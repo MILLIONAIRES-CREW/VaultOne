@@ -411,7 +411,7 @@ tr:hover td{background:var(--bg-card)}
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.16';
+const APP_VERSION = '0.17';
 
 // ========== UTILITIES ==========
 const Utils = {
@@ -419,7 +419,12 @@ const Utils = {
   uid() { return crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2); },
 
   /** Debounce function calls */
-  debounce(fn, ms = 300) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
+  debounce(fn, ms = 300) {
+    let t;
+    const debounced = (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+    debounced.flush = (...a) => { clearTimeout(t); return fn(...a); };
+    return debounced;
+  },
 
   /** Format currency based on settings */
   formatMoney(amount, settings) {
@@ -660,11 +665,10 @@ class CoinGeckoProvider extends CryptoPriceProvider {
     this.COINLIST_TTL = 24 * 60 * 60 * 1000;
     this.PRICES_TTL = 30 * 1000;
     this.BASE = 'https://api.coingecko.com/api/v3';
-    this.DEFAULT_KEY = 'CG-Ad8xnLwey3az1T5kbLHmcJkH';
   }
 
-  /** Resolve API key from settings or default */
-  _apiKey() { return this.getApiKey() || this.DEFAULT_KEY; }
+  /** Resolve API key from settings */
+  _apiKey() { return (this.getApiKey() || '').trim(); }
 
   /** Classify fetch errors for user-friendly handling */
   _classifyError(err, status) {
@@ -677,6 +681,10 @@ class CoinGeckoProvider extends CryptoPriceProvider {
 
   /** HTTP fetch wrapper with timeout and auth header */
   async _fetch(path, params = {}) {
+    const apiKey = this._apiKey();
+    if (!apiKey) {
+      throw Object.assign(new Error('Add your CoinGecko API key in Settings.'), { type: 'no_api_key' });
+    }
     if (Date.now() < this.rateLimitUntil) {
       throw Object.assign(new Error('Rate limited'), { type: 'rate_limited' });
     }
@@ -687,7 +695,7 @@ class CoinGeckoProvider extends CryptoPriceProvider {
     try {
       const res = await fetch(url.toString(), {
         signal: controller.signal,
-        headers: { Accept: 'application/json', 'x-cg-demo-api-key': this._apiKey() }
+        headers: { Accept: 'application/json', 'x-cg-demo-api-key': apiKey }
       });
       clearTimeout(timeout);
       if (res.status === 429) {
@@ -960,9 +968,32 @@ class CryptoPortfolioService {
 class FinanceStore {
   constructor() {
     this.KEY = 'pfm_v1';
+    this.API_KEY_STORAGE = 'pfm_coingecko_api_key';
     this.data = null;
     this.listeners = [];
     this.saveDebounced = Utils.debounce(() => this._persist(), 300);
+  }
+
+  /** Read CoinGecko API key from dedicated localStorage entry */
+  _readCoingeckoApiKey() {
+    try { return localStorage.getItem(this.API_KEY_STORAGE) || ''; } catch (e) { return ''; }
+  }
+
+  /** Write CoinGecko API key immediately (not debounced) */
+  _writeCoingeckoApiKey(key) {
+    try {
+      const trimmed = (key || '').trim();
+      if (trimmed) localStorage.setItem(this.API_KEY_STORAGE, trimmed);
+      else localStorage.removeItem(this.API_KEY_STORAGE);
+      return trimmed;
+    } catch (e) { return (key || '').trim(); }
+  }
+
+  /** Save API key to memory and dedicated storage synchronously */
+  setCoingeckoApiKey(key) {
+    if (!this.data.settings) this.data.settings = {};
+    this.data.settings.coingeckoApiKey = this._writeCoingeckoApiKey(key);
+    return this.data.settings.coingeckoApiKey;
   }
 
   /** Load data from localStorage or create defaults */
@@ -982,9 +1013,19 @@ class FinanceStore {
 
   /** Migrate schema to latest version */
   _migrate() {
+    if (!this.data.settings) this.data.settings = {};
     if (!this.data.cryptoHoldings) this.data.cryptoHoldings = [];
     if (!this.data.cryptoMeta) this.data.cryptoMeta = { lastPriceUpdate: null, apiStatus: 'unknown', lastApiError: null };
-    if (!this.data.settings.coingeckoApiKey) this.data.settings.coingeckoApiKey = 'CG-Ad8xnLwey3az1T5kbLHmcJkH';
+    const LEGACY_DEFAULT_KEY = 'CG-Ad8xnLwey3az1T5kbLHmcJkH';
+    const dedicatedKey = this._readCoingeckoApiKey();
+    if (dedicatedKey) {
+      this.data.settings.coingeckoApiKey = dedicatedKey;
+    } else if (this.data.settings.coingeckoApiKey && this.data.settings.coingeckoApiKey !== LEGACY_DEFAULT_KEY) {
+      this._writeCoingeckoApiKey(this.data.settings.coingeckoApiKey);
+    } else if (this.data.settings.coingeckoApiKey === LEGACY_DEFAULT_KEY) {
+      this.data.settings.coingeckoApiKey = '';
+      this._writeCoingeckoApiKey('');
+    }
     if (this.data.settings.cryptoAutoRefresh === undefined) this.data.settings.cryptoAutoRefresh = true;
     if (this.data.version < 2) this.data.version = 2;
     (this.data.creditCards || []).forEach(c => {
@@ -1002,7 +1043,7 @@ class FinanceStore {
     const cats = ['Salary','Food','Groceries','Restaurants','Coffee','Fuel','Transportation','Shopping','Bills','Rent','Mortgage','Insurance','Healthcare','Education','Entertainment','Travel','Business','Crypto','Stocks','Investment','Other'];
     return {
       version: 2,
-      settings: { currency: 'USD', language: 'en', theme: 'dark', numberFormat: '1,234.56', dateFormat: 'MM/DD/YYYY', autoBackup: false, lastBackup: null, widgetOrder: ['balance','cashflow','recent','bills','categories','networth','insights','heatmap'], coingeckoApiKey: 'CG-Ad8xnLwey3az1T5kbLHmcJkH', cryptoAutoRefresh: true },
+      settings: { currency: 'USD', language: 'en', theme: 'dark', numberFormat: '1,234.56', dateFormat: 'MM/DD/YYYY', autoBackup: false, lastBackup: null, widgetOrder: ['balance','cashflow','recent','bills','categories','networth','insights','heatmap'], coingeckoApiKey: '', cryptoAutoRefresh: true },
       categories: cats.map((name, i) => ({ id: Utils.uid(), name, type: name === 'Salary' ? 'income' : (['Crypto','Stocks','Investment'].includes(name) ? 'both' : 'expense'), icon: 'tag', custom: false })),
       accounts: [
         { id: Utils.uid(), name: 'Cash Wallet', type: 'cash', openingBalance: 0, color: '#10b981' },
@@ -1022,6 +1063,7 @@ class FinanceStore {
   /** Persist to localStorage */
   _persist() {
     try {
+      if (this.data?.settings) this._writeCoingeckoApiKey(this.data.settings.coingeckoApiKey || '');
       localStorage.setItem(this.KEY, JSON.stringify(this.data));
       if (this.data.settings.autoBackup) {
         localStorage.setItem(`pfm_backup_${Date.now()}`, JSON.stringify(this.data));
@@ -1035,14 +1077,28 @@ class FinanceStore {
   /** Notify change and auto-save */
   notify() { this.saveDebounced(); }
 
+  /** Save immediately (e.g. settings the user explicitly saved) */
+  persistNow() { this.saveDebounced.flush(); }
+
   /** Subscribe to data changes */
   subscribe(fn) { this.listeners.push(fn); }
 
   /** Get settings */
   get settings() { return this.data.settings; }
 
+  /** Get CoinGecko API key (dedicated storage is source of truth) */
+  getCoingeckoApiKey() {
+    const dedicated = this._readCoingeckoApiKey();
+    if (dedicated) return dedicated;
+    return (this.data.settings?.coingeckoApiKey || '').trim();
+  }
+
   /** Update settings */
-  updateSettings(patch) { Object.assign(this.data.settings, patch); this.notify(); }
+  updateSettings(patch) {
+    Object.assign(this.data.settings, patch);
+    if ('coingeckoApiKey' in patch) this._writeCoingeckoApiKey(patch.coingeckoApiKey);
+    this.notify();
+  }
 
   /** Generic CRUD helpers */
   add(collection, item) { item.id = item.id || Utils.uid(); this.data[collection].push(item); this.notify(); return item; }
@@ -1063,7 +1119,7 @@ class FinanceStore {
   }
 
   /** Clear all data */
-  clear() { this.data = this._createDefault(); this.notify(); }
+  clear() { this.data = this._createDefault(); this._writeCoingeckoApiKey(''); this.notify(); }
 
   /** Load demo data */
   loadDemo() {
@@ -1348,7 +1404,7 @@ class FinanceApp {
     this.modal = new ModalManager();
     this.charts = new ChartManager();
     this.store.load();
-    this.provider = new CoinGeckoProvider(() => this.store.settings.coingeckoApiKey);
+    this.provider = new CoinGeckoProvider(() => this.store.getCoingeckoApiKey());
     this.crypto = new CryptoPortfolioService(this.store, this.provider, this.toast);
     this.calc = new FinanceCalculator(this.store, this.crypto);
     this.insights = new InsightEngine(this.store, this.calc);
@@ -1369,7 +1425,13 @@ class FinanceApp {
     this.applyTheme(this.store.settings.theme);
     this.buildNav();
     this.bindGlobalEvents();
-    this.store.subscribe(() => { if (this.currentView) this.navigate(this.currentView); });
+    this.store.subscribe(() => {
+      if (!this.currentView) return;
+      const active = document.activeElement;
+      if (this.currentView === 'settings' && active?.closest('#mainContent input, #mainContent select, #mainContent textarea')) return;
+      this.navigate(this.currentView);
+    });
+    window.addEventListener('beforeunload', () => this.store.persistNow());
     this.navigate('dashboard');
     this.checkReminders();
     this.initCrypto();
@@ -2812,12 +2874,11 @@ class FinanceApp {
         </div>
       </div>
       <div class="card"><div class="card-title"><i class="fas fa-bitcoin-sign"></i> Crypto API (CoinGecko)</div>
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px">API key is stored locally in your browser only.</p>
         <div class="form-grid">
           <div class="form-group" style="grid-column:1/-1"><label>CoinGecko API Key</label>
-            <input type="password" id="setCoingeckoKey" value="${Utils.esc(s.coingeckoApiKey||'')}" placeholder="Demo API key"></div>
+            <input type="password" id="setCoingeckoKey" value="${Utils.esc(this.store.getCoingeckoApiKey())}" placeholder="Paste your CoinGecko API key" onchange="app.saveCryptoSettings()" onkeydown="if(event.key==='Enter')app.saveCryptoSettings()"></div>
           <div class="form-group"><label>Auto-Refresh Prices</label>
-            <select id="setCryptoRefresh"><option value="true" ${s.cryptoAutoRefresh!==false?'selected':''}>On (every 60s)</option><option value="false" ${s.cryptoAutoRefresh===false?'selected':''}>Off</option></select></div>
+            <select id="setCryptoRefresh" onchange="app.saveCryptoSettings()"><option value="true" ${s.cryptoAutoRefresh!==false?'selected':''}>On (every 60s)</option><option value="false" ${s.cryptoAutoRefresh===false?'selected':''}>Off</option></select></div>
           <div class="form-group"><label>Coin List Cache</label>
             <input readonly value="${(() => { const age = app.provider.getCoinListCacheAge(); return age != null ? Math.round(age/3600000) + 'h ago' : 'Not cached'; })()}"></div>
           <div class="form-group"><label>Crypto Holdings</label>
@@ -2869,6 +2930,7 @@ class FinanceApp {
       dateFormat: document.getElementById('setDateFmt').value,
       autoBackup: document.getElementById('setAutoBackup').value === 'true'
     });
+    this.store.persistNow();
     this.applyTheme(this.store.settings.theme);
     this.provider.clearPriceCache();
     if (this.store.data.cryptoHoldings?.length) this.crypto.refreshPrices(true, true);
@@ -2879,13 +2941,20 @@ class FinanceApp {
   saveCryptoSettings() {
     const keyEl = document.getElementById('setCoingeckoKey');
     const refreshEl = document.getElementById('setCryptoRefresh');
-    if (keyEl) this.store.updateSettings({ coingeckoApiKey: keyEl.value.trim() });
-    if (refreshEl) {
-      this.store.updateSettings({ cryptoAutoRefresh: refreshEl.value === 'true' });
-      this.crypto.stopAutoRefresh();
-      if (refreshEl.value === 'true') this.crypto.startAutoRefresh();
+    const apiKey = keyEl ? keyEl.value.trim() : '';
+    const autoRefresh = refreshEl ? refreshEl.value === 'true' : this.store.settings.cryptoAutoRefresh !== false;
+    this.store.setCoingeckoApiKey(apiKey);
+    this.store.updateSettings({ cryptoAutoRefresh: autoRefresh });
+    this.store.persistNow();
+    this.crypto.stopAutoRefresh();
+    if (autoRefresh) this.crypto.startAutoRefresh();
+    if (apiKey) {
+      this.provider.ping().then(() => {
+        this.crypto.initCoinList().catch(() => {});
+        if (this.store.data.cryptoHoldings?.length) this.crypto.refreshPrices(true, true);
+      }).catch(() => {});
     }
-    this.toast.show('Crypto settings saved', 'success');
+    this.toast.show(apiKey ? 'Crypto settings saved' : 'Crypto settings saved — add an API key to enable live prices', apiKey ? 'success' : 'warning');
   }
 
   /** Force refresh CoinGecko coin list cache */
