@@ -218,10 +218,10 @@ html.vaultone-access-granted body{overflow:auto}
 }
 .sidebar.collapsed{width:76px}
 .sidebar-header{padding:22px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;min-height:var(--topbar-h)}
-.sidebar-header .logo{width:44px;height:44px;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:transparent;box-shadow:0 0 0 1px rgba(212,175,55,0.35),0 4px 20px rgba(212,175,55,0.18),0 10px 28px rgba(0,0,0,0.4)}
-.sidebar-header .logo::before{content:'';position:absolute;inset:-1px;border-radius:50%;background:conic-gradient(from 210deg,#F5D06F 0%,#D4AF37 18%,#9a7b2f 42%,#D4AF37 68%,#F5D06F 100%);opacity:0.45;z-index:0}
-.sidebar-header .logo::after{content:'';position:absolute;inset:1px;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,0.1),transparent 55%);z-index:2;pointer-events:none}
-.sidebar-header .logo svg{width:40px;height:40px;position:relative;z-index:1;border-radius:50%;display:block}
+.sidebar-header .logo, .topbar-brand .logo{width:44px;height:44px;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:transparent;box-shadow:0 0 0 1px rgba(212,175,55,0.35),0 4px 20px rgba(212,175,55,0.18),0 10px 28px rgba(0,0,0,0.4)}
+.sidebar-header .logo::before, .topbar-brand .logo::before{content:'';position:absolute;inset:-1px;border-radius:50%;background:conic-gradient(from 210deg,#F5D06F 0%,#D4AF37 18%,#9a7b2f 42%,#D4AF37 68%,#F5D06F 100%);opacity:0.45;z-index:0}
+.sidebar-header .logo::after, .topbar-brand .logo::after{content:'';position:absolute;inset:1px;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,0.1),transparent 55%);z-index:2;pointer-events:none}
+.sidebar-header .logo svg, .topbar-brand .logo svg{width:40px;height:40px;position:relative;z-index:1;border-radius:50%;display:block}
 .brand-block{display:flex;flex-direction:column;gap:4px;min-width:0}
 .brand-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
 .brand-title{font-size:18px;font-weight:800;letter-spacing:0.04em;background:linear-gradient(135deg,#FFFFFF 0%,#F5D06F 55%,#D4AF37 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
@@ -278,6 +278,13 @@ html.vaultone-access-granted body{overflow:auto}
   background:linear-gradient(135deg,var(--gold-premium),var(--gold));color:#050505;font-weight:700;font-size:12px;
 }
 .topbar-profile-name{font-size:12px;font-weight:600;color:var(--text-primary)}
+.topbar-brand{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+.search-command{
+  position:fixed;inset:0;z-index:500;display:none;align-items:flex-start;justify-content:center;
+  padding:72px 20px 20px;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+}
+.search-command.open{display:flex}
+.search-command .search-box{max-width:560px;width:100%;flex:none}
 .search-box{flex:1;max-width:520px;position:relative}
 .search-box input{
   width:100%;padding:12px 16px 12px 44px;background:rgba(23,23,23,0.75);
@@ -500,6 +507,17 @@ tr:last-child td{border-bottom:none}
 }
 .fab:hover{transform:scale(1.05);box-shadow:0 8px 32px rgba(212,175,55,0.45)}
 .fab:active{transform:scale(0.94)}
+.mobile-nav-fab{
+  flex:0 0 auto;width:52px;height:52px;margin-top:-22px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(245,208,111,0.98),rgba(212,175,55,0.92));
+  backdrop-filter:blur(12px);color:#050505;font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 28px rgba(212,175,55,0.45),inset 0 1px 0 rgba(255,255,255,0.28);
+  border:1px solid rgba(255,255,255,0.2);transition:var(--transition);font-weight:700;
+  align-self:center;
+}
+.mobile-nav-fab:hover{transform:scale(1.05);box-shadow:0 10px 32px rgba(212,175,55,0.5)}
+.mobile-nav-fab:active{transform:scale(0.94)}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
 .empty-state i{font-size:48px;margin-bottom:16px;opacity:0.4}
 .empty-state h3{font-size:18px;color:var(--text-secondary);margin-bottom:8px}
@@ -585,7 +603,7 @@ tr:last-child td{border-bottom:none}
   border:1px solid rgba(212,175,55,0.18);border-radius:22px;z-index:180;
   padding:6px 8px;box-shadow:var(--shadow-gold-glow),inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.mobile-bottom-nav-inner{display:flex;align-items:stretch;justify-content:space-around;gap:2px;height:100%}
+.mobile-bottom-nav-inner{display:flex;align-items:flex-end;justify-content:space-around;gap:2px;height:100%;padding:0 4px}
 .mobile-nav-item{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   padding:6px 4px;border-radius:14px;color:var(--text-muted);transition:var(--transition);
@@ -613,6 +631,7 @@ tr:last-child td{border-bottom:none}
   position:relative;padding:14px 16px 12px;border-radius:var(--radius-sm);overflow:hidden;
   background:linear-gradient(160deg,rgba(23,23,23,0.9),rgba(11,11,11,0.85));
   border:1px solid rgba(212,175,55,0.2);box-shadow:var(--shadow-gold-glow);
+  text-align:center;
 }
 .m-wealth-header::before{
   content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);
@@ -621,7 +640,7 @@ tr:last-child td{border-bottom:none}
 }
 .m-wealth-label{font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:var(--gold);font-weight:700;margin-bottom:4px}
 .m-wealth-value{font-family:'Manrope',sans-serif;font-size:36px;font-weight:800;letter-spacing:-0.03em;line-height:1.05}
-.m-wealth-trends{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.m-wealth-trends{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:center}
 .m-trend-pill{
   display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;
   font-size:11px;font-weight:600;background:rgba(23,23,23,0.8);border:1px solid var(--border);
@@ -629,8 +648,7 @@ tr:last-child td{border-bottom:none}
 .m-trend-pill.positive{color:var(--income);border-color:rgba(35,193,107,0.25)}
 .m-trend-pill.negative{color:var(--expense);border-color:rgba(229,72,77,0.25)}
 .m-trend-pill span{opacity:0.7;font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:0.06em}
-.m-quick-actions{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.m-quick-actions::-webkit-scrollbar{display:none}
+.m-quick-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding-bottom:2px}
 .m-action-pill{
   flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;
   border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap;
@@ -705,7 +723,7 @@ tr:last-child td{border-bottom:none}
   .main{margin-left:0!important}
   .mobile-toggle{display:none!important}
   .mobile-bottom-nav{display:block}
-  .mobile-header-compact{display:flex}
+  .mobile-header-compact{display:none!important}
   .wealth-strip{display:none}
   .topbar{padding:0 14px;gap:10px;height:56px}
   .topbar-profile-name{display:none}
@@ -714,9 +732,12 @@ tr:last-child td{border-bottom:none}
   .widgets-grid,.chart-row,.form-grid{grid-template-columns:1fr}
   .page-header{flex-direction:column;align-items:flex-start;margin-bottom:16px}
   .page-title{font-size:20px;font-weight:700}
-  .search-box{max-width:none;order:3;flex:1 1 100%}
+  .topbar-brand{flex:1;gap:12px}
+  .topbar-brand .logo{width:40px;height:40px}
+  .topbar-brand .logo svg{width:36px;height:36px}
+  .topbar-brand .brand-title{font-size:16px}
+  .topbar-brand .brand-subtitle{font-size:8px}
   .topbar-actions{gap:6px}
-  .fab{bottom:calc(var(--mobile-nav-h) + 20px);right:14px;width:48px;height:48px;font-size:18px}
   .hide-mobile{display:none!important}
   .hide-on-desktop{display:block!important}
   .dashboard-desktop{display:none!important}
@@ -753,7 +774,6 @@ tr:last-child td{border-bottom:none}
   .widget[data-widget="cashflow"],
   .widget[data-widget="recent"]{display:none!important}
   #widgetsGrid{margin-top:0;gap:0}
-  body.view-dashboard .mobile-header-compact{display:none!important}
   .mobile-home.hide-on-desktop{display:flex!important}
 }
 @media(max-width:390px){
@@ -900,10 +920,71 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
           <span class="wealth-strip-value" id="topCashFlow">—</span>
         </div>
       </div>
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" id="globalSearch" placeholder="Search transactions, accounts, cards... (Ctrl+K)" autocomplete="off">
-        <div class="search-results" id="searchResults"></div>
+      <div class="topbar-brand" aria-label="VaultOne">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VaultOne">
+            <defs>
+              <linearGradient id="tb-v1-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#faf3e3"/>
+                <stop offset="32%" stop-color="#e8c872"/>
+                <stop offset="68%" stop-color="#c9a227"/>
+                <stop offset="100%" stop-color="#7a5c12"/>
+              </linearGradient>
+              <linearGradient id="tb-v1-gold-soft" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f5e6c8"/>
+                <stop offset="100%" stop-color="#b8860b"/>
+              </linearGradient>
+              <linearGradient id="tb-v1-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a2433"/>
+                <stop offset="55%" stop-color="#0f1520"/>
+                <stop offset="100%" stop-color="#080c12"/>
+              </linearGradient>
+              <radialGradient id="tb-v1-sheen" cx="35%" cy="28%" r="55%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.14)"/>
+                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+              <radialGradient id="tb-v1-gem" cx="40%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="#fff8e7"/>
+                <stop offset="100%" stop-color="#d4a853"/>
+              </radialGradient>
+            </defs>
+            <circle cx="20" cy="20" r="19" fill="url(#tb-v1-bg)"/>
+            <circle cx="20" cy="20" r="19" fill="url(#tb-v1-sheen)"/>
+            <circle cx="20" cy="20" r="18.2" fill="none" stroke="url(#tb-v1-gold)" stroke-width="0.9" opacity="0.95"/>
+            <circle cx="20" cy="20" r="15.8" fill="none" stroke="url(#tb-v1-gold)" stroke-width="0.35" opacity="0.45"/>
+            <g stroke="url(#tb-v1-gold-soft)" stroke-width="0.55" stroke-linecap="round" opacity="0.55">
+              <line x1="20" y1="4.5" x2="20" y2="6.8"/>
+              <line x1="20" y1="33.2" x2="20" y2="35.5"/>
+              <line x1="4.5" y1="20" x2="6.8" y2="20"/>
+              <line x1="33.2" y1="20" x2="35.5" y2="20"/>
+              <line x1="9.2" y1="9.2" x2="10.8" y2="10.8"/>
+              <line x1="29.2" y1="29.2" x2="30.8" y2="30.8"/>
+              <line x1="29.2" y1="10.8" x2="30.8" y2="9.2"/>
+              <line x1="9.2" y1="30.8" x2="10.8" y2="29.2"/>
+            </g>
+            <path d="M13.2 12.2 L15.1 14.8 L20 9.8 L24.9 14.8 L26.8 12.2 L20 8 Z" fill="url(#tb-v1-gold)" opacity="0.92"/>
+            <circle cx="20" cy="10.8" r="0.85" fill="url(#tb-v1-gem)"/>
+            <path d="M12.4 27.2 L20 14.6 L27.6 27.2" fill="none" stroke="url(#tb-v1-gold)" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15.2 24.1 L20 17.2 L24.8 24.1 L20 28.6 Z" fill="url(#tb-v1-gold)" opacity="0.88"/>
+            <circle cx="20" cy="21.8" r="1.15" fill="url(#tb-v1-gem)"/>
+            <path d="M17.2 21.1 L20 24.2 L22.8 21.1" fill="none" stroke="#0a0f16" stroke-width="0.55" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="brand-block">
+          <div class="brand-row">
+            <div class="brand-title">VaultOne</div>
+            <span class="brand-beta">Beta</span>
+            <span class="brand-version"></span>
+          </div>
+          <div class="brand-subtitle">by Millionaires Crew</div>
+        </div>
+      </div>
+      <div class="search-command" id="searchCommand" aria-hidden="true">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="globalSearch" placeholder="Search transactions, accounts, cards... (Ctrl+K)" autocomplete="off">
+          <div class="search-results" id="searchResults"></div>
+        </div>
       </div>
       <div class="topbar-actions">
         <button class="btn btn-primary btn-sm hide-mobile" id="quickAddBtn"><i class="fas fa-plus"></i> Add Transaction</button>
@@ -922,13 +1003,13 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
 <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Main navigation">
   <div class="mobile-bottom-nav-inner">
     <button type="button" class="mobile-nav-item active" data-view="dashboard"><i class="fas fa-house"></i><span>Home</span></button>
-    <button type="button" class="mobile-nav-item" data-view="transactions"><i class="fas fa-list"></i><span>Activity</span></button>
     <button type="button" class="mobile-nav-item" data-view="accounts"><i class="fas fa-wallet"></i><span>Accounts</span></button>
+    <button type="button" class="mobile-nav-fab" id="fab" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
     <button type="button" class="mobile-nav-item" data-view="crypto"><i class="fas fa-coins"></i><span>Crypto</span></button>
     <button type="button" class="mobile-nav-item" data-view="more" id="mobileNavMore"><i class="fas fa-grip"></i><span>More</span></button>
   </div>
 </nav>
-<button class="fab" id="fab" title="Quick add transaction"><i class="fas fa-plus"></i></button>
+<button class="fab hide-mobile" id="fabDesktop" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal"><div class="modal-header"><h2 id="modalTitle"></h2><button class="btn-icon" id="modalClose"><i class="fas fa-times"></i></button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
 <div class="modal-overlay" id="confirmOverlay"><div class="modal" style="max-width:400px"><div class="modal-header"><h2 id="confirmTitle">Confirm</h2></div><div class="modal-body" id="confirmBody"></div><div class="modal-footer"><button class="btn btn-secondary" id="confirmCancel">Cancel</button><button class="btn btn-danger" id="confirmOk">Confirm</button></div></div></div>
 <div class="toast-container" id="toastContainer"></div>
@@ -941,7 +1022,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.37';
+const APP_VERSION = '0.41';
 
 // ========== UTILITIES ==========
 const Utils = {
@@ -1733,6 +1814,30 @@ class FinanceStore {
 class FinanceCalculator {
   constructor(store, cryptoService = null) { this.store = store; this.cryptoService = cryptoService; }
 
+  /** Get account balance from transactions up to a date (inclusive) */
+  accountBalanceAt(accountId, asOfDate) {
+    const acc = this.store.get('accounts', accountId);
+    if (!acc) return 0;
+    let bal = acc.openingBalance || 0;
+    this.store.data.transactions.forEach(t => {
+      if (t.date > asOfDate) return;
+      if (t.accountId === accountId) bal += t.type === 'income' ? t.amount : -t.amount;
+      if (t.transferTo === accountId) bal += t.amount;
+      if (t.transferFrom === accountId) bal -= t.amount;
+    });
+    return bal;
+  }
+
+  /** Total balance across all accounts on a date */
+  totalBalanceAt(asOfDate) {
+    return this.store.data.accounts.reduce((s, a) => s + this.accountBalanceAt(a.id, asOfDate), 0);
+  }
+
+  /** Net worth on a date — account history plus current investments, assets, crypto, and debt */
+  netWorthAt(asOfDate) {
+    return this.totalBalanceAt(asOfDate) + (this.netWorth() - this.totalBalance());
+  }
+
   /** Get account balance from transactions */
   accountBalance(accountId) {
     const acc = this.store.get('accounts', accountId);
@@ -1967,8 +2072,7 @@ class FinanceApp {
 
   /** Initialize app */
   init() {
-    const verEl = document.getElementById('appVersion');
-    if (verEl) verEl.textContent = APP_VERSION;
+    document.querySelectorAll('.brand-version').forEach(el => { el.textContent = APP_VERSION; });
     document.documentElement.setAttribute('data-theme', 'dark');
     this.buildNav();
     this.bindGlobalEvents();
@@ -2005,7 +2109,7 @@ class FinanceApp {
 
   /** Sync mobile bottom nav active state */
   syncMobileNav(view) {
-    const primary = ['dashboard', 'transactions', 'accounts', 'crypto'];
+    const primary = ['dashboard', 'accounts', 'crypto'];
     const mapped = primary.includes(view) ? view : 'more';
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.view === mapped);
@@ -2136,14 +2240,36 @@ class FinanceApp {
     document.getElementById('mobileMenuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('mobile-open');
     document.getElementById('quickAddBtn').onclick = () => this.openTransactionModal();
     document.getElementById('fab').onclick = () => this.openTransactionModal();
-    document.getElementById('globalSearch').oninput = Utils.debounce(e => this.globalSearch(e.target.value), 200);
-    document.getElementById('globalSearch').onfocus = () => { if (document.getElementById('globalSearch').value) this.globalSearch(document.getElementById('globalSearch').value); };
-    document.addEventListener('click', e => { if (!e.target.closest('.search-box')) document.getElementById('searchResults').classList.remove('open'); });
+    const fabDesktop = document.getElementById('fabDesktop');
+    if (fabDesktop) fabDesktop.onclick = () => this.openTransactionModal();
+    const searchCmd = document.getElementById('searchCommand');
+    const searchInput = document.getElementById('globalSearch');
+    const openSearch = () => {
+      searchCmd.classList.add('open');
+      searchCmd.setAttribute('aria-hidden', 'false');
+      searchInput.focus();
+      searchInput.select();
+    };
+    const closeSearch = () => {
+      searchCmd.classList.remove('open');
+      searchCmd.setAttribute('aria-hidden', 'true');
+      document.getElementById('searchResults').classList.remove('open');
+      searchInput.value = '';
+    };
+    searchInput.oninput = Utils.debounce(e => this.globalSearch(e.target.value), 200);
+    searchInput.onfocus = () => { if (searchInput.value) this.globalSearch(searchInput.value); };
+    searchCmd.addEventListener('click', e => { if (e.target === searchCmd) closeSearch(); });
+    document.addEventListener('click', e => { if (!e.target.closest('.search-command .search-box')) document.getElementById('searchResults').classList.remove('open'); });
     document.getElementById('shortcutsClose').onclick = () => document.getElementById('shortcutsOverlay').classList.remove('open');
     document.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('globalSearch').focus(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
       if (e.key === 'n' && !e.target.matches('input,textarea,select') && !this.modal.overlay.classList.contains('open')) { e.preventDefault(); this.openTransactionModal(); }
-      if (e.key === 'Escape') { this.modal.close(); document.getElementById('shortcutsOverlay').classList.remove('open'); document.getElementById('searchResults').classList.remove('open'); }
+      if (e.key === 'Escape') {
+        this.modal.close();
+        document.getElementById('shortcutsOverlay').classList.remove('open');
+        if (searchCmd.classList.contains('open')) closeSearch();
+        else document.getElementById('searchResults').classList.remove('open');
+      }
       if (e.key === '?' && !e.target.matches('input,textarea')) { e.preventDefault(); document.getElementById('shortcutsOverlay').classList.add('open'); }
     });
   }
@@ -2258,9 +2384,9 @@ class FinanceApp {
     const topInsight = insights[0] || { icon: 'info-circle', text: 'Add transactions to unlock personalized insights.' };
     const perfPeriod = this.dashboardChartPeriod || '7d';
     const kpis = [
-      { label: 'Net Worth', value: c.netWorth(), icon: 'scale-balanced' },
+      { label: 'Bank Accounts', value: c.bankTotal(), icon: 'building-columns' },
       { label: 'Cash', value: c.cashBalance(), icon: 'money-bill' },
-      { label: 'Investments', value: c.investmentsTotal(), icon: 'chart-line' },
+      { label: 'Credit Card Debt', value: c.ccDebt(), icon: 'credit-card' },
       { label: 'Crypto', value: c.cryptoTotal(), icon: 'coins' }
     ];
 
@@ -2429,32 +2555,56 @@ class FinanceApp {
     if (!el) return;
     const colors = this.charts.colors();
     const period = this.dashboardChartPeriod || '7d';
-    const chartOpts = { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } } };
+    const monthEndAsOf = (monthsAgo) => {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - monthsAgo);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const today = new Date();
+      return Utils.toISO(end > today ? today : end);
+    };
+    let labels, data;
 
     if (period === '1y') {
-      const months = [];
-      for (let i = 11; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); months.push(Utils.monthKey(d)); }
-      this.charts.render('netWorth', el, 'line', {
-        labels: months.map(m => m.slice(5)),
-        datasets: [{ label: 'Net Worth', data: months.map(() => this.calc.netWorth()), borderColor: colors.accent, tension: 0.4, fill: true, backgroundColor: colors.accent + '20', pointRadius: 2 }]
-      }, chartOpts);
-      return;
+      labels = [];
+      data = [];
+      for (let i = 11; i >= 0; i--) {
+        const asOf = monthEndAsOf(i);
+        labels.push(asOf.slice(5, 7));
+        data.push(this.calc.netWorthAt(asOf));
+      }
+    } else {
+      const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+      labels = [];
+      data = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const asOf = Utils.toISO(d);
+        labels.push(asOf.slice(5));
+        data.push(this.calc.netWorthAt(asOf));
+      }
     }
 
-    const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-    const keys = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      keys.push(Utils.toISO(d));
-    }
-    const buckets = {};
-    keys.forEach(k => { buckets[k] = 0; });
-    this.store.data.transactions.filter(t => keys.includes(t.date)).forEach(t => {
-      buckets[t.date] += t.type === 'income' ? t.amount : -t.amount;
-    });
+    const minVal = Math.min(...data);
+    const maxVal = Math.max(...data);
+    const range = maxVal - minVal;
+    const pad = range > 0 ? range * 0.08 : (Math.abs(minVal) > 0 ? Math.abs(minVal) * 0.1 : 100);
+    const chartOpts = {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+        y: {
+          ticks: { font: { size: 10 } },
+          suggestedMin: minVal - pad,
+          suggestedMax: maxVal + pad
+        }
+      }
+    };
+
     this.charts.render('netWorth', el, 'line', {
-      labels: keys.map(k => k.slice(5)),
-      datasets: [{ label: 'Cash Flow', data: keys.map(k => buckets[k]), borderColor: colors.accent, tension: 0.35, fill: true, backgroundColor: colors.accent + '18', pointRadius: period === '7d' ? 3 : 1 }]
+      labels,
+      datasets: [{ label: 'Net Worth', data, borderColor: colors.accent, tension: 0.4, fill: true, backgroundColor: colors.accent + '20', pointRadius: period === '7d' ? 3 : period === '30d' ? 2 : 1 }]
     }, chartOpts);
   }
 
@@ -2474,11 +2624,23 @@ class FinanceApp {
     if (isMobileDash && elMobile) this.renderDashboardPerformanceChart(elMobile);
     else if (elDesktop) {
       const months = [];
-      for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); months.push(Utils.monthKey(d)); }
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() - i);
+        const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        const today = new Date();
+        months.push({ label: Utils.monthKey(end), asOf: Utils.toISO(end > today ? today : end) });
+      }
+      const nwData = months.map(m => this.calc.netWorthAt(m.asOf));
+      const minVal = Math.min(...nwData);
+      const maxVal = Math.max(...nwData);
+      const range = maxVal - minVal;
+      const pad = range > 0 ? range * 0.08 : (Math.abs(minVal) > 0 ? Math.abs(minVal) * 0.1 : 100);
       this.charts.render('netWorth', elDesktop, 'line', {
-        labels: months,
-        datasets: [{ label: 'Net Worth', data: months.map(() => this.calc.netWorth()), borderColor: colors.accent, tension: 0.4, fill: true, backgroundColor: colors.accent + '20' }]
-      }, { plugins: { legend: { display: false } } });
+        labels: months.map(m => m.label),
+        datasets: [{ label: 'Net Worth', data: nwData, borderColor: colors.accent, tension: 0.4, fill: true, backgroundColor: colors.accent + '20' }]
+      }, { plugins: { legend: { display: false } }, scales: { y: { suggestedMin: minVal - pad, suggestedMax: maxVal + pad } } });
     }
 
     const el3 = document.getElementById('chartDashCF');
