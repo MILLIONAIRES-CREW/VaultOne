@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.58';
+const APP_VERSION = '0.59';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3090,10 +3090,11 @@ class TikTokEmbedPlayer {
 
   resume() {
     if (!this.iframe?.contentWindow) return;
-    const iosMuted = Utils.isIOS() && (this.manager?.muted || !this.manager?.soundUnlocked);
-    if (iosMuted || this.manager?.muted) this.post('mute');
+    const wantSound = this._shouldPlay && !this.manager?.muted
+      && (!Utils.isIOS() || this.manager?.soundUnlocked);
+    if (!wantSound) this.post('mute');
     this.post('play');
-    if (!iosMuted && !this.manager?.muted) this.unlockAudio();
+    if (wantSound) this.unlockAudio();
     if (!this._playing) this.schedulePlayRetry();
   }
 
@@ -3168,6 +3169,7 @@ class TikTokEmbedPlayer {
     if (!id) return;
     this.ensureSrc(id);
     this.resume();
+    if (!this.manager?.muted && this.manager?.soundUnlocked) this.unlockAudio();
   }
 
   schedulePlayRetry() {
@@ -3326,7 +3328,6 @@ class TikTokEmbedPlayer {
     e.stopPropagation();
     if (this.manager.muted || !this.manager.soundUnlocked) {
       this.manager.enableSound();
-      this.unlockAudio();
     }
   }
 
@@ -3381,7 +3382,8 @@ class VideoPlayer {
     this.video.setAttribute('playsinline', '');
     this.video.setAttribute('webkit-playsinline', '');
     this.video.loop = true;
-    this.video.muted = this.manager ? this.manager.muted : false;
+    this.video.muted = this.manager?.muted
+      || (Utils.isIOS() && !this.manager?.soundUnlocked);
     this.video.preload = 'none';
     this.video.src = this.url;
     this.video.addEventListener('error', () => this.onError?.());
@@ -3461,7 +3463,8 @@ class VideoPlayer {
   kickFromGesture() {
     this.manager?.noteUserGesture?.();
     if (!this.video) return;
-    const wantSound = this.manager?.soundUnlocked && !this.manager?.muted;
+    const wantSound = !this.manager?.muted
+      && (!Utils.isIOS() || this.manager?.soundUnlocked);
     this.video.muted = !wantSound;
     this.video.play().catch(() => {
       if (!this.video) return;
@@ -3607,10 +3610,32 @@ class VideoManager {
     this.bookmarks = new Set();
     this.cards = [];
     this.activeIndex = 0;
-    this.muted = Utils.isIOS();
+    this.muted = false;
     this.soundUnlocked = !Utils.isIOS();
     this._gestureAt = 0;
     this.onSoundChange = null;
+  }
+
+  unlockIOSAudio() {
+    if (!Utils.isIOS() || this.soundUnlocked) return;
+    this.soundUnlocked = true;
+    this.noteUserGesture();
+    this.unmuteActive();
+    this.onSoundChange?.();
+  }
+
+  muteAllForScroll() {
+    this.cards.forEach((c) => c.player?.silence?.());
+  }
+
+  unmuteActive() {
+    if (this.muted) return;
+    if (Utils.isIOS() && !this.soundUnlocked) return;
+    const p = this.cards[this.activeIndex]?.player;
+    if (!p) return;
+    p.setMuted?.(false);
+    p.unlockAudio?.();
+    if (p.video) p.video.muted = false;
   }
 
   enableSound() {
@@ -3618,13 +3643,9 @@ class VideoManager {
     this.muted = false;
     this.soundUnlocked = true;
     this.cards.forEach((c, i) => {
-      if (i === this.activeIndex) {
-        c.player?.setMuted?.(false);
-        c.player?.unlockAudio?.();
-      } else {
-        c.player?.silence?.();
-      }
+      if (i !== this.activeIndex) c.player?.silence?.();
     });
+    this.unmuteActive();
     this.onSoundChange?.();
   }
 
@@ -3657,6 +3678,7 @@ class VideoManager {
     this.noteUserGesture();
     const p = this.cards[this.activeIndex]?.player;
     p?.kickFromGesture?.();
+    this.unmuteActive();
   }
 
   canPlayWithSound() {
@@ -3685,11 +3707,7 @@ class VideoManager {
     this.cards.forEach((c, i) => {
       if (i !== this.activeIndex) c.player?.silence?.();
     });
-    if (!this.muted && this.soundUnlocked) {
-      const p = this.cards[this.activeIndex]?.player;
-      p?.setMuted?.(false);
-      p?.unlockAudio?.();
-    }
+    this.unmuteActive();
   }
 
   getVideos() {
@@ -3726,7 +3744,7 @@ class VideoFeed {
     this.sourceVideos = sourceVideos;
     this.manager = new VideoManager([]);
     if (Utils.isIOS()) {
-      this.manager.muted = true;
+      this.manager.muted = false;
       this.manager.soundUnlocked = false;
       if (options.soundState) {
         this.manager.muted = options.soundState.muted;
@@ -3759,6 +3777,7 @@ class VideoFeed {
     };
     this._onTouchStart = (e) => {
       this.manager.noteUserGesture();
+      if (Utils.isIOS()) this.manager.unlockIOSAudio();
       this._touchStartY = e.touches[0]?.clientY ?? 0;
       this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
       this._lastScrollT = Date.now();
@@ -3789,6 +3808,8 @@ class VideoFeed {
       this._lastScrollT = now;
       this.manager.noteUserGesture();
       if (Math.abs(y - this._touchStartY) > 10) {
+        this.manager.muteAllForScroll();
+        if (Utils.isIOS()) this.manager.unlockIOSAudio();
         this.syncActiveFromScroll();
         this.manager.kickActiveFromGesture();
       }
