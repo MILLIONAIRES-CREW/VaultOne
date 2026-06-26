@@ -249,6 +249,12 @@ html.vaultone-access-granted body{overflow:auto}
 .nav-item i{width:20px;text-align:center;font-size:15px;flex-shrink:0;color:inherit}
 .nav-item.active i{color:var(--gold-premium)}
 .sidebar-footer{padding:14px;border-top:1px solid var(--border)}
+.sidebar-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:240;opacity:0;transition:opacity 0.25s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.sidebar-backdrop.is-visible{display:block;opacity:1}
 .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;transition:var(--transition);max-width:100%}
 .sidebar.collapsed~.main{margin-left:76px}
 .topbar{
@@ -708,7 +714,12 @@ tr:last-child td{border-bottom:none}
 }
 @media(max-width:768px){
   .sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;z-index:250}
+  .sidebar.collapsed{width:var(--sidebar-w)!important}
+  .sidebar.collapsed .brand-block,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .nav-section{display:revert}
   .sidebar.mobile-open{transform:translateX(0);box-shadow:8px 0 40px rgba(0,0,0,0.6)}
+  body.sidebar-drawer-open{overflow:hidden}
   .main{margin-left:0!important}
   .mobile-toggle{display:none!important}
   .mobile-bottom-nav{display:block}
@@ -788,10 +799,28 @@ tr:last-child td{border-bottom:none}
 body.view-insights .topbar{display:none}
 body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
 .insights-mount{width:100%;height:100%}
+.insights-feed-shell{
+  position:relative;height:100dvh;overflow:hidden;background:#000;
+}
+.insights-pull-zone{
+  position:absolute;top:0;left:0;right:0;z-index:25;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:10px;height:0;opacity:0;pointer-events:none;
+  color:var(--gold-premium);font-size:11px;font-weight:600;
+  letter-spacing:0.06em;text-transform:uppercase;gap:8px;
+  transition:opacity 0.15s ease;
+}
+.insights-pull-zone.is-visible{opacity:1}
+.insights-pull-zone.is-ready span{color:var(--gold)}
+.insights-pull-spinner{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(17,17,17,0.88);border:1px solid rgba(212,175,55,0.28);font-size:13px;
+}
+.insights-pull-zone.is-refreshing .insights-pull-spinner i{animation:spin 0.8s linear infinite}
 .insights-feed{
-  height:100dvh;overflow-y:auto;scroll-snap-type:y mandatory;
+  height:100%;overflow-y:auto;scroll-snap-type:y mandatory;
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
-  background:#000;scrollbar-width:none;
+  background:#000;scrollbar-width:none;will-change:transform;
 }
 .insights-feed::-webkit-scrollbar{display:none}
 .insights-slide{
@@ -837,7 +866,7 @@ body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
     inset 0 var(--tt-top) 0 0 #000,
     inset 0 calc(-1 * var(--tt-bottom)) 0 0 #000;
 }
-.insights-slide--tiktok .insights-counter{display:none}
+.insights-counter{display:none}
 .insights-slide--tiktok .insights-meta{
   left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));
   margin:0;
@@ -967,7 +996,8 @@ body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
 @media(min-width:769px){
   body.view-insights .content{min-height:calc(100vh - var(--topbar-h))}
   body.view-insights .topbar{display:flex}
-  .insights-feed{height:calc(100vh - var(--topbar-h));max-width:430px;margin:0 auto}
+  .insights-feed-shell{height:calc(100vh - var(--topbar-h));max-width:430px;margin:0 auto}
+  .insights-feed{height:100%}
   .insights-slide{height:calc(100vh - var(--topbar-h))}
   .insights-empty{height:calc(100vh - var(--topbar-h))}
   .insights-meta{bottom:24px}
@@ -1090,6 +1120,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
       <button class="nav-item" id="collapseBtn"><i class="fas fa-angles-left"></i><span class="nav-label">Collapse</span></button>
     </div>
   </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
   <div class="main">
     <header class="topbar">
       <div class="mobile-header-compact">
@@ -1208,7 +1239,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.42';
+const APP_VERSION = '0.43';
 
 const INSIGHT_VIDEOS = [
   {
@@ -1217,6 +1248,7 @@ const INSIGHT_VIDEOS = [
     category: 'Finance',
     description: 'Quick financial mindset tip.',
     source: 'tiktok',
+    videoId: '7635847746116717855',
     url: 'https://vt.tiktok.com/ZSCMmCtXw/',
     canonicalUrl: 'https://www.tiktok.com/@dailymotivation.227/video/7635847746116717855'
   },
@@ -1226,7 +1258,341 @@ const INSIGHT_VIDEOS = [
     category: 'Finance',
     description: 'Financial education insight.',
     source: 'tiktok',
+    videoId: '7635240397865798934',
     url: 'https://www.tiktok.com/@kevintrudeau_student/video/7635240397865798934'
+  },
+  {
+    id: 'success-mindset',
+    title: 'Success Mindset',
+    category: 'Finance',
+    description: 'Mindset and success insight from @18successmindset.',
+    source: 'tiktok',
+    videoId: '7543684775479921950',
+    url: 'https://www.tiktok.com/@18successmindset/video/7543684775479921950'
+  },
+  {
+    id: 'mentalityclb-7540036269468880150',
+    title: 'Mentality Club',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @mentalityclb.',
+    source: 'tiktok',
+    videoId: '7540036269468880150',
+    url: 'https://www.tiktok.com/@mentalityclb/video/7540036269468880150'
+  },
+  {
+    id: 'vision111-7649778842164301057',
+    title: 'Vision111',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @vision111_.',
+    source: 'tiktok',
+    videoId: '7649778842164301057',
+    url: 'https://www.tiktok.com/@vision111_/video/7649778842164301057'
+  },
+  {
+    id: 'light178-7566369614595198238',
+    title: 'Light 178',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @light.178.',
+    source: 'tiktok',
+    videoId: '7566369614595198238',
+    url: 'https://www.tiktok.com/@light.178/video/7566369614595198238'
+  },
+  {
+    id: 'motivation44-7633857511736511766',
+    title: 'Motivation 44',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @motivation_44.',
+    source: 'tiktok',
+    videoId: '7633857511736511766',
+    url: 'https://www.tiktok.com/@motivation_44/video/7633857511736511766'
+  },
+  {
+    id: 'roarofvictory-7621640703390682390',
+    title: 'Roar of Victory',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @roarofvictory_.',
+    source: 'tiktok',
+    videoId: '7621640703390682390',
+    url: 'https://www.tiktok.com/@roarofvictory_/video/7621640703390682390'
+  },
+  {
+    id: 'roarofvictory-7621998749618834710',
+    title: 'Roar of Victory',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @roarofvictory_.',
+    source: 'tiktok',
+    videoId: '7621998749618834710',
+    url: 'https://www.tiktok.com/@roarofvictory_/video/7621998749618834710'
+  },
+  {
+    id: 'kingbq53-7631476367544044832',
+    title: 'King BQ',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @king.bq.53.',
+    source: 'tiktok',
+    videoId: '7631476367544044832',
+    url: 'https://www.tiktok.com/@king.bq.53/video/7631476367544044832'
+  },
+  {
+    id: 'roarofvictory-7624236221237153046',
+    title: 'Roar of Victory',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @roarofvictory_.',
+    source: 'tiktok',
+    videoId: '7624236221237153046',
+    url: 'https://www.tiktok.com/@roarofvictory_/video/7624236221237153046'
+  },
+  {
+    id: 'motivationframes-7576425019127975190',
+    title: 'Motivation Frames',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @motivation.frames.',
+    source: 'tiktok',
+    videoId: '7576425019127975190',
+    url: 'https://www.tiktok.com/@motivation.frames/video/7576425019127975190'
+  },
+  {
+    id: 'thequotebuddy-7578561866960506134',
+    title: 'The Quote Buddy',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @the_quote_buddy.',
+    source: 'tiktok',
+    videoId: '7578561866960506134',
+    url: 'https://www.tiktok.com/@the_quote_buddy/video/7578561866960506134'
+  },
+  {
+    id: 'growthmentorship-7211974211680685318',
+    title: 'Growth Mentorship',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @growthmentorship.',
+    source: 'tiktok',
+    videoId: '7211974211680685318',
+    url: 'https://www.tiktok.com/@growthmentorship/video/7211974211680685318'
+  },
+  {
+    id: 'resetthemind-7634903007007673622',
+    title: 'Reset the Mind',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @reset_themind.',
+    source: 'tiktok',
+    videoId: '7634903007007673622',
+    url: 'https://www.tiktok.com/@reset_themind/video/7634903007007673622'
+  },
+  {
+    id: 'selfishworld00-7231375543067839746',
+    title: 'Selfish World',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @selfish_world00.',
+    source: 'tiktok',
+    videoId: '7231375543067839746',
+    url: 'https://www.tiktok.com/@selfish_world00/video/7231375543067839746'
+  },
+  {
+    id: 'emrahenn-7531424669346336016',
+    title: 'Emrah Enn',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @emrahenn.',
+    source: 'tiktok',
+    videoId: '7531424669346336016',
+    url: 'https://www.tiktok.com/@emrahenn/video/7531424669346336016'
+  },
+  {
+    id: 'jmotivation10-7401821630755835169',
+    title: 'J Motivation',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @jmotivation10.',
+    source: 'tiktok',
+    videoId: '7401821630755835169',
+    url: 'https://www.tiktok.com/@jmotivation10/video/7401821630755835169'
+  },
+  {
+    id: 'nofacefuel82-7517607008271404310',
+    title: 'No Face Fuel',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @nofacefuel82.',
+    source: 'tiktok',
+    videoId: '7517607008271404310',
+    url: 'https://www.tiktok.com/@nofacefuel82/video/7517607008271404310'
+  },
+  {
+    id: 'spreadpeace31-7570297108440354066',
+    title: 'Spread Peace',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @spreadpeace31.',
+    source: 'tiktok',
+    videoId: '7570297108440354066',
+    url: 'https://www.tiktok.com/@spreadpeace31/video/7570297108440354066'
+  },
+  {
+    id: 'elvoraura-7534495684368567559',
+    title: 'Elvor Aura',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @elvoraura.',
+    source: 'tiktok',
+    videoId: '7534495684368567559',
+    url: 'https://www.tiktok.com/@elvoraura/video/7534495684368567559'
+  },
+  {
+    id: 'balancetheory-7554000159147838727',
+    title: 'The Balance Theory',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @thebalancetheorypodcast.',
+    source: 'tiktok',
+    videoId: '7554000159147838727',
+    url: 'https://www.tiktok.com/@thebalancetheorypodcast/video/7554000159147838727'
+  },
+  {
+    id: 'mulhmeen-7624294463266950420',
+    title: 'Mulhmeen',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @mulhmeen.',
+    source: 'tiktok',
+    videoId: '7624294463266950420',
+    url: 'https://www.tiktok.com/@mulhmeen/video/7624294463266950420'
+  },
+  {
+    id: 'anubisbrand-7283143213173591302',
+    title: 'Anubis Brand',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @anubisbrand.',
+    source: 'tiktok',
+    videoId: '7283143213173591302',
+    url: 'https://www.tiktok.com/@anubisbrand/video/7283143213173591302'
+  },
+  {
+    id: 'myinspirationtosucceed-7216558155084401962',
+    title: 'My Inspiration to Succeed',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @myinspirationtosucceed.',
+    source: 'tiktok',
+    videoId: '7216558155084401962',
+    url: 'https://www.tiktok.com/@myinspirationtosucceed/video/7216558155084401962'
+  },
+  {
+    id: 'spartanmotivation-7431320608710905120',
+    title: 'Spartan Motivation',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @spartan_motivation2.',
+    source: 'tiktok',
+    videoId: '7431320608710905120',
+    url: 'https://www.tiktok.com/@spartan_motivation2/video/7431320608710905120'
+  },
+  {
+    id: 'ragthree-7631345593356455190',
+    title: 'Ragthree',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @ragthree.',
+    source: 'tiktok',
+    videoId: '7631345593356455190',
+    url: 'https://www.tiktok.com/@ragthree/video/7631345593356455190'
+  },
+  {
+    id: 'successmotivation14-7651478819399814422',
+    title: 'Success Motivation',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @successmotivation14.',
+    source: 'tiktok',
+    videoId: '7651478819399814422',
+    url: 'https://www.tiktok.com/@successmotivation14/video/7651478819399814422'
+  },
+  {
+    id: 'marktilbury-7655340952835476758',
+    title: 'Mark Tilbury',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @marktilbury.',
+    source: 'tiktok',
+    videoId: '7655340952835476758',
+    url: 'https://www.tiktok.com/@marktilbury/video/7655340952835476758'
+  },
+  {
+    id: 'houseoflegacies-7428303498476834051',
+    title: 'House of Legacies',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @houseoflegacies.',
+    source: 'tiktok',
+    videoId: '7428303498476834051',
+    url: 'https://www.tiktok.com/@houseoflegacies/video/7428303498476834051'
+  },
+  {
+    id: 'elitethink-7547748026027134221',
+    title: 'Elite Think',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @elite_think.',
+    source: 'tiktok',
+    videoId: '7547748026027134221',
+    url: 'https://www.tiktok.com/@elite_think/video/7547748026027134221'
+  },
+  {
+    id: 'mrmotivationca-7587084988630240520',
+    title: 'Mr. Motivation CA',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @mr.motivation.ca.',
+    source: 'tiktok',
+    videoId: '7587084988630240520',
+    url: 'https://www.tiktok.com/@mr.motivation.ca/video/7587084988630240520'
+  },
+  {
+    id: 'successifymotivation-7581857087899143454',
+    title: 'Successify Motivation',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @successifymotivation.',
+    source: 'tiktok',
+    videoId: '7581857087899143454',
+    url: 'https://www.tiktok.com/@successifymotivation/video/7581857087899143454'
+  },
+  {
+    id: 'growthofwisdom-7651275704390274336',
+    title: 'Growth of Wisdom',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @growthofwisdom.',
+    source: 'tiktok',
+    videoId: '7651275704390274336',
+    url: 'https://www.tiktok.com/@growthofwisdom/video/7651275704390274336'
+  },
+  {
+    id: 'mindsethq-7632132551007620366',
+    title: 'Mindset HQ',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @mindsethqofficial.',
+    source: 'tiktok',
+    videoId: '7632132551007620366',
+    url: 'https://www.tiktok.com/@mindsethqofficial/video/7632132551007620366'
+  },
+  {
+    id: 'alphacompound-7630931279734787350',
+    title: 'Alpha Compound',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @alphacompound.',
+    source: 'tiktok',
+    videoId: '7630931279734787350',
+    url: 'https://www.tiktok.com/@alphacompound/video/7630931279734787350'
+  },
+  {
+    id: 'luxigma0-7651717453638143250',
+    title: 'Luxigma',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @luxigma0.',
+    source: 'tiktok',
+    videoId: '7651717453638143250',
+    url: 'https://www.tiktok.com/@luxigma0/video/7651717453638143250'
+  },
+  {
+    id: 'unbreakablemindset-7652826740581993741',
+    title: 'Unbreakable Mindset',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @unbreakablemindset71.',
+    source: 'tiktok',
+    videoId: '7652826740581993741',
+    url: 'https://www.tiktok.com/@unbreakablemindset71/video/7652826740581993741'
+  },
+  {
+    id: 'committochange-7652374221787499806',
+    title: 'Commit to Change',
+    category: 'Finance',
+    description: 'Motivation and mindset insight from @commit_to_change.',
+    source: 'tiktok',
+    videoId: '7652374221787499806',
+    url: 'https://www.tiktok.com/@commit_to_change/video/7652374221787499806'
   }
 ];
 
@@ -1234,6 +1600,16 @@ const INSIGHT_VIDEOS = [
 const Utils = {
   /** Generate unique ID */
   uid() { return crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2); },
+
+  /** Return a new randomly shuffled copy of an array */
+  shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  },
 
   /** Debounce function calls */
   debounce(fn, ms = 300) {
@@ -1363,7 +1739,12 @@ const Utils = {
   async resolveTikTokMeta(url, meta = {}) {
     const key = String(url || '').split('#')[0];
     if (meta.videoId) {
-      return { videoId: String(meta.videoId), thumbnail: meta.thumbnail || null };
+      const result = { videoId: String(meta.videoId), thumbnail: meta.thumbnail || null };
+      this._tiktokMetaCache.set(key, result);
+      if (!result.thumbnail && meta.canonicalUrl) {
+        this.prefetchTikTokThumbnail(key, meta.canonicalUrl || key);
+      }
+      return result;
     }
     if (this._tiktokMetaCache.has(key)) return this._tiktokMetaCache.get(key);
 
@@ -1400,6 +1781,24 @@ const Utils = {
     } catch { /* CORS on short links in browser */ }
 
     return cacheAndReturn(await tryOembed(key));
+  },
+
+  /** Fetch thumbnail in background and update cache */
+  prefetchTikTokThumbnail(cacheKey, targetUrl) {
+    const key = String(cacheKey || '').split('#')[0];
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(targetUrl)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const thumb = data?.thumbnail_url;
+        if (!thumb) return;
+        const cached = this._tiktokMetaCache.get(key);
+        if (cached) {
+          cached.thumbnail = thumb;
+          this._tiktokMetaCache.set(key, cached);
+          window.dispatchEvent(new CustomEvent('tiktok-thumb', { detail: { key, thumbnail: thumb } }));
+        }
+      })
+      .catch(() => {});
   },
 
   /** Resolve vt.tiktok.com and other short links to a video ID */
@@ -2510,7 +2909,6 @@ class TikTokEmbedPlayer {
     this.iframe.className = 'insights-embed-frame';
     this.iframe.title = 'TikTok video';
     this.iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
-    this.iframe.setAttribute('loading', 'lazy');
     this.stageEl.appendChild(this.iframe);
     this.curtainEl = document.createElement('div');
     this.curtainEl.className = 'insights-tiktok-curtain';
@@ -2542,6 +2940,11 @@ class TikTokEmbedPlayer {
     this.container.appendChild(this.tapZone);
     this.container.appendChild(this.muteHint);
     window.addEventListener('message', this._onMessage);
+    this._onThumb = (e) => {
+      const key = String(this.url || '').split('#')[0];
+      if (e.detail?.key === key && e.detail?.thumbnail) this.setCurtainThumbnail(e.detail.thumbnail);
+    };
+    window.addEventListener('tiktok-thumb', this._onThumb);
   }
 
   setCurtainThumbnail(url) {
@@ -2555,11 +2958,34 @@ class TikTokEmbedPlayer {
     this.curtainEl?.classList.remove('is-hidden');
   }
 
+  hideFallback() {
+    clearTimeout(this._errorTimer);
+    this.fallback?.classList.remove('show');
+  }
+
+  scheduleErrorFallback() {
+    clearTimeout(this._errorTimer);
+    this._errorTimer = setTimeout(() => {
+      if (this._shouldPlay && !this._revealed && !this._playing) this.showFallback();
+    }, 8000);
+  }
+
+  unlockAudio() {
+    if (!this.iframe?.contentWindow || this.manager?.muted) return;
+    this.post('unMute');
+    clearTimeout(this._unmuteT1);
+    clearTimeout(this._unmuteT2);
+    this._unmuteT1 = setTimeout(() => this.post('unMute'), 250);
+    this._unmuteT2 = setTimeout(() => this.post('unMute'), 700);
+  }
+
   revealPlayer() {
     if (this._revealed) return;
     this._revealed = true;
+    this.hideFallback();
     this.curtainEl?.classList.add('is-hidden');
     this.loadingEl?.classList.remove('show');
+    this.unlockAudio();
   }
 
   resetReveal() {
@@ -2571,20 +2997,24 @@ class TikTokEmbedPlayer {
     if (!e.data?.['x-tiktok-player'] || e.source !== this.iframe?.contentWindow) return;
     if (e.data.type === 'onPlayerReady') {
       this._ready = true;
+      this.hideFallback();
       if (this._shouldPlay) {
         this.post('play');
-        if (!this.manager.muted) this.post('unMute');
+        this.unlockAudio();
       }
     }
     if (e.data.type === 'onStateChange') {
       this._playing = e.data.value === 1;
+      if (this._playing) this.hideFallback();
       if (this._playing && this._shouldPlay) this.revealPlayer();
     }
     if (e.data.type === 'onCurrentTime' && e.data.value?.duration > 0) {
       if (this._shouldPlay && e.data.value.currentTime > 0) this.revealPlayer();
       this.overlay?.setProgress((e.data.value.currentTime / e.data.value.duration) * 100);
     }
-    if (e.data.type === 'onPlayerError') this.showFallback();
+    if (e.data.type === 'onPlayerError' && this._shouldPlay && !this._revealed && !this._playing) {
+      this.scheduleErrorFallback();
+    }
   }
 
   post(type, value) {
@@ -2596,11 +3026,12 @@ class TikTokEmbedPlayer {
 
   async ensureVideoId() {
     if (this.videoId) return this.videoId;
-    this.loadingEl?.classList.add('show');
+    const hasKnownId = !!(this.meta.videoId);
+    if (!hasKnownId) this.loadingEl?.classList.add('show');
     const resolved = await Utils.resolveTikTokMeta(this.url, this.meta);
-    this.loadingEl?.classList.remove('show');
+    if (!hasKnownId) this.loadingEl?.classList.remove('show');
     if (!resolved?.videoId) {
-      this.showFallback();
+      if (this._shouldPlay) this.showFallback();
       this.onError?.();
       return null;
     }
@@ -2629,9 +3060,9 @@ class TikTokEmbedPlayer {
     } else if (this._ready) {
       this.resetReveal();
       this.post('play');
-      if (!this.manager.muted) this.post('unMute');
+      this.unlockAudio();
     }
-    this.fallback?.classList.remove('show');
+    this.hideFallback();
   }
 
   pause() {
@@ -2663,7 +3094,8 @@ class TikTokEmbedPlayer {
   }
 
   setMuted(muted) {
-    this.post(muted ? 'mute' : 'unMute');
+    if (muted) this.post('mute');
+    else this.unlockAudio();
   }
 
   handleTap(e) {
@@ -2684,7 +3116,7 @@ class TikTokEmbedPlayer {
     this._lastTap = now;
     setTimeout(() => {
       if (this._lastTap !== now) return;
-      if (!this.manager.muted) this.post('unMute');
+      if (!this.manager.muted) this.unlockAudio();
       if (this._playing) this.post('pause');
       else this.post('play');
     }, 300);
@@ -2699,8 +3131,12 @@ class TikTokEmbedPlayer {
 
   destroy() {
     window.removeEventListener('message', this._onMessage);
+    window.removeEventListener('tiktok-thumb', this._onThumb);
     this.tapZone?.removeEventListener('click', this._onTap);
     clearTimeout(this._hintTimer);
+    clearTimeout(this._errorTimer);
+    clearTimeout(this._unmuteT1);
+    clearTimeout(this._unmuteT2);
     if (this.iframe) this.iframe.src = 'about:blank';
     this.loadingEl?.remove();
     this.fallback?.remove();
@@ -2896,6 +3332,7 @@ class VideoCard {
     this.ensureLoaded();
     this.player?.setPreload('auto');
     this.player?.play();
+    this.player?.unlockAudio?.();
   }
 
   deactivate() {
@@ -2946,16 +3383,17 @@ class VideoManager {
   }
 
   setActive(index) {
-    if (index === this.activeIndex && this.cards[index]?.player?.video && !this.cards[index].player.video.paused) return;
+    if (index === this.activeIndex) {
+      const p = this.cards[index]?.player;
+      if (p?._playing || (p?.video && !p.video.paused)) return;
+    }
     this.activeIndex = index;
     this.cards.forEach((card, i) => {
       if (i === index) card.activate();
       else {
         card.deactivate();
-        if (Math.abs(i - index) <= 1) {
-          if (i === index + 1) card.preloadNext();
-          else card.setPreloadNone();
-        }
+        if (Math.abs(i - index) === 1) card.preloadNext();
+        else if (Math.abs(i - index) > 1) card.setPreloadNone();
       }
     });
   }
@@ -2975,9 +3413,104 @@ class VideoFeed {
   constructor(container, videos) {
     this.container = container;
     this.manager = new VideoManager(videos);
+    this.shellEl = null;
+    this.pullEl = null;
     this.feedEl = null;
     this.observer = null;
+    this.onRefresh = null;
+    this.refreshing = false;
+    this.pullDistance = 0;
+    this._pullThreshold = 72;
     this._onScroll = Utils.debounce(() => this.syncActiveFromScroll(), 80);
+  }
+
+  setPullDistance(px) {
+    this.pullDistance = Math.max(0, Math.min(px, 110));
+    if (!this.feedEl || !this.pullEl) return;
+    this.feedEl.style.transform = this.pullDistance ? `translateY(${this.pullDistance}px)` : '';
+    this.pullEl.style.height = `${this.pullDistance}px`;
+    const visible = this.pullDistance > 6;
+    this.pullEl.classList.toggle('is-visible', visible);
+    this.pullEl.classList.toggle('is-ready', this.pullDistance >= this._pullThreshold);
+    const label = this.pullEl.querySelector('.insights-pull-label');
+    if (label && !this.refreshing) {
+      label.textContent = this.pullDistance >= this._pullThreshold ? 'Release to refresh' : 'Pull to refresh';
+    }
+    const icon = this.pullEl.querySelector('.insights-pull-spinner i');
+    if (icon) icon.style.transform = `rotate(${Math.min(this.pullDistance * 2.5, 360)}deg)`;
+  }
+
+  resetPull(animate = true) {
+    if (animate && this.feedEl) {
+      this.feedEl.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+      this.pullEl.style.transition = 'height 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+    }
+    this.setPullDistance(0);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (this.feedEl) this.feedEl.style.transition = '';
+        if (this.pullEl) this.pullEl.style.transition = '';
+      }, animate ? 280 : 0);
+    });
+  }
+
+  bindPullToRefresh() {
+    const feed = this.feedEl;
+    let startY = 0;
+    let tracking = false;
+
+    const canPull = () => !this.refreshing && feed.scrollTop <= 1;
+
+    const onTouchStart = (e) => {
+      if (!canPull()) return;
+      startY = e.touches[0].clientY;
+      tracking = true;
+    };
+
+    const onTouchMove = (e) => {
+      if (!tracking || this.refreshing) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 0 && feed.scrollTop <= 1) {
+        if (dy > 8) e.preventDefault();
+        this.setPullDistance((dy - 8) * 0.45);
+      } else if (dy <= 0) {
+        tracking = false;
+        this.resetPull();
+      }
+    };
+
+    const endPull = () => {
+      if (!tracking) return;
+      tracking = false;
+      if (this.pullDistance >= this._pullThreshold) this.triggerRefresh();
+      else this.resetPull();
+    };
+
+    feed.addEventListener('touchstart', onTouchStart, { passive: true });
+    feed.addEventListener('touchmove', onTouchMove, { passive: false });
+    feed.addEventListener('touchend', endPull, { passive: true });
+    feed.addEventListener('touchcancel', endPull, { passive: true });
+
+    this._unbindPull = () => {
+      feed.removeEventListener('touchstart', onTouchStart);
+      feed.removeEventListener('touchmove', onTouchMove);
+      feed.removeEventListener('touchend', endPull);
+      feed.removeEventListener('touchcancel', endPull);
+    };
+  }
+
+  async triggerRefresh() {
+    if (this.refreshing) return;
+    this.refreshing = true;
+    this.pullEl?.classList.add('is-refreshing');
+    const label = this.pullEl?.querySelector('.insights-pull-label');
+    if (label) label.textContent = 'Refreshing…';
+    this.setPullDistance(this._pullThreshold);
+    this.manager.cards.forEach(c => c.deactivate());
+    await new Promise(r => setTimeout(r, 350));
+    const cb = this.onRefresh;
+    this.destroy();
+    if (cb) cb();
   }
 
   mount() {
@@ -2991,6 +3524,13 @@ class VideoFeed {
         </div>`;
       return;
     }
+    this.shellEl = document.createElement('div');
+    this.shellEl.className = 'insights-feed-shell';
+    this.pullEl = document.createElement('div');
+    this.pullEl.className = 'insights-pull-zone';
+    this.pullEl.innerHTML = `
+      <div class="insights-pull-spinner"><i class="fas fa-arrow-down"></i></div>
+      <span class="insights-pull-label">Pull to refresh</span>`;
     this.feedEl = document.createElement('div');
     this.feedEl.className = 'insights-feed';
     list.forEach((meta, i) => {
@@ -2998,8 +3538,11 @@ class VideoFeed {
       this.manager.registerCard(card);
       this.feedEl.appendChild(card.el);
     });
+    this.shellEl.appendChild(this.pullEl);
+    this.shellEl.appendChild(this.feedEl);
     this.container.innerHTML = '';
-    this.container.appendChild(this.feedEl);
+    this.container.appendChild(this.shellEl);
+    this.bindPullToRefresh();
     this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
     this.observer = new IntersectionObserver(
       entries => {
@@ -3012,7 +3555,25 @@ class VideoFeed {
       { root: this.feedEl, threshold: [0.65, 0.85] }
     );
     this.manager.cards.forEach(c => this.observer.observe(c.el));
-    requestAnimationFrame(() => this.manager.setActive(0));
+    list.forEach(m => Utils.resolveTikTokMeta(m.url, m));
+    this.startIndex = Math.floor(Math.random() * list.length);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const start = this.startIndex;
+        this.manager.cards.forEach((card, i) => {
+          if (Math.abs(i - start) <= 1) card.preloadNext();
+        });
+        const target = this.manager.cards[start]?.el;
+        if (target && this.feedEl) this.feedEl.scrollTop = target.offsetTop;
+        this.manager.setActive(start);
+      });
+    });
+    const unlockAudio = () => {
+      this.manager.muted = false;
+      this.manager.cards.forEach(c => c.player?.unlockAudio?.());
+    };
+    this.feedEl.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
+    this.feedEl.addEventListener('pointerdown', unlockAudio, { once: true });
   }
 
   syncActiveFromScroll() {
@@ -3030,12 +3591,17 @@ class VideoFeed {
   }
 
   destroy() {
+    this._unbindPull?.();
     this.feedEl?.removeEventListener('scroll', this._onScroll);
     this.observer?.disconnect();
     this.manager.destroy();
     this.container.innerHTML = '';
+    this.shellEl = null;
+    this.pullEl = null;
     this.feedEl = null;
     this.observer = null;
+    this.refreshing = false;
+    this.pullDistance = 0;
   }
 }
 
@@ -3100,6 +3666,39 @@ class FinanceApp {
     if (mobileEl) mobileEl.textContent = this.$(net);
   }
 
+  /** Whether the mobile drawer layout is active */
+  isMobileNav() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  /** Close the mobile sidebar drawer */
+  closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    sidebar?.classList.remove('mobile-open', 'collapsed');
+    backdrop?.classList.remove('is-visible');
+    backdrop?.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('sidebar-drawer-open');
+  }
+
+  /** Open the mobile sidebar drawer */
+  openMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    sidebar?.classList.remove('collapsed');
+    sidebar?.classList.add('mobile-open');
+    backdrop?.classList.add('is-visible');
+    backdrop?.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('sidebar-drawer-open');
+  }
+
+  /** Toggle the mobile sidebar drawer */
+  toggleMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar?.classList.contains('mobile-open')) this.closeMobileSidebar();
+    else this.openMobileSidebar();
+  }
+
   /** Sync mobile bottom nav active state */
   syncMobileNav(view) {
     const primary = ['dashboard', 'accounts', 'crypto', 'insights'];
@@ -3111,16 +3710,15 @@ class FinanceApp {
 
   /** Bind mobile bottom navigation */
   bindMobileBottomNav() {
-    const sidebar = document.getElementById('sidebar');
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
       el.onclick = () => {
         const view = el.dataset.view;
         if (view === 'more') {
-          sidebar.classList.toggle('mobile-open');
+          this.toggleMobileSidebar();
           this.syncMobileNav(this.currentView || 'dashboard');
           return;
         }
-        sidebar.classList.remove('mobile-open');
+        this.closeMobileSidebar();
         this.navigate(view);
       };
     });
@@ -3218,7 +3816,7 @@ class FinanceApp {
       <div class="nav-section">${s.section}</div>
       ${s.links.map(l => `<button class="nav-item" data-view="${l.id}"><i class="fas fa-${l.icon}"></i><span class="nav-label">${l.label}</span></button>`).join('')}
     `).join('');
-    nav.querySelectorAll('.nav-item').forEach(el => el.onclick = () => { this.navigate(el.dataset.view); document.getElementById('sidebar').classList.remove('mobile-open'); });
+    nav.querySelectorAll('.nav-item').forEach(el => el.onclick = () => { this.navigate(el.dataset.view); this.closeMobileSidebar(); });
   }
 
   /** Bind global UI events */
@@ -3230,8 +3828,12 @@ class FinanceApp {
       this.charts.destroyAll();
       this.navigate(this.currentView);
     };
-    document.getElementById('collapseBtn').onclick = () => document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('mobileMenuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('mobile-open');
+    document.getElementById('collapseBtn').onclick = () => {
+      if (this.isMobileNav()) this.closeMobileSidebar();
+      else document.getElementById('sidebar').classList.toggle('collapsed');
+    };
+    document.getElementById('sidebarBackdrop').onclick = () => this.closeMobileSidebar();
+    document.getElementById('mobileMenuBtn').onclick = () => this.toggleMobileSidebar();
     document.getElementById('quickAddBtn').onclick = () => this.openTransactionModal();
     document.getElementById('fab').onclick = () => this.openTransactionModal();
     const searchCmd = document.getElementById('searchCommand');
@@ -3268,6 +3870,12 @@ class FinanceApp {
 
   /** Navigate to view */
   navigate(view) {
+    if (view === 'insights' && this.currentView === 'insights') {
+      this.closeMobileSidebar();
+      document.getElementById('sidebar')?.classList.remove('mobile-open');
+      this.syncMobileNav(view);
+      return;
+    }
     if (this.currentView === 'insights' && view !== 'insights') {
       this.insightsFeed?.destroy();
       this.insightsFeed = null;
@@ -3280,7 +3888,7 @@ class FinanceApp {
     const content = document.getElementById('mainContent');
     const renderers = {
       dashboard: () => this.renderDashboard(),
-      insights: () => this.renderInsights(),
+      insights: () => { if (!this.insightsFeed) this.renderInsights(); },
       transactions: () => this.renderTransactions(),
       income: () => this.renderIncomeExpenses('income'),
       expenses: () => this.renderIncomeExpenses('expense'),
@@ -3333,9 +3941,28 @@ class FinanceApp {
   /** Render dashboard view */
   /** Render VaultOne Insights vertical video feed */
   renderInsights() {
-    this.insightsFeed?.destroy();
+    if (this.insightsFeed) return;
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this.insightsFeed = new VideoFeed(document.getElementById('insightsMount'), INSIGHT_VIDEOS);
+    this._mountInsightsFeed();
+  }
+
+  /** Rebuild insights feed (pull-to-refresh) */
+  refreshInsightsFeed() {
+    const mount = document.getElementById('insightsMount');
+    if (!mount) return;
+    this._mountInsightsFeed(mount);
+    this.toast.show('Feed refreshed', 'success', 1800);
+  }
+
+  _mountInsightsFeed(mountEl) {
+    const mount = mountEl || document.getElementById('insightsMount');
+    if (!mount) return;
+    const feedVideos = Utils.shuffleArray(INSIGHT_VIDEOS);
+    this.insightsFeed = new VideoFeed(mount, feedVideos);
+    this.insightsFeed.onRefresh = () => {
+      this.insightsFeed = null;
+      this.refreshInsightsFeed();
+    };
     this.insightsFeed.mount();
   }
 
