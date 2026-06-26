@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.57';
+const APP_VERSION = '0.58';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3142,6 +3142,34 @@ class TikTokEmbedPlayer {
     this.post('pause');
   }
 
+  warmForGesture() {
+    if (!this.iframe || this._shouldPlay) return;
+    const id = this.getVideoIdSync();
+    if (!id) {
+      this.ensureVideoId().then((resolved) => {
+        if (resolved && !this._shouldPlay) this.warmForGesture();
+      });
+      return;
+    }
+    if (!this.hasPlaySrc(id)) {
+      this._ready = false;
+      this._playing = false;
+      this.iframe.src = this.playerUrl(id);
+    }
+  }
+
+  kickFromGesture() {
+    this.manager?.noteUserGesture?.();
+    if (!this._shouldPlay) {
+      this.go();
+      return;
+    }
+    const id = this.getVideoIdSync();
+    if (!id) return;
+    this.ensureSrc(id);
+    this.resume();
+  }
+
   schedulePlayRetry() {
     clearTimeout(this._kickRetry);
     let attempts = 0;
@@ -3428,6 +3456,20 @@ class VideoPlayer {
     this.video.pause();
   }
 
+  warmForGesture() {}
+
+  kickFromGesture() {
+    this.manager?.noteUserGesture?.();
+    if (!this.video) return;
+    const wantSound = this.manager?.soundUnlocked && !this.manager?.muted;
+    this.video.muted = !wantSound;
+    this.video.play().catch(() => {
+      if (!this.video) return;
+      this.video.muted = true;
+      this.video.play().catch(() => {});
+    });
+  }
+
   play() {
     if (!this.video) return;
     const wantSound = !(this.manager?.muted);
@@ -3601,6 +3643,22 @@ class VideoManager {
     this._gestureAt = Date.now();
   }
 
+  warmNeighborsForGesture() {
+    const idx = this.activeIndex;
+    [-1, 1].forEach((off) => {
+      const card = this.cards[idx + off];
+      if (!card) return;
+      card.ensureLoaded();
+      card.player?.warmForGesture?.();
+    });
+  }
+
+  kickActiveFromGesture() {
+    this.noteUserGesture();
+    const p = this.cards[this.activeIndex]?.player;
+    p?.kickFromGesture?.();
+  }
+
   canPlayWithSound() {
     return !Utils.needsGesturePlay() || this.soundUnlocked;
   }
@@ -3690,18 +3748,50 @@ class VideoFeed {
     this._pullThreshold = 72;
     this._appending = false;
     this._touchStartY = 0;
+    this._lastScrollTop = 0;
+    this._lastScrollT = 0;
+    this._scrollVelocity = 0;
     this._onScroll = () => this._scrollSync();
     this._scrollSync = Utils.debounce(() => this.syncActiveFromScroll(), 60);
-    this._onScrollEnd = () => this.syncActiveFromScroll();
+    this._onScrollEnd = () => {
+      this.syncActiveFromScroll();
+      this.manager.kickActiveFromGesture();
+    };
     this._onTouchStart = (e) => {
       this.manager.noteUserGesture();
       this._touchStartY = e.touches[0]?.clientY ?? 0;
+      this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
+      this._lastScrollT = Date.now();
+      this._scrollVelocity = 0;
+      this.manager.warmNeighborsForGesture();
     };
-    this._onTouchEnd = () => this.syncActiveFromScroll();
+    this._onTouchEnd = () => {
+      this.manager.noteUserGesture();
+      const vel = this._scrollVelocity || 0;
+      if (Math.abs(vel) > 0.25) {
+        const dir = vel > 0 ? 1 : -1;
+        const target = Math.max(0, Math.min(this.manager.cards.length - 1, this.manager.activeIndex + dir));
+        this.manager.setActive(target);
+      } else {
+        this.syncActiveFromScroll();
+      }
+      this.manager.kickActiveFromGesture();
+      this._scrollVelocity = 0;
+    };
     this._onTouchMove = (e) => {
       if (!this.feedEl) return;
       const y = e.touches[0]?.clientY ?? 0;
-      if (Math.abs(y - this._touchStartY) <= 10) return;
+      const now = Date.now();
+      const top = this.feedEl.scrollTop;
+      const dt = now - this._lastScrollT;
+      if (dt > 0) this._scrollVelocity = (top - this._lastScrollTop) / dt;
+      this._lastScrollTop = top;
+      this._lastScrollT = now;
+      this.manager.noteUserGesture();
+      if (Math.abs(y - this._touchStartY) > 10) {
+        this.syncActiveFromScroll();
+        this.manager.kickActiveFromGesture();
+      }
       const dir = y < this._touchStartY ? 1 : -1;
       const idx = this.manager.activeIndex + dir;
       this.manager.cards[idx]?.preloadAdjacent();
@@ -3890,6 +3980,7 @@ class VideoFeed {
         const idx = parseInt(bestEl.dataset.index, 10);
         if (!isNaN(idx)) {
           this.manager.setActive(idx);
+          this.manager.kickActiveFromGesture();
           this.maybeLoadMore(idx);
         }
       },
