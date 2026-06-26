@@ -1830,9 +1830,10 @@ const Utils = {
 
   /** Build TikTok official embed player URL */
   tiktokPlayerUrl(videoId, options = {}) {
-    const muted = options.muted ?? Utils.needsGesturePlay();
+    const autoplay = options.autoplay !== false;
+    const muted = options.muted ?? (Utils.needsGesturePlay() && !options.soundUnlocked);
     const params = new URLSearchParams({
-      autoplay: '1',
+      autoplay: autoplay ? '1' : '0',
       loop: '1',
       controls: '0',
       progress_bar: '0',
@@ -3034,7 +3035,7 @@ class TikTokEmbedPlayer {
     this._shouldPlay = true;
     this.clearAutoplayCheck();
     if (this._ready) {
-      this.post('play');
+      if (!this._playing) this.post('play');
       if (!this.manager.muted) this.unlockAudio();
     } else if (!this.iframe?.src || this.iframe.src === 'about:blank') {
       this.play();
@@ -3042,10 +3043,12 @@ class TikTokEmbedPlayer {
   }
 
   beginPlayback() {
-    if (Utils.needsGesturePlay()) this.post('mute');
+    const canSound = !this.manager?.muted
+      && (!Utils.needsGesturePlay() || this.manager?.soundUnlocked);
+    if (Utils.needsGesturePlay() && !canSound) this.post('mute');
     this.post('play');
-    if (!Utils.needsGesturePlay() && !this.manager?.muted) this.unlockAudio();
-    this.scheduleAutoplayCheck();
+    if (canSound) this.unlockAudio();
+    else this.scheduleAutoplayCheck();
   }
   revealPlayer() {
     if (this._revealed) return;
@@ -3054,7 +3057,7 @@ class TikTokEmbedPlayer {
     this.hideFallback();
     this.curtainEl?.classList.add('is-hidden');
     this.loadingEl?.classList.remove('show');
-    if (!Utils.needsGesturePlay() && !this.manager?.muted) this.unlockAudio();
+    if (!this.manager?.muted && this.manager?.soundUnlocked) this.unlockAudio();
   }
 
   resetReveal() {
@@ -3117,7 +3120,10 @@ class TikTokEmbedPlayer {
     this._shouldPlay = true;
     const id = await this.ensureVideoId();
     if (!id) return;
-    const src = Utils.tiktokPlayerUrl(id);
+    const src = Utils.tiktokPlayerUrl(id, {
+      soundUnlocked: this.manager?.soundUnlocked,
+      muted: Utils.needsGesturePlay() && !this.manager?.soundUnlocked
+    });
     const blank = !this.iframe.src || this.iframe.src === 'about:blank';
     if (blank || this.iframe.src !== src) {
       this.resetReveal();
@@ -3148,15 +3154,7 @@ class TikTokEmbedPlayer {
 
   async warmIframe() {
     if (!this.iframe || this._shouldPlay) return;
-    const id = await this.ensureVideoId();
-    if (!id) return;
-    const src = Utils.tiktokPlayerUrl(id);
-    const blank = !this.iframe.src || this.iframe.src === 'about:blank';
-    if (!blank && this.iframe.src === src) return;
-    this.resetReveal();
-    this._ready = false;
-    this._playing = false;
-    this.iframe.src = src;
+    await this.ensureVideoId();
   }
 
   setMuted(muted) {
@@ -3165,17 +3163,16 @@ class TikTokEmbedPlayer {
   }
 
   handleTouchStart() {
+    this.manager.soundUnlocked = true;
     if (this._tapPlayVisible || (this._shouldPlay && !this._playing)) {
       this.resumeWithGesture();
+    } else if (this._playing && !this.manager.muted) {
+      this.unlockAudio();
     }
   }
 
   handleTap(e) {
     e.stopPropagation();
-    if (this._tapPlayVisible || (this._shouldPlay && !this._playing)) {
-      this.resumeWithGesture();
-      return;
-    }
     const now = Date.now();
     if (now - this._lastTap < 300) {
       this.manager.muted = !this.manager.muted;
@@ -3192,17 +3189,17 @@ class TikTokEmbedPlayer {
     this._lastTap = now;
     setTimeout(() => {
       if (this._lastTap !== now) return;
-      if (!this.manager.muted) this.unlockAudio();
-      if (this._playing) this.post('pause');
-      else this.resumeWithGesture();
+      this.manager.soundUnlocked = true;
+      if (this._tapPlayVisible || !this._playing) {
+        this.resumeWithGesture();
+      } else if (!this.manager.muted) {
+        this.unlockAudio();
+      }
     }, 300);
   }
 
   async setPreload(mode) {
-    if (mode === 'auto') {
-      await this.ensureVideoId();
-      await this.warmIframe();
-    }
+    if (mode === 'auto') await this.ensureVideoId();
   }
 
   destroy() {
@@ -3408,18 +3405,22 @@ class VideoCard {
 
   activate() {
     this.ensureLoaded();
-    this.player?.setPreload('auto');
     this.player?.play();
-    if (!Utils.needsGesturePlay()) this.player?.unlockAudio?.();
+    if (this.manager.soundUnlocked && !this.manager.muted) {
+      this.player?.unlockAudio?.();
+    }
   }
 
   deactivate() {
     this.player?.pause();
   }
 
+  preloadMeta() {
+    Utils.resolveTikTokMeta(this.meta.url, this.meta);
+  }
+
   preloadNext() {
-    this.ensureLoaded();
-    this.player?.setPreload('auto');
+    this.preloadMeta();
   }
 
   setPreloadNone() {
@@ -3444,6 +3445,7 @@ class VideoManager {
     this.cards = [];
     this.activeIndex = 0;
     this.muted = false;
+    this.soundUnlocked = false;
   }
 
   getVideos() {
@@ -3470,7 +3472,7 @@ class VideoManager {
       if (i === index) card.activate();
       else {
         card.deactivate();
-        if (Math.abs(i - index) === 1) card.preloadNext();
+        if (Math.abs(i - index) === 1) card.preloadMeta();
         else if (Math.abs(i - index) > 1) card.setPreloadNone();
       }
     });
@@ -3488,9 +3490,11 @@ class VideoManager {
 }
 
 class VideoFeed {
-  constructor(container, videos) {
+  constructor(container, sourceVideos, options = {}) {
     this.container = container;
-    this.manager = new VideoManager(videos);
+    this.sourceVideos = sourceVideos;
+    this.manager = new VideoManager([]);
+    if (options.unlockSound) this.manager.soundUnlocked = true;
     this.shellEl = null;
     this.pullEl = null;
     this.feedEl = null;
@@ -3499,7 +3503,31 @@ class VideoFeed {
     this.refreshing = false;
     this.pullDistance = 0;
     this._pullThreshold = 72;
+    this._appending = false;
     this._onScroll = Utils.debounce(() => this.syncActiveFromScroll(), 80);
+  }
+
+  appendMoreVideos() {
+    if (this._appending || !this.sourceVideos.length) return;
+    this._appending = true;
+    const batch = Utils.shuffleArray(this.sourceVideos);
+    const startIdx = this.manager.cards.length;
+    batch.forEach((meta, i) => {
+      const index = startIdx + i;
+      const card = new VideoCard(meta, index, 0, this.manager);
+      this.manager.registerCard(card);
+      this.feedEl?.appendChild(card.el);
+      this.observer?.observe(card.el);
+      Utils.resolveTikTokMeta(meta.url, meta);
+    });
+    this._appending = false;
+  }
+
+  maybeLoadMore(activeIndex) {
+    const count = this.manager.cards.length;
+    if (!count) return;
+    const remaining = count - 1 - activeIndex;
+    if (remaining <= 2) this.appendMoreVideos();
   }
 
   setPullDistance(px) {
@@ -3592,8 +3620,7 @@ class VideoFeed {
   }
 
   mount() {
-    const list = this.manager.getVideos();
-    if (!list.length) {
+    if (!this.sourceVideos.length) {
       this.container.innerHTML = `
         <div class="insights-empty">
           <i class="fas fa-circle-play"></i>
@@ -3611,48 +3638,37 @@ class VideoFeed {
       <span class="insights-pull-label">Pull to refresh</span>`;
     this.feedEl = document.createElement('div');
     this.feedEl.className = 'insights-feed';
-    list.forEach((meta, i) => {
-      const card = new VideoCard(meta, i, list.length, this.manager);
-      this.manager.registerCard(card);
-      this.feedEl.appendChild(card.el);
-    });
     this.shellEl.appendChild(this.pullEl);
     this.shellEl.appendChild(this.feedEl);
     this.container.innerHTML = '';
     this.container.appendChild(this.shellEl);
+    this.appendMoreVideos();
     this.bindPullToRefresh();
     this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
     this.observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
-          if (!entry.isIntersecting || entry.intersectionRatio < 0.65) return;
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.88) return;
           const idx = parseInt(entry.target.dataset.index, 10);
-          if (!isNaN(idx)) this.manager.setActive(idx);
+          if (!isNaN(idx)) {
+            this.manager.setActive(idx);
+            this.maybeLoadMore(idx);
+          }
         });
       },
-      { root: this.feedEl, threshold: [0.65, 0.85] }
+      { root: this.feedEl, threshold: [0.88, 0.95] }
     );
     this.manager.cards.forEach(c => this.observer.observe(c.el));
-    list.forEach(m => Utils.resolveTikTokMeta(m.url, m));
-    this.startIndex = Math.floor(Math.random() * list.length);
+    this.startIndex = Math.floor(Math.random() * this.manager.cards.length);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const start = this.startIndex;
-        this.manager.cards.forEach((card, i) => {
-          if (Math.abs(i - start) <= 1) card.preloadNext();
-        });
+        this.maybeLoadMore(start);
         const target = this.manager.cards[start]?.el;
         if (target && this.feedEl) this.feedEl.scrollTop = target.offsetTop;
         this.manager.setActive(start);
       });
     });
-    const onGesture = () => {
-      this.manager.muted = false;
-      const player = this.manager.cards[this.manager.activeIndex]?.player;
-      if (player?.resumeWithGesture) player.resumeWithGesture();
-      else player?.unlockAudio?.();
-    };
-    this.feedEl.addEventListener('touchstart', onGesture, { passive: true });
   }
 
   syncActiveFromScroll() {
@@ -3667,6 +3683,7 @@ class VideoFeed {
       if (dist < minDist) { minDist = dist; closest = i; }
     });
     this.manager.setActive(closest);
+    this.maybeLoadMore(closest);
   }
 
   destroy() {
@@ -3705,6 +3722,7 @@ class FinanceApp {
     this.calMonth = new Date();
     this.dashboardChartPeriod = '7d';
     this.insightsFeed = null;
+    this._insightsSoundUnlock = false;
     this.init();
   }
 
@@ -3798,6 +3816,7 @@ class FinanceApp {
           return;
         }
         this.closeMobileSidebar();
+        if (view === 'insights') this._insightsSoundUnlock = true;
         this.navigate(view);
       };
     });
@@ -3895,7 +3914,11 @@ class FinanceApp {
       <div class="nav-section">${s.section}</div>
       ${s.links.map(l => `<button class="nav-item" data-view="${l.id}"><i class="fas fa-${l.icon}"></i><span class="nav-label">${l.label}</span></button>`).join('')}
     `).join('');
-    nav.querySelectorAll('.nav-item').forEach(el => el.onclick = () => { this.navigate(el.dataset.view); this.closeMobileSidebar(); });
+    nav.querySelectorAll('.nav-item').forEach(el => el.onclick = () => {
+      this._insightsSoundUnlock = el.dataset.view === 'insights';
+      this.navigate(el.dataset.view);
+      this.closeMobileSidebar();
+    });
   }
 
   /** Bind global UI events */
@@ -4021,23 +4044,24 @@ class FinanceApp {
   /** Render VaultOne Insights vertical video feed */
   renderInsights() {
     if (this.insightsFeed) return;
+    const unlockSound = this._insightsSoundUnlock;
+    this._insightsSoundUnlock = false;
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed();
+    this._mountInsightsFeed(null, unlockSound);
   }
 
   /** Rebuild insights feed (pull-to-refresh) */
   refreshInsightsFeed() {
     const mount = document.getElementById('insightsMount');
     if (!mount) return;
-    this._mountInsightsFeed(mount);
+    this._mountInsightsFeed(mount, true);
     this.toast.show('Feed refreshed', 'success', 1800);
   }
 
-  _mountInsightsFeed(mountEl) {
+  _mountInsightsFeed(mountEl, unlockSound = false) {
     const mount = mountEl || document.getElementById('insightsMount');
     if (!mount) return;
-    const feedVideos = Utils.shuffleArray(INSIGHT_VIDEOS);
-    this.insightsFeed = new VideoFeed(mount, feedVideos);
+    this.insightsFeed = new VideoFeed(mount, INSIGHT_VIDEOS, { unlockSound });
     this.insightsFeed.onRefresh = () => {
       this.insightsFeed = null;
       this.refreshInsightsFeed();
