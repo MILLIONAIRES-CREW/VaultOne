@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.59';
+const APP_VERSION = '0.60';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3169,7 +3169,10 @@ class TikTokEmbedPlayer {
     if (!id) return;
     this.ensureSrc(id);
     this.resume();
-    if (!this.manager?.muted && this.manager?.soundUnlocked) this.unlockAudio();
+    if (!this.manager?.muted) {
+      this.manager.soundUnlocked = true;
+      this.unlockAudio();
+    }
   }
 
   schedulePlayRetry() {
@@ -3243,8 +3246,15 @@ class TikTokEmbedPlayer {
     if (e.data.type === 'onPlayerReady') {
       this._ready = true;
       this.hideFallback();
-      if (this._shouldPlay) this.resume();
-      else this.silence();
+      if (this._shouldPlay) {
+        this.resume();
+        if (!this.manager?.muted && this._shouldPlay) {
+          this.manager.soundUnlocked = true;
+          this.unlockAudio();
+        }
+      } else {
+        this.silence();
+      }
     }
     if (e.data.type === 'onStateChange') {
       this._playing = e.data.value === 1;
@@ -3675,10 +3685,29 @@ class VideoManager {
   }
 
   kickActiveFromGesture() {
+    this.scrollAutoTapSound();
+  }
+
+  /** Scroll acts like a screen tap: play active video with sound on iOS */
+  scrollAutoTapSound() {
     this.noteUserGesture();
+    if (!this.muted) {
+      this.soundUnlocked = true;
+      this.onSoundChange?.();
+    }
+    this.cards.forEach((c, i) => {
+      if (i !== this.activeIndex) c.player?.silence?.();
+    });
     const p = this.cards[this.activeIndex]?.player;
     p?.kickFromGesture?.();
-    this.unmuteActive();
+    if (!this.muted) {
+      p?.setMuted?.(false);
+      p?.unlockAudio?.();
+      if (p?.video) {
+        p.video.muted = false;
+        p.video.play?.().catch(() => {});
+      }
+    }
   }
 
   canPlayWithSound() {
@@ -3694,7 +3723,8 @@ class VideoManager {
 
   setActive(index) {
     if (index < 0 || index >= this.cards.length) return;
-    if (index !== this.activeIndex) {
+    const changed = index !== this.activeIndex;
+    if (changed) {
       this.cards[this.activeIndex]?.deactivate();
       this.activeIndex = index;
       this.cards[index]?.activate();
@@ -3707,7 +3737,8 @@ class VideoManager {
     this.cards.forEach((c, i) => {
       if (i !== this.activeIndex) c.player?.silence?.();
     });
-    this.unmuteActive();
+    if (changed) this.scrollAutoTapSound();
+    else if (!this.muted) this.unmuteActive();
   }
 
   getVideos() {
@@ -3769,13 +3800,22 @@ class VideoFeed {
     this._lastScrollTop = 0;
     this._lastScrollT = 0;
     this._scrollVelocity = 0;
-    this._onScroll = () => this._scrollSync();
-    this._scrollSync = Utils.debounce(() => this.syncActiveFromScroll(), 60);
-    this._onScrollEnd = () => {
+    this._touchScrolling = false;
+    this._onScroll = () => {
+      this._scrollSync();
+      if (this._touchScrolling) this.manager.noteUserGesture();
+    };
+    this._scrollSync = Utils.debounce(() => {
       this.syncActiveFromScroll();
-      this.manager.kickActiveFromGesture();
+      if (this._touchScrolling) this.manager.scrollAutoTapSound();
+    }, 40);
+    this._onScrollEnd = () => {
+      this._touchScrolling = false;
+      this.syncActiveFromScroll();
+      this.manager.scrollAutoTapSound();
     };
     this._onTouchStart = (e) => {
+      this._touchScrolling = true;
       this.manager.noteUserGesture();
       if (Utils.isIOS()) this.manager.unlockIOSAudio();
       this._touchStartY = e.touches[0]?.clientY ?? 0;
@@ -3785,6 +3825,7 @@ class VideoFeed {
       this.manager.warmNeighborsForGesture();
     };
     this._onTouchEnd = () => {
+      this._touchScrolling = true;
       this.manager.noteUserGesture();
       const vel = this._scrollVelocity || 0;
       if (Math.abs(vel) > 0.25) {
@@ -3794,11 +3835,13 @@ class VideoFeed {
       } else {
         this.syncActiveFromScroll();
       }
-      this.manager.kickActiveFromGesture();
+      this.manager.scrollAutoTapSound();
       this._scrollVelocity = 0;
+      setTimeout(() => { this._touchScrolling = false; }, 400);
     };
     this._onTouchMove = (e) => {
       if (!this.feedEl) return;
+      this._touchScrolling = true;
       const y = e.touches[0]?.clientY ?? 0;
       const now = Date.now();
       const top = this.feedEl.scrollTop;
@@ -3807,11 +3850,9 @@ class VideoFeed {
       this._lastScrollTop = top;
       this._lastScrollT = now;
       this.manager.noteUserGesture();
-      if (Math.abs(y - this._touchStartY) > 10) {
-        this.manager.muteAllForScroll();
-        if (Utils.isIOS()) this.manager.unlockIOSAudio();
+      if (Math.abs(y - this._touchStartY) > 8) {
+        if (Utils.isIOS()) this.manager.soundUnlocked = true;
         this.syncActiveFromScroll();
-        this.manager.kickActiveFromGesture();
       }
       const dir = y < this._touchStartY ? 1 : -1;
       const idx = this.manager.activeIndex + dir;
@@ -4001,7 +4042,6 @@ class VideoFeed {
         const idx = parseInt(bestEl.dataset.index, 10);
         if (!isNaN(idx)) {
           this.manager.setActive(idx);
-          this.manager.kickActiveFromGesture();
           this.maybeLoadMore(idx);
         }
       },
