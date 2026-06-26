@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.60';
+const APP_VERSION = '0.61';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3062,6 +3062,10 @@ class TikTokEmbedPlayer {
     });
   }
 
+  preloadUrl(id) {
+    return Utils.tiktokPlayerUrl(id, { soundUnlocked: false, muted: true, autoplay: false });
+  }
+
   loadedVideoId() {
     const m = this.iframe?.src?.match(/\/player\/v1\/(\d+)/);
     return m ? m[1] : null;
@@ -3110,6 +3114,15 @@ class TikTokEmbedPlayer {
       return;
     }
     this.applyCachedThumbnail();
+    if (this.isLoaded(id) && !this.hasPlaySrc(id)) {
+      if (this._ready) {
+        this.resume();
+        if (!this._playing) this.schedulePlayRetry();
+      } else {
+        this.schedulePlayRetry();
+      }
+      return;
+    }
     this.ensureSrc(id);
     if (this._ready && this.hasPlaySrc(id)) this.resume();
     else this.schedulePlayRetry();
@@ -3133,8 +3146,14 @@ class TikTokEmbedPlayer {
       this.ensureVideoId().then((resolved) => {
         if (resolved && !this._shouldPlay) this.prime();
       });
+      return;
     }
     this.applyCachedThumbnail();
+    if (!this.isLoaded(id)) {
+      this._ready = false;
+      this._playing = false;
+      this.iframe.src = this.preloadUrl(id);
+    }
   }
 
   silence() {
@@ -3144,19 +3163,7 @@ class TikTokEmbedPlayer {
   }
 
   warmForGesture() {
-    if (!this.iframe || this._shouldPlay) return;
-    const id = this.getVideoIdSync();
-    if (!id) {
-      this.ensureVideoId().then((resolved) => {
-        if (resolved && !this._shouldPlay) this.warmForGesture();
-      });
-      return;
-    }
-    if (!this.hasPlaySrc(id)) {
-      this._ready = false;
-      this._playing = false;
-      this.iframe.src = this.playerUrl(id);
-    }
+    this.prime();
   }
 
   kickFromGesture() {
@@ -3501,7 +3508,12 @@ class VideoPlayer {
   }
 
   setPreload(mode) {
-    if (this.video) this.video.preload = mode;
+    if (this.video) this.video.preload = mode === 'auto' ? 'auto' : 'metadata';
+  }
+
+  prime() {
+    if (!this.video || this._shouldPlay) return;
+    this.video.preload = 'auto';
   }
 
   destroy() {
