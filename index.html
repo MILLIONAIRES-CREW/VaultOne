@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.55';
+const APP_VERSION = '0.57';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3071,8 +3071,17 @@ class TikTokEmbedPlayer {
     return this.loadedVideoId() === String(id);
   }
 
+  hasPlaySrc(id) {
+    if (!this.isLoaded(id)) return false;
+    try {
+      return new URL(this.iframe.src).searchParams.get('autoplay') === '1';
+    } catch {
+      return /[?&]autoplay=1(?:&|$)/.test(this.iframe?.src || '');
+    }
+  }
+
   ensureSrc(id) {
-    if (!this.iframe || this.isLoaded(id)) return;
+    if (!this.iframe || this.hasPlaySrc(id)) return;
     this._ready = false;
     this._playing = false;
     this.showCurtain();
@@ -3101,7 +3110,7 @@ class TikTokEmbedPlayer {
     }
     this.applyCachedThumbnail();
     this.ensureSrc(id);
-    if (this._ready) this.resume();
+    if (this._ready && this.hasPlaySrc(id)) this.resume();
     else this.schedulePlayRetry();
   }
 
@@ -3123,10 +3132,14 @@ class TikTokEmbedPlayer {
       this.ensureVideoId().then((resolved) => {
         if (resolved && !this._shouldPlay) this.prime();
       });
-      return;
     }
     this.applyCachedThumbnail();
-    this.ensureSrc(id);
+  }
+
+  silence() {
+    if (!this.iframe?.contentWindow) return;
+    this.post('mute');
+    this.post('pause');
   }
 
   schedulePlayRetry() {
@@ -3201,6 +3214,7 @@ class TikTokEmbedPlayer {
       this._ready = true;
       this.hideFallback();
       if (this._shouldPlay) this.resume();
+      else this.silence();
     }
     if (e.data.type === 'onStateChange') {
       this._playing = e.data.value === 1;
@@ -3277,7 +3291,7 @@ class TikTokEmbedPlayer {
 
   setMuted(muted) {
     if (muted) this.post('mute');
-    else this.unlockAudio();
+    else if (this._shouldPlay) this.unlockAudio();
   }
 
   handleTap(e) {
@@ -3406,6 +3420,12 @@ class VideoPlayer {
 
   setMuted(muted) {
     if (this.video) this.video.muted = muted;
+  }
+
+  silence() {
+    if (!this.video) return;
+    this.video.muted = true;
+    this.video.pause();
   }
 
   play() {
@@ -3555,9 +3575,14 @@ class VideoManager {
     this.noteUserGesture();
     this.muted = false;
     this.soundUnlocked = true;
-    this.cards.forEach((c) => c.player?.setMuted?.(false));
-    const active = this.cards[this.activeIndex]?.player;
-    active?.unlockAudio?.();
+    this.cards.forEach((c, i) => {
+      if (i === this.activeIndex) {
+        c.player?.setMuted?.(false);
+        c.player?.unlockAudio?.();
+      } else {
+        c.player?.silence?.();
+      }
+    });
     this.onSoundChange?.();
   }
 
@@ -3599,6 +3624,9 @@ class VideoManager {
       if (!playing) this.cards[index]?.activate();
     }
     this.preloadWindow(index);
+    this.cards.forEach((c, i) => {
+      if (i !== this.activeIndex) c.player?.silence?.();
+    });
     if (!this.muted && this.soundUnlocked) {
       const p = this.cards[this.activeIndex]?.player;
       p?.setMuted?.(false);
@@ -3622,7 +3650,10 @@ class VideoManager {
 
   setMuted(muted) {
     this.muted = muted;
-    this.cards.forEach(c => c.player?.setMuted(muted));
+    this.cards.forEach((c, i) => {
+      if (muted || i === this.activeIndex) c.player?.setMuted?.(muted);
+      else c.player?.silence?.();
+    });
   }
 
   destroy() {
