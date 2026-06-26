@@ -1023,6 +1023,21 @@ body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
 .insights-empty i{font-size:36px;color:var(--gold);opacity:0.6}
 .insights-empty h2{font-family:'Manrope',sans-serif;font-size:20px;font-weight:700}
 .insights-empty p{font-size:13px;color:var(--text-muted);max-width:280px;line-height:1.5}
+.insights-sound-btn{
+  position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:30;
+  width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(11,11,11,0.72);backdrop-filter:blur(12px);
+  border:1px solid rgba(212,175,55,0.28);color:var(--gold-premium);font-size:18px;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:background 0.2s,border-color 0.2s,transform 0.15s;
+}
+.insights-sound-btn:active{transform:scale(0.94)}
+.insights-sound-btn.is-muted{color:var(--text-muted);border-color:rgba(255,255,255,0.12)}
+@media(max-width:768px){
+  body.view-insights .insights-sound-btn{
+    bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
+  }
+}
 .insights-tap-zone{
   position:absolute;inset:0;z-index:8;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
@@ -1281,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.52';
+const APP_VERSION = '0.54';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3036,7 +3051,12 @@ class TikTokEmbedPlayer {
   }
 
   playerUrl(id) {
-    return Utils.tiktokPlayerUrl(id, { soundUnlocked: false, muted: true, autoplay: true });
+    const wantSound = this.manager?.soundUnlocked && !this.manager?.muted;
+    return Utils.tiktokPlayerUrl(id, {
+      soundUnlocked: wantSound,
+      muted: Utils.needsGesturePlay() ? true : !wantSound,
+      autoplay: true
+    });
   }
 
   loadedVideoId() {
@@ -3258,22 +3278,10 @@ class TikTokEmbedPlayer {
 
   handleTap(e) {
     e.stopPropagation();
-    this.manager.noteUserGesture();
-    const now = Date.now();
-    if (now - this._lastTap < 300) {
-      this.manager.muted = !this.manager.muted;
-      this.setMuted(this.manager.muted);
-      this.muteHint.innerHTML = this.manager.muted
-        ? '<i class="fas fa-volume-xmark"></i>'
-        : '<i class="fas fa-volume-high"></i>';
-      this.muteHint.classList.add('show');
-      clearTimeout(this._hintTimer);
-      this._hintTimer = setTimeout(() => this.muteHint.classList.remove('show'), 700);
-      this._lastTap = 0;
-      return;
+    if (this.manager.muted || !this.manager.soundUnlocked) {
+      this.manager.enableSound();
+      this.unlockAudio();
     }
-    this._lastTap = now;
-    if (this._playing && !this.manager.muted) this.unlockAudio();
   }
 
   async setPreload(mode) {
@@ -3346,6 +3354,15 @@ class VideoPlayer {
 
   handleTap(e) {
     e.stopPropagation();
+    if (this.manager && (this.manager.muted || !this.manager.soundUnlocked)) {
+      this.manager.enableSound();
+      if (this.video) {
+        this.video.muted = false;
+        this.video.play().catch(() => {});
+      }
+      this.flashMuteHint(false);
+      return;
+    }
     const now = Date.now();
     if (now - this._lastTap < 300) {
       this.toggleMute();
@@ -3355,13 +3372,6 @@ class VideoPlayer {
     this._lastTap = now;
     setTimeout(() => {
       if (this._lastTap !== now) return;
-      if (this._needsGestureUnmute && this.manager && !this.manager.muted) {
-        this._needsGestureUnmute = false;
-        this.video.muted = false;
-        this.video.play().catch(() => {});
-        this.flashMuteHint(false);
-        return;
-      }
       this.togglePlay();
     }, 300);
   }
@@ -3531,9 +3541,31 @@ class VideoManager {
     this.bookmarks = new Set();
     this.cards = [];
     this.activeIndex = 0;
-    this.muted = false;
-    this.soundUnlocked = false;
+    this.muted = Utils.isIOS();
+    this.soundUnlocked = !Utils.isIOS();
     this._gestureAt = 0;
+    this.onSoundChange = null;
+  }
+
+  enableSound() {
+    this.noteUserGesture();
+    this.muted = false;
+    this.soundUnlocked = true;
+    this.cards.forEach((c) => c.player?.setMuted?.(false));
+    const active = this.cards[this.activeIndex]?.player;
+    active?.unlockAudio?.();
+    this.onSoundChange?.();
+  }
+
+  toggleSound() {
+    this.noteUserGesture();
+    if (this.muted) {
+      this.enableSound();
+      return;
+    }
+    this.muted = true;
+    this.cards.forEach((c) => c.player?.setMuted?.(true));
+    this.onSoundChange?.();
   }
 
   noteUserGesture() {
@@ -3564,6 +3596,11 @@ class VideoManager {
       if (!playing) this.cards[index]?.activate();
     }
     this.preloadWindow(index);
+    if (!this.muted && this.soundUnlocked) {
+      const p = this.cards[this.activeIndex]?.player;
+      p?.setMuted?.(false);
+      p?.unlockAudio?.();
+    }
   }
 
   getVideos() {
@@ -3596,8 +3633,15 @@ class VideoFeed {
     this.container = container;
     this.sourceVideos = sourceVideos;
     this.manager = new VideoManager([]);
-    this.manager.soundUnlocked = true;
+    if (Utils.isIOS()) {
+      this.manager.muted = true;
+      this.manager.soundUnlocked = false;
+    } else {
+      this.manager.muted = false;
+      this.manager.soundUnlocked = true;
+    }
     if (options.unlockSound) this.manager.noteUserGesture();
+    this.soundBtn = null;
     this.shellEl = null;
     this.pullEl = null;
     this.feedEl = null;
@@ -3765,6 +3809,17 @@ class VideoFeed {
     this.feedEl.className = 'insights-feed';
     this.shellEl.appendChild(this.pullEl);
     this.shellEl.appendChild(this.feedEl);
+    this.soundBtn = document.createElement('button');
+    this.soundBtn.className = 'insights-sound-btn';
+    this.soundBtn.type = 'button';
+    this.soundBtn.setAttribute('aria-label', 'Toggle sound');
+    this.soundBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.manager.toggleSound();
+    };
+    this.manager.onSoundChange = () => this.updateSoundBtn();
+    this.shellEl.appendChild(this.soundBtn);
+    this.updateSoundBtn();
     this.container.innerHTML = '';
     this.container.appendChild(this.shellEl);
     this.appendMoreVideos();
@@ -3805,6 +3860,16 @@ class VideoFeed {
     this.manager.cards.forEach((c) => this.observer.observe(c.el));
     this.manager.setActive(start);
     this.maybeLoadMore(start);
+  }
+
+  updateSoundBtn() {
+    if (!this.soundBtn) return;
+    const muted = this.manager.muted;
+    this.soundBtn.innerHTML = muted
+      ? '<i class="fas fa-volume-xmark"></i>'
+      : '<i class="fas fa-volume-high"></i>';
+    this.soundBtn.classList.toggle('is-muted', muted);
+    this.soundBtn.setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off');
   }
 
   noteUserGesture() {
