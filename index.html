@@ -1831,7 +1831,8 @@ const Utils = {
   /** Build TikTok official embed player URL */
   tiktokPlayerUrl(videoId, options = {}) {
     const autoplay = options.autoplay !== false;
-    const muted = options.muted ?? (Utils.needsGesturePlay() && !options.soundUnlocked);
+    const mobile = Utils.needsGesturePlay();
+    const muted = options.muted ?? (mobile || !options.soundUnlocked);
     const params = new URLSearchParams({
       autoplay: autoplay ? '1' : '0',
       loop: '1',
@@ -2933,6 +2934,10 @@ class TikTokEmbedPlayer {
     this.iframe.className = 'insights-embed-frame';
     this.iframe.title = 'TikTok video';
     this.iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    this._onIframeLoad = () => {
+      if (this._shouldPlay && this._ready) this.beginPlayback();
+    };
+    this.iframe.addEventListener('load', this._onIframeLoad);
     this.stageEl.appendChild(this.iframe);
     this.curtainEl = document.createElement('div');
     this.curtainEl.className = 'insights-tiktok-curtain';
@@ -3022,12 +3027,38 @@ class TikTokEmbedPlayer {
     clearTimeout(this._autoplayTimer);
     if (!Utils.needsGesturePlay()) return;
     this._autoplayTimer = setTimeout(() => {
-      if (this._shouldPlay && !this._playing && !this._revealed) this.showTapToPlay();
-    }, 700);
+      if (this._shouldPlay && !this._playing && !this._revealed) {
+        this.retryPlayback(6);
+        this._autoplayTimer = setTimeout(() => {
+          if (this._shouldPlay && !this._playing && !this._revealed) this.showTapToPlay();
+        }, 2400);
+      }
+    }, 400);
+  }
+
+  retryPlayback(attempts = 8) {
+    clearTimeout(this._retryTimer);
+    const tick = (left) => {
+      if (!this._shouldPlay || this._playing || left <= 0) return;
+      if (Utils.needsGesturePlay()) this.post('mute');
+      this.post('play');
+      this._retryTimer = setTimeout(() => tick(left - 1), 350);
+    };
+    tick(attempts);
+  }
+
+  scheduleOptimisticReveal() {
+    if (!Utils.needsGesturePlay() || !this._shouldPlay) return;
+    clearTimeout(this._revealTimer);
+    this._revealTimer = setTimeout(() => {
+      if (this._shouldPlay && !this._revealed) this.revealPlayer();
+    }, 500);
   }
 
   clearAutoplayCheck() {
     clearTimeout(this._autoplayTimer);
+    clearTimeout(this._retryTimer);
+    clearTimeout(this._revealTimer);
     this.hideTapToPlay();
   }
 
@@ -3035,7 +3066,7 @@ class TikTokEmbedPlayer {
     this._shouldPlay = true;
     this.clearAutoplayCheck();
     if (this._ready) {
-      if (!this._playing) this.post('play');
+      this.beginPlayback();
       if (!this.manager.muted) this.unlockAudio();
     } else if (!this.iframe?.src || this.iframe.src === 'about:blank') {
       this.play();
@@ -3043,13 +3074,16 @@ class TikTokEmbedPlayer {
   }
 
   beginPlayback() {
+    if (Utils.needsGesturePlay()) this.post('mute');
+    this.post('play');
+    this.retryPlayback(10);
+    this.scheduleOptimisticReveal();
     const canSound = !this.manager?.muted
       && (!Utils.needsGesturePlay() || this.manager?.soundUnlocked);
-    if (Utils.needsGesturePlay() && !canSound) this.post('mute');
-    this.post('play');
     if (canSound) this.unlockAudio();
     else this.scheduleAutoplayCheck();
   }
+
   revealPlayer() {
     if (this._revealed) return;
     this._revealed = true;
@@ -3122,7 +3156,7 @@ class TikTokEmbedPlayer {
     if (!id) return;
     const src = Utils.tiktokPlayerUrl(id, {
       soundUnlocked: this.manager?.soundUnlocked,
-      muted: Utils.needsGesturePlay() && !this.manager?.soundUnlocked
+      muted: Utils.needsGesturePlay() || !this.manager?.soundUnlocked
     });
     const blank = !this.iframe.src || this.iframe.src === 'about:blank';
     if (blank || this.iframe.src !== src) {
@@ -3207,9 +3241,12 @@ class TikTokEmbedPlayer {
     window.removeEventListener('tiktok-thumb', this._onThumb);
     this.tapZone?.removeEventListener('click', this._onTap);
     this.tapZone?.removeEventListener('touchstart', this._onTouchStart);
+    this.iframe?.removeEventListener('load', this._onIframeLoad);
     clearTimeout(this._hintTimer);
     clearTimeout(this._errorTimer);
     clearTimeout(this._autoplayTimer);
+    clearTimeout(this._retryTimer);
+    clearTimeout(this._revealTimer);
     clearTimeout(this._unmuteT1);
     clearTimeout(this._unmuteT2);
     if (this.iframe) this.iframe.src = 'about:blank';
@@ -3406,6 +3443,7 @@ class VideoCard {
   activate() {
     this.ensureLoaded();
     this.player?.play();
+    this.player?.retryPlayback?.(10);
     if (this.manager.soundUnlocked && !this.manager.muted) {
       this.player?.unlockAudio?.();
     }
@@ -3495,6 +3533,7 @@ class VideoFeed {
     this.sourceVideos = sourceVideos;
     this.manager = new VideoManager([]);
     if (options.unlockSound) this.manager.soundUnlocked = true;
+    if (Utils.needsGesturePlay()) this.manager.soundUnlocked = true;
     this.shellEl = null;
     this.pullEl = null;
     this.feedEl = null;
