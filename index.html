@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.62';
+const APP_VERSION = '0.63';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3223,8 +3223,15 @@ class TikTokEmbedPlayer {
     if (e.data.type === 'onPlayerReady') {
       this._ready = true;
       this.hideFallback();
-      if (this._shouldPlay) this.resume();
-      else this.silence();
+      if (this._shouldPlay) {
+        this.resume();
+        if (!this.manager?.muted && (this.manager?.soundUnlocked || this.manager?.hasRecentGesture?.())) {
+          this.manager.soundUnlocked = true;
+          this.unlockAudio();
+        }
+      } else {
+        this.silence();
+      }
     }
     if (e.data.type === 'onStateChange') {
       this._playing = e.data.value === 1;
@@ -3645,6 +3652,10 @@ class VideoManager {
     this.onSoundChange?.();
   }
 
+  hasRecentGesture(maxMs = 3000) {
+    return this._gestureAt > 0 && (Date.now() - this._gestureAt) < maxMs;
+  }
+
   noteUserGesture() {
     this._gestureAt = Date.now();
   }
@@ -3672,6 +3683,7 @@ class VideoManager {
 
   setActive(index, fromGesture = false) {
     if (index < 0 || index >= this.cards.length) return;
+    const gesture = fromGesture || this.hasRecentGesture();
     const changed = index !== this.activeIndex;
     if (changed) {
       this.cards[this.activeIndex]?.deactivate();
@@ -3688,7 +3700,7 @@ class VideoManager {
       if (!playing) this.cards[index]?.activate();
     }
     this.preloadWindow(index);
-    if (fromGesture) {
+    if (gesture) {
       this.noteUserGesture();
       if (!this.muted) this.soundUnlocked = true;
       this.cards[this.activeIndex]?.player?.kickFromGesture?.();
@@ -3741,7 +3753,13 @@ class VideoFeed {
       this.manager.muted = false;
       this.manager.soundUnlocked = true;
     }
-    if (options.unlockSound && !Utils.isIOS()) this.manager.noteUserGesture();
+    if (options.unlockSound) {
+      this.manager.noteUserGesture();
+      if (Utils.isIOS()) {
+        this.manager.soundUnlocked = true;
+      }
+    }
+    this._bootFromGesture = !!options.unlockSound;
     this.soundBtn = null;
     this.shellEl = null;
     this.pullEl = null;
@@ -3761,7 +3779,8 @@ class VideoFeed {
     this._onScrollEnd = () => this.syncActiveFromScroll(true);
     this._onTouchStart = (e) => {
       this.manager.noteUserGesture();
-      if (Utils.isIOS()) this.manager.unlockIOSAudio();
+      if (Utils.isIOS() && !this.manager.muted) this.manager.soundUnlocked = true;
+      this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
       this._touchStartY = e.touches[0]?.clientY ?? 0;
       this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
       this._lastScrollT = Date.now();
@@ -3982,15 +4001,22 @@ class VideoFeed {
         if (!bestEl || bestRatio < 0.55) return;
         const idx = parseInt(bestEl.dataset.index, 10);
         if (!isNaN(idx)) {
-          this.manager.setActive(idx);
+          this.manager.setActive(idx, this.manager.hasRecentGesture());
           this.maybeLoadMore(idx);
         }
       },
       { root: this.feedEl, threshold: [0.55, 0.7, 0.85] }
     );
     this.manager.cards.forEach((c) => this.observer.observe(c.el));
-    this.manager.setActive(start);
+    this.manager.setActive(start, this._bootFromGesture);
     this.maybeLoadMore(start);
+    if (this._bootFromGesture) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        this.manager.noteUserGesture();
+        if (!this.manager.muted) this.manager.soundUnlocked = true;
+        this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
+      }));
+    }
   }
 
   updateSoundBtn() {
@@ -4152,7 +4178,8 @@ class FinanceApp {
   bindMobileBottomNav() {
     const primeInsightsGesture = () => {
       this._insightsSoundUnlock = true;
-      this.insightsFeed?.noteUserGesture?.();
+      this.insightsFeed?.manager?.noteUserGesture?.();
+      this.insightsFeed?.manager?.cards?.[this.insightsFeed.manager.activeIndex]?.player?.kickFromGesture?.();
     };
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
       if (el.dataset.view === 'insights') {
@@ -4268,7 +4295,7 @@ class FinanceApp {
       if (el.dataset.view === 'insights') {
         el.addEventListener('pointerdown', () => {
           this._insightsSoundUnlock = true;
-          this.insightsFeed?.noteUserGesture?.();
+          this.insightsFeed?.manager?.noteUserGesture?.();
         }, { passive: true });
       }
       el.onclick = () => {
@@ -4402,9 +4429,10 @@ class FinanceApp {
   /** Render VaultOne Insights vertical video feed */
   renderInsights() {
     if (this.insightsFeed) return;
-    this._insightsSoundUnlock = false;
+    const fromNavGesture = this._insightsSoundUnlock;
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed(null, !Utils.isIOS());
+    this._mountInsightsFeed(null, fromNavGesture || !Utils.isIOS());
+    this._insightsSoundUnlock = false;
   }
 
   /** Rebuild insights feed (pull-to-refresh) */
