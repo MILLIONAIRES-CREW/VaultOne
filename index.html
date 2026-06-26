@@ -1255,7 +1255,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.43';
+const APP_VERSION = '0.44';
 
 const INSIGHT_VIDEOS = [
   {
@@ -1832,7 +1832,8 @@ const Utils = {
   tiktokPlayerUrl(videoId, options = {}) {
     const autoplay = options.autoplay !== false;
     const mobile = Utils.needsGesturePlay();
-    const muted = options.muted ?? (mobile || !options.soundUnlocked);
+    const wantSound = options.soundUnlocked && !options.forceMuted;
+    const muted = options.muted ?? (mobile && !wantSound);
     const params = new URLSearchParams({
       autoplay: autoplay ? '1' : '0',
       loop: '1',
@@ -2917,9 +2918,13 @@ class TikTokEmbedPlayer {
     this._playing = false;
     this._shouldPlay = false;
     this._lastTap = 0;
+    this._revealed = false;
     this._onMessage = (e) => this.handleMessage(e);
     this._onTap = (e) => this.handleTap(e);
-    this._onTouchStart = (e) => this.handleTouchStart(e);
+    this._onPointerDown = () => {
+      this.manager?.noteUserGesture?.();
+      if (!this._playing && this._shouldPlay) this.kickPlayer();
+    };
     this.video = null;
   }
 
@@ -2934,10 +2939,6 @@ class TikTokEmbedPlayer {
     this.iframe.className = 'insights-embed-frame';
     this.iframe.title = 'TikTok video';
     this.iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
-    this._onIframeLoad = () => {
-      if (this._shouldPlay && this._ready) this.beginPlayback();
-    };
-    this.iframe.addEventListener('load', this._onIframeLoad);
     this.stageEl.appendChild(this.iframe);
     this.curtainEl = document.createElement('div');
     this.curtainEl.className = 'insights-tiktok-curtain';
@@ -2960,7 +2961,7 @@ class TikTokEmbedPlayer {
     this.tapZone = document.createElement('div');
     this.tapZone.className = 'insights-tap-zone';
     this.tapZone.addEventListener('click', this._onTap);
-    this.tapZone.addEventListener('touchstart', this._onTouchStart, { passive: true });
+    this.tapZone.addEventListener('pointerdown', this._onPointerDown, { passive: true });
     this.muteHint = document.createElement('div');
     this.muteHint.className = 'insights-mute-hint';
     this.muteHint.innerHTML = this.manager?.muted
@@ -3007,97 +3008,49 @@ class TikTokEmbedPlayer {
   unlockAudio() {
     if (!this.iframe?.contentWindow || this.manager?.muted) return;
     this.post('unMute');
-    clearTimeout(this._unmuteT1);
-    clearTimeout(this._unmuteT2);
-    this._unmuteT1 = setTimeout(() => this.post('unMute'), 250);
-    this._unmuteT2 = setTimeout(() => this.post('unMute'), 700);
-  }
-
-  showTapToPlay() {
-    this._tapPlayVisible = true;
-    this.tapPlayEl?.classList.add('show');
-  }
-
-  hideTapToPlay() {
-    this._tapPlayVisible = false;
-    this.tapPlayEl?.classList.remove('show');
-  }
-
-  scheduleAutoplayCheck() {
-    clearTimeout(this._autoplayTimer);
-    if (!Utils.needsGesturePlay()) return;
-    this._autoplayTimer = setTimeout(() => {
-      if (this._shouldPlay && !this._playing && !this._revealed) {
-        this.retryPlayback(6);
-        this._autoplayTimer = setTimeout(() => {
-          if (this._shouldPlay && !this._playing && !this._revealed) this.showTapToPlay();
-        }, 2400);
-      }
-    }, 400);
-  }
-
-  retryPlayback(attempts = 8) {
-    clearTimeout(this._retryTimer);
-    const tick = (left) => {
-      if (!this._shouldPlay || this._playing || left <= 0) return;
-      if (Utils.needsGesturePlay()) this.post('mute');
-      this.post('play');
-      this._retryTimer = setTimeout(() => tick(left - 1), 350);
-    };
-    tick(attempts);
-  }
-
-  scheduleOptimisticReveal() {
-    if (!Utils.needsGesturePlay() || !this._shouldPlay) return;
-    clearTimeout(this._revealTimer);
-    this._revealTimer = setTimeout(() => {
-      if (this._shouldPlay && !this._revealed) this.revealPlayer();
-    }, 500);
-  }
-
-  clearAutoplayCheck() {
-    clearTimeout(this._autoplayTimer);
-    clearTimeout(this._retryTimer);
-    clearTimeout(this._revealTimer);
-    this.hideTapToPlay();
-  }
-
-  resumeWithGesture() {
-    this._shouldPlay = true;
-    this.clearAutoplayCheck();
-    if (this._ready) {
-      this.beginPlayback();
-      if (!this.manager.muted) this.unlockAudio();
-    } else if (!this.iframe?.src || this.iframe.src === 'about:blank') {
-      this.play();
-    }
-  }
-
-  beginPlayback() {
-    if (Utils.needsGesturePlay()) this.post('mute');
-    this.post('play');
-    this.retryPlayback(10);
-    this.scheduleOptimisticReveal();
-    const canSound = !this.manager?.muted
-      && (!Utils.needsGesturePlay() || this.manager?.soundUnlocked);
-    if (canSound) this.unlockAudio();
-    else this.scheduleAutoplayCheck();
   }
 
   revealPlayer() {
     if (this._revealed) return;
     this._revealed = true;
-    this.clearAutoplayCheck();
+    clearTimeout(this._errorTimer);
     this.hideFallback();
+    this.hideTapToPlay();
     this.curtainEl?.classList.add('is-hidden');
     this.loadingEl?.classList.remove('show');
-    if (!this.manager?.muted && this.manager?.soundUnlocked) this.unlockAudio();
   }
 
-  resetReveal() {
-    this._revealed = false;
-    this.hideTapToPlay();
-    this.showCurtain();
+  getVideoIdSync() {
+    if (this.videoId) return this.videoId;
+    if (this.meta.videoId) {
+      this.videoId = String(this.meta.videoId);
+      return this.videoId;
+    }
+    return null;
+  }
+
+  kickPlayer() {
+    if (!this.iframe?.contentWindow) return;
+    const withSound = this.manager?.canPlayWithSound?.() && !this.manager?.muted;
+    if (Utils.needsGesturePlay() && !withSound) this.post('mute');
+    this.post('play');
+    if (withSound) this.unlockAudio();
+  }
+
+  startPlayer(id) {
+    const withSound = this.manager?.canPlayWithSound?.() && !this.manager?.muted;
+    const src = Utils.tiktokPlayerUrl(id, {
+      soundUnlocked: withSound,
+      muted: Utils.needsGesturePlay() && !withSound
+    });
+    this.revealPlayer();
+    if (!this.iframe.src || this.iframe.src === 'about:blank' || this.iframe.src !== src) {
+      this._ready = false;
+      this._playing = false;
+      this.iframe.src = src;
+      return;
+    }
+    if (this._ready) this.kickPlayer();
   }
 
   handleMessage(e) {
@@ -3105,18 +3058,22 @@ class TikTokEmbedPlayer {
     if (e.data.type === 'onPlayerReady') {
       this._ready = true;
       this.hideFallback();
-      if (this._shouldPlay) this.beginPlayback();
+      this.revealPlayer();
+      if (this._shouldPlay) this.kickPlayer();
     }
     if (e.data.type === 'onStateChange') {
       this._playing = e.data.value === 1;
-      if (this._playing) this.hideFallback();
-      if (this._playing && this._shouldPlay) this.revealPlayer();
+      if (this._playing) {
+        this.hideFallback();
+        this.hideTapToPlay();
+        this.revealPlayer();
+      }
     }
     if (e.data.type === 'onCurrentTime' && e.data.value?.duration > 0) {
       if (this._shouldPlay && e.data.value.currentTime > 0) this.revealPlayer();
       this.overlay?.setProgress((e.data.value.currentTime / e.data.value.duration) * 100);
     }
-    if (e.data.type === 'onPlayerError' && this._shouldPlay && !this._revealed && !this._playing) {
+    if (e.data.type === 'onPlayerError' && this._shouldPlay && !this._playing) {
       this.scheduleErrorFallback();
     }
   }
@@ -3149,40 +3106,36 @@ class TikTokEmbedPlayer {
     this.fallback?.classList.add('show');
   }
 
-  async play() {
+  hideTapToPlay() {
+    this.tapPlayEl?.classList.remove('show');
+  }
+
+  play() {
     if (!this.iframe) return;
     this._shouldPlay = true;
-    const id = await this.ensureVideoId();
-    if (!id) return;
-    const src = Utils.tiktokPlayerUrl(id, {
-      soundUnlocked: this.manager?.soundUnlocked,
-      muted: Utils.needsGesturePlay() || !this.manager?.soundUnlocked
-    });
-    const blank = !this.iframe.src || this.iframe.src === 'about:blank';
-    if (blank || this.iframe.src !== src) {
-      this.resetReveal();
-      this._ready = false;
-      this._playing = false;
-      this.iframe.src = src;
-    } else if (this._ready) {
-      this.resetReveal();
-      this.beginPlayback();
-    }
     this.hideFallback();
+    const id = this.getVideoIdSync();
+    if (id) {
+      this.startPlayer(id);
+      return;
+    }
+    this.ensureVideoId().then((resolved) => {
+      if (resolved && this._shouldPlay) this.startPlayer(resolved);
+    });
   }
 
   pause() {
     this._shouldPlay = false;
     this._playing = false;
     this.post('pause');
-    this.showCurtain();
   }
 
   unload() {
     this._shouldPlay = false;
     this._ready = false;
     this._playing = false;
-    this.resetReveal();
+    this._revealed = false;
+    this.curtainEl?.classList.remove('is-hidden');
     if (this.iframe) this.iframe.src = 'about:blank';
   }
 
@@ -3196,17 +3149,9 @@ class TikTokEmbedPlayer {
     else this.unlockAudio();
   }
 
-  handleTouchStart() {
-    this.manager.soundUnlocked = true;
-    if (this._tapPlayVisible || (this._shouldPlay && !this._playing)) {
-      this.resumeWithGesture();
-    } else if (this._playing && !this.manager.muted) {
-      this.unlockAudio();
-    }
-  }
-
   handleTap(e) {
     e.stopPropagation();
+    this.manager.noteUserGesture();
     const now = Date.now();
     if (now - this._lastTap < 300) {
       this.manager.muted = !this.manager.muted;
@@ -3221,15 +3166,7 @@ class TikTokEmbedPlayer {
       return;
     }
     this._lastTap = now;
-    setTimeout(() => {
-      if (this._lastTap !== now) return;
-      this.manager.soundUnlocked = true;
-      if (this._tapPlayVisible || !this._playing) {
-        this.resumeWithGesture();
-      } else if (!this.manager.muted) {
-        this.unlockAudio();
-      }
-    }, 300);
+    if (this._playing && !this.manager.muted) this.unlockAudio();
   }
 
   async setPreload(mode) {
@@ -3240,15 +3177,9 @@ class TikTokEmbedPlayer {
     window.removeEventListener('message', this._onMessage);
     window.removeEventListener('tiktok-thumb', this._onThumb);
     this.tapZone?.removeEventListener('click', this._onTap);
-    this.tapZone?.removeEventListener('touchstart', this._onTouchStart);
-    this.iframe?.removeEventListener('load', this._onIframeLoad);
+    this.tapZone?.removeEventListener('pointerdown', this._onPointerDown);
     clearTimeout(this._hintTimer);
     clearTimeout(this._errorTimer);
-    clearTimeout(this._autoplayTimer);
-    clearTimeout(this._retryTimer);
-    clearTimeout(this._revealTimer);
-    clearTimeout(this._unmuteT1);
-    clearTimeout(this._unmuteT2);
     if (this.iframe) this.iframe.src = 'about:blank';
     this.loadingEl?.remove();
     this.fallback?.remove();
@@ -3443,10 +3374,6 @@ class VideoCard {
   activate() {
     this.ensureLoaded();
     this.player?.play();
-    this.player?.retryPlayback?.(10);
-    if (this.manager.soundUnlocked && !this.manager.muted) {
-      this.player?.unlockAudio?.();
-    }
   }
 
   deactivate() {
@@ -3484,6 +3411,16 @@ class VideoManager {
     this.activeIndex = 0;
     this.muted = false;
     this.soundUnlocked = false;
+    this._gestureAt = 0;
+  }
+
+  noteUserGesture() {
+    this._gestureAt = Date.now();
+    this.soundUnlocked = true;
+  }
+
+  canPlayWithSound() {
+    return !Utils.needsGesturePlay() || (Date.now() - this._gestureAt < 2500);
   }
 
   getVideos() {
@@ -3532,8 +3469,7 @@ class VideoFeed {
     this.container = container;
     this.sourceVideos = sourceVideos;
     this.manager = new VideoManager([]);
-    if (options.unlockSound) this.manager.soundUnlocked = true;
-    if (Utils.needsGesturePlay()) this.manager.soundUnlocked = true;
+    if (options.unlockSound) this.manager.noteUserGesture();
     this.shellEl = null;
     this.pullEl = null;
     this.feedEl = null;
@@ -3543,6 +3479,7 @@ class VideoFeed {
     this.pullDistance = 0;
     this._pullThreshold = 72;
     this._appending = false;
+    this._booting = false;
     this._onScroll = Utils.debounce(() => this.syncActiveFromScroll(), 80);
   }
 
@@ -3627,8 +3564,10 @@ class VideoFeed {
     const endPull = () => {
       if (!tracking) return;
       tracking = false;
-      if (this.pullDistance >= this._pullThreshold) this.triggerRefresh();
-      else this.resetPull();
+      if (this.pullDistance >= this._pullThreshold) {
+        this.manager.noteUserGesture();
+        this.triggerRefresh();
+      } else this.resetPull();
     };
 
     feed.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -3647,12 +3586,12 @@ class VideoFeed {
   async triggerRefresh() {
     if (this.refreshing) return;
     this.refreshing = true;
+    this.manager.noteUserGesture();
     this.pullEl?.classList.add('is-refreshing');
     const label = this.pullEl?.querySelector('.insights-pull-label');
     if (label) label.textContent = 'Refreshing…';
     this.setPullDistance(this._pullThreshold);
     this.manager.cards.forEach(c => c.deactivate());
-    await new Promise(r => setTimeout(r, 350));
     const cb = this.onRefresh;
     this.destroy();
     if (cb) cb();
@@ -3686,6 +3625,7 @@ class VideoFeed {
     this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
     this.observer = new IntersectionObserver(
       entries => {
+        if (this._booting) return;
         entries.forEach(entry => {
           if (!entry.isIntersecting || entry.intersectionRatio < 0.88) return;
           const idx = parseInt(entry.target.dataset.index, 10);
@@ -3697,17 +3637,26 @@ class VideoFeed {
       },
       { root: this.feedEl, threshold: [0.88, 0.95] }
     );
-    this.manager.cards.forEach(c => this.observer.observe(c.el));
+    this._booting = true;
     this.startIndex = Math.floor(Math.random() * this.manager.cards.length);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const start = this.startIndex;
-        this.maybeLoadMore(start);
-        const target = this.manager.cards[start]?.el;
-        if (target && this.feedEl) this.feedEl.scrollTop = target.offsetTop;
-        this.manager.setActive(start);
-      });
-    });
+    const start = this.startIndex;
+    const slideH = this.feedEl.clientHeight || this.manager.cards[0]?.el?.offsetHeight || 0;
+    if (slideH) this.feedEl.scrollTop = start * slideH;
+    else {
+      const target = this.manager.cards[start]?.el;
+      if (target) this.feedEl.scrollTop = target.offsetTop;
+    }
+    this.manager.cards.forEach(c => this.observer.observe(c.el));
+    this.manager.setActive(start);
+    this.maybeLoadMore(start);
+    this._booting = false;
+  }
+
+  noteUserGesture() {
+    this.manager.noteUserGesture();
+    const p = this.manager.cards[this.manager.activeIndex]?.player;
+    if (p?.kickPlayer) p.kickPlayer();
+    else p?.unlockAudio?.();
   }
 
   syncActiveFromScroll() {
@@ -3846,7 +3795,14 @@ class FinanceApp {
 
   /** Bind mobile bottom navigation */
   bindMobileBottomNav() {
+    const primeInsightsGesture = () => {
+      this._insightsSoundUnlock = true;
+      this.insightsFeed?.noteUserGesture?.();
+    };
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
+      if (el.dataset.view === 'insights') {
+        el.addEventListener('pointerdown', primeInsightsGesture, { passive: true });
+      }
       el.onclick = () => {
         const view = el.dataset.view;
         if (view === 'more') {
@@ -3855,7 +3811,7 @@ class FinanceApp {
           return;
         }
         this.closeMobileSidebar();
-        if (view === 'insights') this._insightsSoundUnlock = true;
+        if (view === 'insights') primeInsightsGesture();
         this.navigate(view);
       };
     });
@@ -3953,10 +3909,18 @@ class FinanceApp {
       <div class="nav-section">${s.section}</div>
       ${s.links.map(l => `<button class="nav-item" data-view="${l.id}"><i class="fas fa-${l.icon}"></i><span class="nav-label">${l.label}</span></button>`).join('')}
     `).join('');
-    nav.querySelectorAll('.nav-item').forEach(el => el.onclick = () => {
-      this._insightsSoundUnlock = el.dataset.view === 'insights';
-      this.navigate(el.dataset.view);
-      this.closeMobileSidebar();
+    nav.querySelectorAll('.nav-item').forEach(el => {
+      if (el.dataset.view === 'insights') {
+        el.addEventListener('pointerdown', () => {
+          this._insightsSoundUnlock = true;
+          this.insightsFeed?.noteUserGesture?.();
+        }, { passive: true });
+      }
+      el.onclick = () => {
+        this._insightsSoundUnlock = el.dataset.view === 'insights';
+        this.navigate(el.dataset.view);
+        this.closeMobileSidebar();
+      };
     });
   }
 
