@@ -1296,7 +1296,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.54';
+const APP_VERSION = '0.55';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3051,10 +3051,13 @@ class TikTokEmbedPlayer {
   }
 
   playerUrl(id) {
-    const wantSound = this.manager?.soundUnlocked && !this.manager?.muted;
+    const soundOn = this.manager?.soundUnlocked && !this.manager?.muted;
+    if (Utils.isIOS()) {
+      return Utils.tiktokPlayerUrl(id, { soundUnlocked: false, muted: true, autoplay: true });
+    }
     return Utils.tiktokPlayerUrl(id, {
-      soundUnlocked: wantSound,
-      muted: Utils.needsGesturePlay() ? true : !wantSound,
+      soundUnlocked: soundOn,
+      muted: !soundOn,
       autoplay: true
     });
   }
@@ -3078,9 +3081,10 @@ class TikTokEmbedPlayer {
 
   resume() {
     if (!this.iframe?.contentWindow) return;
+    const iosMuted = Utils.isIOS() && (this.manager?.muted || !this.manager?.soundUnlocked);
+    if (iosMuted || this.manager?.muted) this.post('mute');
     this.post('play');
-    if (this.manager?.canPlayWithSound?.() && !this.manager?.muted) this.unlockAudio();
-    else this.post('mute');
+    if (!iosMuted && !this.manager?.muted) this.unlockAudio();
     if (!this._playing) this.schedulePlayRetry();
   }
 
@@ -3570,7 +3574,6 @@ class VideoManager {
 
   noteUserGesture() {
     this._gestureAt = Date.now();
-    this.soundUnlocked = true;
   }
 
   canPlayWithSound() {
@@ -3636,11 +3639,15 @@ class VideoFeed {
     if (Utils.isIOS()) {
       this.manager.muted = true;
       this.manager.soundUnlocked = false;
+      if (options.soundState) {
+        this.manager.muted = options.soundState.muted;
+        this.manager.soundUnlocked = options.soundState.soundUnlocked;
+      }
     } else {
       this.manager.muted = false;
       this.manager.soundUnlocked = true;
     }
-    if (options.unlockSound) this.manager.noteUserGesture();
+    if (options.unlockSound && !Utils.isIOS()) this.manager.noteUserGesture();
     this.soundBtn = null;
     this.shellEl = null;
     this.pullEl = null;
@@ -4273,21 +4280,23 @@ class FinanceApp {
     if (this.insightsFeed) return;
     this._insightsSoundUnlock = false;
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed(null, true);
+    this._mountInsightsFeed(null, !Utils.isIOS());
   }
 
   /** Rebuild insights feed (pull-to-refresh) */
   refreshInsightsFeed() {
     const mount = document.getElementById('insightsMount');
     if (!mount) return;
-    this._mountInsightsFeed(mount, true);
+    const prev = this.insightsFeed?.manager;
+    const soundState = prev ? { muted: prev.muted, soundUnlocked: prev.soundUnlocked } : null;
+    this._mountInsightsFeed(mount, !Utils.isIOS(), soundState);
     this.toast.show('Feed refreshed', 'success', 1800);
   }
 
-  _mountInsightsFeed(mountEl, unlockSound = false) {
+  _mountInsightsFeed(mountEl, unlockSound = false, soundState = null) {
     const mount = mountEl || document.getElementById('insightsMount');
     if (!mount) return;
-    this.insightsFeed = new VideoFeed(mount, INSIGHT_VIDEOS, { unlockSound });
+    this.insightsFeed = new VideoFeed(mount, INSIGHT_VIDEOS, { unlockSound, soundState });
     this.insightsFeed.onRefresh = () => {
       this.insightsFeed = null;
       this.refreshInsightsFeed();
