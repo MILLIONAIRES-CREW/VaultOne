@@ -507,17 +507,6 @@ tr:last-child td{border-bottom:none}
 }
 .fab:hover{transform:scale(1.05);box-shadow:0 8px 32px rgba(212,175,55,0.45)}
 .fab:active{transform:scale(0.94)}
-.mobile-nav-fab{
-  flex:0 0 auto;width:52px;height:52px;margin-top:-22px;border-radius:50%;
-  background:linear-gradient(135deg,rgba(245,208,111,0.98),rgba(212,175,55,0.92));
-  backdrop-filter:blur(12px);color:#050505;font-size:20px;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 28px rgba(212,175,55,0.45),inset 0 1px 0 rgba(255,255,255,0.28);
-  border:1px solid rgba(255,255,255,0.2);transition:var(--transition);font-weight:700;
-  align-self:center;
-}
-.mobile-nav-fab:hover{transform:scale(1.05);box-shadow:0 10px 32px rgba(212,175,55,0.5)}
-.mobile-nav-fab:active{transform:scale(0.94)}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
 .empty-state i{font-size:48px;margin-bottom:16px;opacity:0.4}
 .empty-state h3{font-size:18px;color:var(--text-secondary);margin-bottom:8px}
@@ -603,7 +592,7 @@ tr:last-child td{border-bottom:none}
   border:1px solid rgba(212,175,55,0.18);border-radius:22px;z-index:180;
   padding:6px 8px;box-shadow:var(--shadow-gold-glow),inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.mobile-bottom-nav-inner{display:flex;align-items:flex-end;justify-content:space-around;gap:2px;height:100%;padding:0 4px}
+.mobile-bottom-nav-inner{display:flex;align-items:center;justify-content:space-around;gap:2px;height:100%;padding:0 4px}
 .mobile-nav-item{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   padding:6px 4px;border-radius:14px;color:var(--text-muted);transition:var(--transition);
@@ -738,6 +727,14 @@ tr:last-child td{border-bottom:none}
   .topbar-brand .brand-title{font-size:16px}
   .topbar-brand .brand-subtitle{font-size:8px}
   .topbar-actions{gap:6px}
+  .mobile-nav-item{max-width:64px;padding:5px 2px}
+  .mobile-nav-item i{font-size:15px}
+  .mobile-nav-item span{font-size:8px}
+  body.view-insights .content{padding:0!important}
+  .fab{
+    bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
+    right:16px;width:52px;height:52px;font-size:20px;z-index:185;
+  }
   .hide-mobile{display:none!important}
   .hide-on-desktop{display:block!important}
   .dashboard-desktop{display:none!important}
@@ -785,6 +782,195 @@ tr:last-child td{border-bottom:none}
   .stats-grid{grid-template-columns:1fr}
   .topbar-profile{padding:4px}
   .topbar-profile-name{display:none}
+}
+
+/* ========== VAULTONE INSIGHTS (Vertical Video Feed) ========== */
+body.view-insights .topbar{display:none}
+body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
+.insights-mount{width:100%;height:100%}
+.insights-feed{
+  height:100dvh;overflow-y:auto;scroll-snap-type:y mandatory;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  background:#000;scrollbar-width:none;
+}
+.insights-feed::-webkit-scrollbar{display:none}
+.insights-slide{
+  height:100dvh;scroll-snap-align:start;scroll-snap-stop:always;
+  position:relative;overflow:hidden;background:#000;
+  transform:translateZ(0);will-change:transform;
+}
+.insights-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;background:#000;
+}
+.insights-proton-frame,
+.insights-embed-frame{
+  position:absolute;inset:0;width:100%;height:100%;
+  border:0;background:#000;
+}
+.insights-slide--tiktok{
+  --tt-top:max(108px, 12dvh);
+  --tt-bottom:max(108px, 12dvh);
+  --tt-scale:1.42;
+}
+.insights-tiktok-stage{
+  position:absolute;inset:0;overflow:hidden;background:#000;z-index:1;
+}
+.insights-tiktok-stage .insights-embed-frame{
+  position:absolute;top:50%;left:50%;
+  width:calc(100% * var(--tt-scale));
+  height:calc(100% * var(--tt-scale));
+  transform:translate(-50%, -50%);
+  border:0;
+}
+.insights-tiktok-curtain{
+  position:absolute;inset:0;z-index:4;background:#000 center/cover no-repeat;
+  pointer-events:none;opacity:1;transition:opacity 0.22s ease;
+}
+.insights-tiktok-curtain.has-thumb::after{
+  content:'';position:absolute;inset:0;background:rgba(0,0,0,0.32);
+}
+.insights-tiktok-curtain.is-hidden{opacity:0}
+.insights-tiktok-chrome{
+  position:absolute;inset:0;z-index:8;pointer-events:none;
+  box-shadow:
+    inset 0 var(--tt-top) 0 0 #000,
+    inset 0 calc(-1 * var(--tt-bottom)) 0 0 #000;
+}
+.insights-slide--tiktok .insights-counter{display:none}
+.insights-slide--tiktok .insights-meta{
+  left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));
+  margin:0;
+  padding:14px 16px 16px;
+  border-radius:18px 18px 0 0;
+  border:1px solid rgba(212,175,55,0.16);
+  border-bottom:none;
+  background:rgba(8,8,8,0.94);
+  backdrop-filter:blur(18px);
+  box-shadow:0 -12px 40px rgba(0,0,0,0.55);
+}
+.insights-slide--tiktok .insights-desc{
+  -webkit-line-clamp:1;
+}
+.insights-slide--tiktok .insights-progress{
+  top:0;z-index:20;
+}
+.insights-slide--tiktok .insights-tap-zone{
+  z-index:9;
+  bottom:calc(72px + env(safe-area-inset-bottom));
+}
+.insights-proton-fallback,
+.insights-embed-fallback{
+  position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:28px;text-align:center;
+  background:radial-gradient(ellipse at 50% 35%,rgba(27,19,64,0.55),rgba(0,0,0,0.92));
+  pointer-events:none;opacity:0;transition:opacity 0.35s ease;
+}
+.insights-proton-fallback.show,
+.insights-embed-fallback.show{opacity:1;pointer-events:auto}
+.insights-embed-loading{
+  position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.55);color:var(--gold-premium);font-size:13px;gap:10px;
+}
+.insights-embed-loading.show{display:flex}
+.insights-embed-loading i{animation:pulse 1.2s ease-in-out infinite}
+.insights-proton-fallback i,
+.insights-embed-fallback i{font-size:34px;color:var(--gold-premium);filter:drop-shadow(0 0 12px rgba(212,175,55,0.35))}
+.insights-proton-fallback p,
+.insights-embed-fallback p{font-size:13px;color:var(--text-secondary);max-width:280px;line-height:1.5}
+.insights-embed-open,
+.insights-proton-open{
+  display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;
+  background:linear-gradient(135deg,rgba(212,175,55,0.24),rgba(212,175,55,0.08));
+  border:1px solid rgba(212,175,55,0.4);color:var(--gold-premium);
+  font-size:12px;font-weight:700;letter-spacing:0.04em;text-decoration:none;
+  box-shadow:0 4px 20px rgba(212,175,55,0.15);
+}
+.insights-embed-open:hover,
+.insights-proton-open:hover{filter:brightness(1.08)}
+.insights-progress-bar.indeterminate{
+  width:35%;animation:insightsProgressPulse 1.6s ease-in-out infinite;
+}
+@keyframes insightsProgressPulse{
+  0%{transform:translateX(-120%)}
+  100%{transform:translateX(320%)}
+}
+.insights-video-placeholder{
+  position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(23,23,23,0.9),#000);
+}
+.insights-progress{
+  position:absolute;top:0;left:0;right:0;height:2px;z-index:20;
+  background:rgba(255,255,255,0.08);overflow:hidden;
+}
+.insights-progress-bar{
+  height:100%;width:0;
+  background:linear-gradient(90deg,var(--gold),var(--gold-premium));
+  box-shadow:0 0 8px rgba(212,175,55,0.6);
+  transition:width 0.1s linear;
+}
+.insights-overlay{position:absolute;inset:0;z-index:10;pointer-events:none}
+.insights-counter{
+  position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;
+  padding:6px 10px;border-radius:999px;
+  background:rgba(11,11,11,0.55);backdrop-filter:blur(12px);
+  border:1px solid rgba(212,175,55,0.22);
+  font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--text-secondary);
+}
+.insights-meta{
+  position:absolute;left:14px;right:14px;bottom:calc(88px + env(safe-area-inset-bottom));
+  padding:14px 16px;border-radius:var(--radius-sm);
+  background:rgba(11,11,11,0.55);backdrop-filter:blur(16px);
+  border:1px solid rgba(212,175,55,0.2);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);
+  pointer-events:none;
+}
+.insights-category{
+  display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  padding:4px 8px;border-radius:999px;margin-bottom:8px;
+  background:linear-gradient(135deg,rgba(212,175,55,0.22),rgba(212,175,55,0.06));
+  border:1px solid rgba(212,175,55,0.35);color:var(--gold-premium);
+}
+.insights-title{
+  font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;
+  color:var(--text-primary);letter-spacing:-0.02em;line-height:1.25;
+}
+.insights-desc{
+  margin-top:6px;font-size:12px;line-height:1.45;color:var(--text-secondary);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.insights-error{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:24px;text-align:center;z-index:5;
+}
+.insights-error i{font-size:28px;color:var(--gold);opacity:0.7}
+.insights-error p{font-size:13px;color:var(--text-secondary);max-width:260px;line-height:1.5}
+.insights-empty{
+  height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:32px;text-align:center;background:#000;
+}
+.insights-empty i{font-size:36px;color:var(--gold);opacity:0.6}
+.insights-empty h2{font-family:'Manrope',sans-serif;font-size:20px;font-weight:700}
+.insights-empty p{font-size:13px;color:var(--text-muted);max-width:280px;line-height:1.5}
+.insights-tap-zone{
+  position:absolute;inset:0;z-index:8;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.insights-mute-hint{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);
+  width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(11,11,11,0.65);backdrop-filter:blur(8px);
+  border:1px solid rgba(212,175,55,0.3);color:var(--gold-premium);font-size:22px;
+  opacity:0;pointer-events:none;transition:opacity 0.25s,transform 0.25s;z-index:15;
+}
+.insights-mute-hint.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+@media(min-width:769px){
+  body.view-insights .content{min-height:calc(100vh - var(--topbar-h))}
+  body.view-insights .topbar{display:flex}
+  .insights-feed{height:calc(100vh - var(--topbar-h));max-width:430px;margin:0 auto}
+  .insights-slide{height:calc(100vh - var(--topbar-h))}
+  .insights-empty{height:calc(100vh - var(--topbar-h))}
+  .insights-meta{bottom:24px}
 }
 @media(min-width:1440px){
   .content{padding:32px 48px}
@@ -1004,12 +1190,12 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
   <div class="mobile-bottom-nav-inner">
     <button type="button" class="mobile-nav-item active" data-view="dashboard"><i class="fas fa-house"></i><span>Home</span></button>
     <button type="button" class="mobile-nav-item" data-view="accounts"><i class="fas fa-wallet"></i><span>Accounts</span></button>
-    <button type="button" class="mobile-nav-fab" id="fab" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
     <button type="button" class="mobile-nav-item" data-view="crypto"><i class="fas fa-coins"></i><span>Crypto</span></button>
+    <button type="button" class="mobile-nav-item" data-view="insights"><i class="fas fa-circle-play"></i><span>Insights</span></button>
     <button type="button" class="mobile-nav-item" data-view="more" id="mobileNavMore"><i class="fas fa-grip"></i><span>More</span></button>
   </div>
 </nav>
-<button class="fab hide-mobile" id="fabDesktop" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
+<button class="fab" id="fab" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal"><div class="modal-header"><h2 id="modalTitle"></h2><button class="btn-icon" id="modalClose"><i class="fas fa-times"></i></button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
 <div class="modal-overlay" id="confirmOverlay"><div class="modal" style="max-width:400px"><div class="modal-header"><h2 id="confirmTitle">Confirm</h2></div><div class="modal-body" id="confirmBody"></div><div class="modal-footer"><button class="btn btn-secondary" id="confirmCancel">Cancel</button><button class="btn btn-danger" id="confirmOk">Confirm</button></div></div></div>
 <div class="toast-container" id="toastContainer"></div>
@@ -1022,7 +1208,27 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.41';
+const APP_VERSION = '0.42';
+
+const INSIGHT_VIDEOS = [
+  {
+    id: 'daily-motivation',
+    title: 'Daily Motivation',
+    category: 'Finance',
+    description: 'Quick financial mindset tip.',
+    source: 'tiktok',
+    url: 'https://vt.tiktok.com/ZSCMmCtXw/',
+    canonicalUrl: 'https://www.tiktok.com/@dailymotivation.227/video/7635847746116717855'
+  },
+  {
+    id: 'kevintrudeau-student',
+    title: 'Kevin Trudeau Student',
+    category: 'Finance',
+    description: 'Financial education insight.',
+    source: 'tiktok',
+    url: 'https://www.tiktok.com/@kevintrudeau_student/video/7635240397865798934'
+  }
+];
 
 // ========== UTILITIES ==========
 const Utils = {
@@ -1119,6 +1325,109 @@ const Utils = {
 
   /** Escape HTML */
   esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; },
+
+  /** Detect Proton Drive public share URLs */
+  isProtonDriveUrl(url) {
+    try {
+      const u = new URL(url);
+      return u.hostname === 'drive.proton.me' && u.pathname.includes('/urls/');
+    } catch { return false; }
+  },
+
+  /** Normalize Proton Drive share URL for embedding (strip hash) */
+  protonDriveEmbedUrl(url) {
+    try {
+      const u = new URL(url);
+      const token = u.pathname.split('/urls/')[1]?.split('/')[0];
+      return token ? `https://drive.proton.me/urls/${token}` : url.split('#')[0];
+    } catch { return String(url || '').split('#')[0]; }
+  },
+
+  _tiktokMetaCache: new Map(),
+
+  /** Detect TikTok share URLs */
+  isTikTokUrl(url) {
+    try {
+      const h = new URL(url).hostname;
+      return h === 'tiktok.com' || h.endsWith('.tiktok.com');
+    } catch { return false; }
+  },
+
+  /** Extract TikTok video ID from a canonical post URL */
+  extractTikTokVideoId(url) {
+    const m = String(url || '').match(/\/video\/(\d+)/);
+    return m ? m[1] : null;
+  },
+
+  /** Resolve TikTok URL to video ID + optional thumbnail (oEmbed) */
+  async resolveTikTokMeta(url, meta = {}) {
+    const key = String(url || '').split('#')[0];
+    if (meta.videoId) {
+      return { videoId: String(meta.videoId), thumbnail: meta.thumbnail || null };
+    }
+    if (this._tiktokMetaCache.has(key)) return this._tiktokMetaCache.get(key);
+
+    const cacheAndReturn = (result) => {
+      if (result?.videoId) this._tiktokMetaCache.set(key, result);
+      return result;
+    };
+
+    const tryOembed = async (target) => {
+      try {
+        const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(target)}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const videoId = data?.html?.match(/data-video-id="(\d+)"/)?.[1] || null;
+        if (!videoId) return null;
+        return { videoId, thumbnail: data.thumbnail_url || null };
+      } catch { return null; }
+    };
+
+    const direct = this.extractTikTokVideoId(key);
+    if (direct) return cacheAndReturn({ videoId: direct, thumbnail: null });
+
+    if (meta.canonicalUrl) {
+      const fromCanonId = this.extractTikTokVideoId(meta.canonicalUrl);
+      if (fromCanonId) return cacheAndReturn({ videoId: fromCanonId, thumbnail: null });
+      const fromOembed = await tryOembed(meta.canonicalUrl);
+      if (fromOembed) return cacheAndReturn(fromOembed);
+    }
+
+    try {
+      const res = await fetch(key, { redirect: 'follow' });
+      const fromRedirect = this.extractTikTokVideoId(res.url);
+      if (fromRedirect) return cacheAndReturn({ videoId: fromRedirect, thumbnail: null });
+    } catch { /* CORS on short links in browser */ }
+
+    return cacheAndReturn(await tryOembed(key));
+  },
+
+  /** Resolve vt.tiktok.com and other short links to a video ID */
+  async resolveTikTokVideoId(url, meta = {}) {
+    const resolved = await this.resolveTikTokMeta(url, meta);
+    return resolved?.videoId || null;
+  },
+
+  /** Build TikTok official embed player URL */
+  tiktokPlayerUrl(videoId) {
+    const params = new URLSearchParams({
+      autoplay: '1',
+      loop: '1',
+      controls: '0',
+      progress_bar: '0',
+      play_button: '0',
+      volume_control: '0',
+      fullscreen_button: '0',
+      timestamp: '0',
+      closed_caption: '0',
+      music_info: '0',
+      description: '0',
+      rel: '0',
+      native_context_menu: '0',
+      muted: '0'
+    });
+    return `https://www.tiktok.com/player/v1/${videoId}?${params}`;
+  },
 
   /** Download blob */
   download(filename, content, type = 'application/json') {
@@ -2047,6 +2356,689 @@ class InsightEngine {
   }
 }
 
+// ========== VAULTONE INSIGHTS (Vertical Video Feed) ==========
+class VideoOverlay {
+  constructor(video, meta, index, total, options = {}) {
+    this.video = video;
+    this.options = options;
+    this.el = document.createElement('div');
+    this.el.className = 'insights-overlay';
+    const progress = options.embed
+      ? '<div class="insights-progress"><div class="insights-progress-bar indeterminate"></div></div>'
+      : '<div class="insights-progress"><div class="insights-progress-bar"></div></div>';
+    this.el.innerHTML = `
+      ${progress}
+      <div class="insights-counter">${index + 1} / ${total}</div>
+      <div class="insights-meta">
+        <span class="insights-category">${Utils.esc(meta.category || 'Finance')}</span>
+        <div class="insights-title">${Utils.esc(meta.title)}</div>
+        ${meta.description ? `<div class="insights-desc">${Utils.esc(meta.description)}</div>` : ''}
+      </div>`;
+    this.progressBar = this.el.querySelector('.insights-progress-bar');
+    this._onTime = () => this.updateProgress();
+    if (video) video.addEventListener('timeupdate', this._onTime);
+  }
+
+  updateProgress() {
+    if (!this.video || !this.progressBar || this.options.embed) return;
+    if (!this.video.duration || !isFinite(this.video.duration)) {
+      this.progressBar.style.width = '0%';
+      return;
+    }
+    this.progressBar.style.width = `${(this.video.currentTime / this.video.duration) * 100}%`;
+  }
+
+  setProgress(percent) {
+    if (!this.progressBar) return;
+    this.progressBar.classList.remove('indeterminate');
+    this.progressBar.style.transform = 'none';
+    this.progressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  }
+
+  destroy() {
+    if (this.video) this.video.removeEventListener('timeupdate', this._onTime);
+    this.el.remove();
+  }
+}
+
+class ProtonEmbedPlayer {
+  constructor(container, url, manager) {
+    this.container = container;
+    this.url = Utils.protonDriveEmbedUrl(url);
+    this.manager = manager;
+    this.mounted = false;
+    this.iframe = null;
+    this.fallback = null;
+    this._fallbackTimer = null;
+    this.video = null;
+  }
+
+  mount() {
+    if (this.mounted) return;
+    this.mounted = true;
+    this.iframe = document.createElement('iframe');
+    this.iframe.className = 'insights-embed-frame insights-proton-frame';
+    this.iframe.title = 'Proton Drive video';
+    this.iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    this.iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+    this.iframe.setAttribute('loading', 'lazy');
+    this.fallback = document.createElement('div');
+    this.fallback.className = 'insights-proton-fallback';
+    this.fallback.innerHTML = `
+      <i class="fas fa-circle-play"></i>
+      <p>Proton Drive videos play in their secure viewer. Tap below if the embed does not load.</p>
+      <a class="insights-proton-open" href="${Utils.esc(this.url)}" target="_blank" rel="noopener noreferrer">
+        <i class="fas fa-up-right-from-square"></i> Open in Proton Drive
+      </a>`;
+    this.fallback.querySelector('.insights-proton-open')?.addEventListener('click', e => e.stopPropagation());
+    this.container.appendChild(this.iframe);
+    this.container.appendChild(this.fallback);
+  }
+
+  _scheduleFallback() {
+    clearTimeout(this._fallbackTimer);
+    this._fallbackTimer = setTimeout(() => this.fallback?.classList.add('show'), 2800);
+  }
+
+  _clearFallback() {
+    clearTimeout(this._fallbackTimer);
+    this.fallback?.classList.remove('show');
+  }
+
+  play() {
+    if (!this.iframe) return;
+    if (this.iframe.src !== this.url) this.iframe.src = this.url;
+    this._scheduleFallback();
+  }
+
+  pause() {
+    if (!this.iframe) return;
+    this.iframe.src = 'about:blank';
+    this._clearFallback();
+  }
+
+  setMuted() {}
+  setPreload() {}
+  togglePlay() { this.iframe?.src === 'about:blank' || !this.iframe?.src ? this.play() : this.pause(); }
+
+  destroy() {
+    this._clearFallback();
+    if (this.iframe) {
+      this.iframe.src = 'about:blank';
+      this.iframe.remove();
+    }
+    this.fallback?.remove();
+    this.iframe = null;
+    this.fallback = null;
+    this.mounted = false;
+  }
+}
+
+class TikTokEmbedPlayer {
+  constructor(container, meta, manager, onError) {
+    this.container = container;
+    this.meta = meta;
+    this.url = meta.url;
+    this.manager = manager;
+    this.onError = onError;
+    this.mounted = false;
+    this.iframe = null;
+    this.fallback = null;
+    this.loadingEl = null;
+    this.tapZone = null;
+    this.muteHint = null;
+    this.overlay = null;
+    this.videoId = null;
+    this.thumbnailUrl = null;
+    this._ready = false;
+    this._playing = false;
+    this._shouldPlay = false;
+    this._lastTap = 0;
+    this._onMessage = (e) => this.handleMessage(e);
+    this._onTap = (e) => this.handleTap(e);
+    this.video = null;
+  }
+
+  mount() {
+    if (this.mounted) return;
+    this.mounted = true;
+    this.stageEl = document.createElement('div');
+    this.stageEl.className = 'insights-tiktok-stage';
+    this.chromeEl = document.createElement('div');
+    this.chromeEl.className = 'insights-tiktok-chrome';
+    this.iframe = document.createElement('iframe');
+    this.iframe.className = 'insights-embed-frame';
+    this.iframe.title = 'TikTok video';
+    this.iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    this.iframe.setAttribute('loading', 'lazy');
+    this.stageEl.appendChild(this.iframe);
+    this.curtainEl = document.createElement('div');
+    this.curtainEl.className = 'insights-tiktok-curtain';
+    this.loadingEl = document.createElement('div');
+    this.loadingEl.className = 'insights-embed-loading';
+    this.loadingEl.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Loading…</span>';
+    this.fallback = document.createElement('div');
+    this.fallback.className = 'insights-embed-fallback';
+    this.fallback.innerHTML = `
+      <i class="fab fa-tiktok"></i>
+      <p>Could not load this TikTok video. Open it directly on TikTok instead.</p>
+      <a class="insights-embed-open" href="${Utils.esc(this.meta.canonicalUrl || this.url)}" target="_blank" rel="noopener noreferrer">
+        <i class="fas fa-up-right-from-square"></i> Open on TikTok
+      </a>`;
+    this.fallback.querySelector('.insights-embed-open')?.addEventListener('click', e => e.stopPropagation());
+    this.tapZone = document.createElement('div');
+    this.tapZone.className = 'insights-tap-zone';
+    this.tapZone.addEventListener('click', this._onTap);
+    this.muteHint = document.createElement('div');
+    this.muteHint.className = 'insights-mute-hint';
+    this.muteHint.innerHTML = this.manager?.muted
+      ? '<i class="fas fa-volume-xmark"></i>'
+      : '<i class="fas fa-volume-high"></i>';
+    this.container.appendChild(this.stageEl);
+    this.container.appendChild(this.curtainEl);
+    this.container.appendChild(this.chromeEl);
+    this.container.appendChild(this.loadingEl);
+    this.container.appendChild(this.fallback);
+    this.container.appendChild(this.tapZone);
+    this.container.appendChild(this.muteHint);
+    window.addEventListener('message', this._onMessage);
+  }
+
+  setCurtainThumbnail(url) {
+    if (!this.curtainEl || !url) return;
+    this.thumbnailUrl = url;
+    this.curtainEl.style.backgroundImage = `url(${url})`;
+    this.curtainEl.classList.add('has-thumb');
+  }
+
+  showCurtain() {
+    this.curtainEl?.classList.remove('is-hidden');
+  }
+
+  revealPlayer() {
+    if (this._revealed) return;
+    this._revealed = true;
+    this.curtainEl?.classList.add('is-hidden');
+    this.loadingEl?.classList.remove('show');
+  }
+
+  resetReveal() {
+    this._revealed = false;
+    this.showCurtain();
+  }
+
+  handleMessage(e) {
+    if (!e.data?.['x-tiktok-player'] || e.source !== this.iframe?.contentWindow) return;
+    if (e.data.type === 'onPlayerReady') {
+      this._ready = true;
+      if (this._shouldPlay) {
+        this.post('play');
+        if (!this.manager.muted) this.post('unMute');
+      }
+    }
+    if (e.data.type === 'onStateChange') {
+      this._playing = e.data.value === 1;
+      if (this._playing && this._shouldPlay) this.revealPlayer();
+    }
+    if (e.data.type === 'onCurrentTime' && e.data.value?.duration > 0) {
+      if (this._shouldPlay && e.data.value.currentTime > 0) this.revealPlayer();
+      this.overlay?.setProgress((e.data.value.currentTime / e.data.value.duration) * 100);
+    }
+    if (e.data.type === 'onPlayerError') this.showFallback();
+  }
+
+  post(type, value) {
+    if (!this.iframe?.contentWindow) return;
+    const msg = { type, 'x-tiktok-player': true };
+    if (value !== undefined) msg.value = value;
+    this.iframe.contentWindow.postMessage(msg, '*');
+  }
+
+  async ensureVideoId() {
+    if (this.videoId) return this.videoId;
+    this.loadingEl?.classList.add('show');
+    const resolved = await Utils.resolveTikTokMeta(this.url, this.meta);
+    this.loadingEl?.classList.remove('show');
+    if (!resolved?.videoId) {
+      this.showFallback();
+      this.onError?.();
+      return null;
+    }
+    this.videoId = resolved.videoId;
+    if (resolved.thumbnail) this.setCurtainThumbnail(resolved.thumbnail);
+    else if (this.meta.thumbnail) this.setCurtainThumbnail(this.meta.thumbnail);
+    return this.videoId;
+  }
+
+  showFallback() {
+    this.fallback?.classList.add('show');
+  }
+
+  async play() {
+    if (!this.iframe) return;
+    this._shouldPlay = true;
+    const id = await this.ensureVideoId();
+    if (!id) return;
+    const src = Utils.tiktokPlayerUrl(id);
+    const blank = !this.iframe.src || this.iframe.src === 'about:blank';
+    if (blank || this.iframe.src !== src) {
+      this.resetReveal();
+      this._ready = false;
+      this._playing = false;
+      this.iframe.src = src;
+    } else if (this._ready) {
+      this.resetReveal();
+      this.post('play');
+      if (!this.manager.muted) this.post('unMute');
+    }
+    this.fallback?.classList.remove('show');
+  }
+
+  pause() {
+    this._shouldPlay = false;
+    this._playing = false;
+    this.post('pause');
+    this.showCurtain();
+  }
+
+  unload() {
+    this._shouldPlay = false;
+    this._ready = false;
+    this._playing = false;
+    this.resetReveal();
+    if (this.iframe) this.iframe.src = 'about:blank';
+  }
+
+  async warmIframe() {
+    if (!this.iframe || this._shouldPlay) return;
+    const id = await this.ensureVideoId();
+    if (!id) return;
+    const src = Utils.tiktokPlayerUrl(id);
+    const blank = !this.iframe.src || this.iframe.src === 'about:blank';
+    if (!blank && this.iframe.src === src) return;
+    this.resetReveal();
+    this._ready = false;
+    this._playing = false;
+    this.iframe.src = src;
+  }
+
+  setMuted(muted) {
+    this.post(muted ? 'mute' : 'unMute');
+  }
+
+  handleTap(e) {
+    e.stopPropagation();
+    const now = Date.now();
+    if (now - this._lastTap < 300) {
+      this.manager.muted = !this.manager.muted;
+      this.setMuted(this.manager.muted);
+      this.muteHint.innerHTML = this.manager.muted
+        ? '<i class="fas fa-volume-xmark"></i>'
+        : '<i class="fas fa-volume-high"></i>';
+      this.muteHint.classList.add('show');
+      clearTimeout(this._hintTimer);
+      this._hintTimer = setTimeout(() => this.muteHint.classList.remove('show'), 700);
+      this._lastTap = 0;
+      return;
+    }
+    this._lastTap = now;
+    setTimeout(() => {
+      if (this._lastTap !== now) return;
+      if (!this.manager.muted) this.post('unMute');
+      if (this._playing) this.post('pause');
+      else this.post('play');
+    }, 300);
+  }
+
+  async setPreload(mode) {
+    if (mode === 'auto') {
+      await this.ensureVideoId();
+      await this.warmIframe();
+    }
+  }
+
+  destroy() {
+    window.removeEventListener('message', this._onMessage);
+    this.tapZone?.removeEventListener('click', this._onTap);
+    clearTimeout(this._hintTimer);
+    if (this.iframe) this.iframe.src = 'about:blank';
+    this.loadingEl?.remove();
+    this.fallback?.remove();
+    this.tapZone?.remove();
+    this.muteHint?.remove();
+    this.chromeEl?.remove();
+    this.curtainEl?.remove();
+    this.stageEl?.remove();
+    this.iframe = null;
+    this.stageEl = null;
+    this.chromeEl = null;
+    this.curtainEl = null;
+    this.mounted = false;
+  }
+}
+
+class VideoPlayer {
+  constructor(container, url, onError, manager) {
+    this.container = container;
+    this.url = url;
+    this.onError = onError;
+    this.manager = manager;
+    this.mounted = false;
+    this.video = null;
+    this.tapZone = null;
+    this.muteHint = null;
+    this._lastTap = 0;
+    this._onTap = (e) => this.handleTap(e);
+  }
+
+  mount() {
+    if (this.mounted) return;
+    this.mounted = true;
+    this.video = document.createElement('video');
+    this.video.className = 'insights-video';
+    this.video.setAttribute('playsinline', '');
+    this.video.setAttribute('webkit-playsinline', '');
+    this.video.loop = true;
+    this.video.muted = this.manager ? this.manager.muted : false;
+    this.video.preload = 'none';
+    this.video.src = this.url;
+    this.video.addEventListener('error', () => this.onError?.());
+    this.tapZone = document.createElement('div');
+    this.tapZone.className = 'insights-tap-zone';
+    this.tapZone.addEventListener('click', this._onTap);
+    this.muteHint = document.createElement('div');
+    this.muteHint.className = 'insights-mute-hint';
+    this.muteHint.innerHTML = this.manager?.muted
+      ? '<i class="fas fa-volume-xmark"></i>'
+      : '<i class="fas fa-volume-high"></i>';
+    this.container.appendChild(this.video);
+    this.container.appendChild(this.tapZone);
+    this.container.appendChild(this.muteHint);
+  }
+
+  handleTap(e) {
+    e.stopPropagation();
+    const now = Date.now();
+    if (now - this._lastTap < 300) {
+      this.toggleMute();
+      this._lastTap = 0;
+      return;
+    }
+    this._lastTap = now;
+    setTimeout(() => {
+      if (this._lastTap !== now) return;
+      if (this._needsGestureUnmute && this.manager && !this.manager.muted) {
+        this._needsGestureUnmute = false;
+        this.video.muted = false;
+        this.video.play().catch(() => {});
+        this.flashMuteHint(false);
+        return;
+      }
+      this.togglePlay();
+    }, 300);
+  }
+
+  togglePlay() {
+    if (!this.video) return;
+    if (this.video.paused) this.video.play().catch(() => {});
+    else this.video.pause();
+  }
+
+  toggleMute() {
+    if (!this.video) return;
+    this._needsGestureUnmute = false;
+    this.video.muted = !this.video.muted;
+    if (this.manager) this.manager.muted = this.video.muted;
+    this.flashMuteHint(this.video.muted);
+  }
+
+  flashMuteHint(muted) {
+    if (!this.muteHint) return;
+    this.muteHint.innerHTML = muted
+      ? '<i class="fas fa-volume-xmark"></i>'
+      : '<i class="fas fa-volume-high"></i>';
+    this.muteHint.classList.add('show');
+    clearTimeout(this._hintTimer);
+    this._hintTimer = setTimeout(() => this.muteHint.classList.remove('show'), 700);
+  }
+
+  setMuted(muted) {
+    if (this.video) this.video.muted = muted;
+  }
+
+  play() {
+    if (!this.video) return;
+    const wantSound = !(this.manager?.muted);
+    this.video.muted = !wantSound;
+    this.video.play().catch(() => {
+      if (!wantSound) return;
+      this.video.muted = true;
+      this._needsGestureUnmute = true;
+      this.video.play().catch(() => {});
+      this.flashMuteHint(true);
+    });
+  }
+
+  pause() {
+    if (this.video) this.video.pause();
+  }
+
+  setPreload(mode) {
+    if (this.video) this.video.preload = mode;
+  }
+
+  destroy() {
+    if (this.tapZone) this.tapZone.removeEventListener('click', this._onTap);
+    if (this.video) {
+      this.video.pause();
+      this.video.removeAttribute('src');
+      this.video.load();
+      this.video.remove();
+    }
+    this.tapZone?.remove();
+    this.muteHint?.remove();
+    this.video = null;
+    this.mounted = false;
+  }
+}
+
+class VideoCard {
+  constructor(videoMeta, index, total, manager) {
+    this.meta = videoMeta;
+    this.index = index;
+    this.total = total;
+    this.manager = manager;
+    this.el = document.createElement('div');
+    this.el.className = 'insights-slide';
+    this.el.dataset.index = index;
+    this.placeholder = document.createElement('div');
+    this.placeholder.className = 'insights-video-placeholder';
+    this.el.appendChild(this.placeholder);
+    this.player = null;
+    this.overlay = null;
+    this.errorEl = null;
+    this.loaded = false;
+  }
+
+  ensureLoaded() {
+    if (this.loaded) return;
+    this.loaded = true;
+    const isTikTok = this.meta.source === 'tiktok' || Utils.isTikTokUrl(this.meta.url);
+    const isProton = this.meta.source === 'proton' || Utils.isProtonDriveUrl(this.meta.url);
+    if (isTikTok) {
+      this.el.classList.add('insights-slide--tiktok');
+      this.player = new TikTokEmbedPlayer(this.el, this.meta, this.manager, () => this.showError());
+      this.player.mount();
+      this.overlay = new VideoOverlay(null, this.meta, this.index, this.total, { embed: true });
+      this.player.overlay = this.overlay;
+    } else if (isProton) {
+      this.player = new ProtonEmbedPlayer(this.el, this.meta.url, this.manager);
+      this.player.mount();
+      this.overlay = new VideoOverlay(null, this.meta, this.index, this.total, { embed: true });
+    } else {
+      this.player = new VideoPlayer(this.el, this.meta.url, () => this.showError(), this.manager);
+      this.player.mount();
+      this.player.setMuted(this.manager.muted);
+      this.overlay = new VideoOverlay(this.player.video, this.meta, this.index, this.total);
+    }
+    this.el.appendChild(this.overlay.el);
+  }
+
+  showError() {
+    if (this.errorEl) return;
+    this.errorEl = document.createElement('div');
+    this.errorEl.className = 'insights-error';
+    this.errorEl.innerHTML = '<i class="fas fa-circle-exclamation"></i><p>Unable to load this video. Use a TikTok link, Proton share link, or a direct .mp4/.webm URL.</p>';
+    this.el.appendChild(this.errorEl);
+  }
+
+  activate() {
+    this.ensureLoaded();
+    this.player?.setPreload('auto');
+    this.player?.play();
+  }
+
+  deactivate() {
+    this.player?.pause();
+  }
+
+  preloadNext() {
+    this.ensureLoaded();
+    this.player?.setPreload('auto');
+  }
+
+  setPreloadNone() {
+    if (this.player?.unload) this.player.unload();
+    else this.player?.setPreload?.('none');
+  }
+
+  destroy() {
+    this.overlay?.destroy();
+    this.player?.destroy();
+    this.errorEl?.remove();
+    this.el.remove();
+  }
+}
+
+class VideoManager {
+  constructor(videos, options = {}) {
+    this.videos = videos;
+    this.options = options;
+    this.filters = { category: null, query: '' };
+    this.bookmarks = new Set();
+    this.cards = [];
+    this.activeIndex = 0;
+    this.muted = false;
+  }
+
+  getVideos() {
+    let list = [...this.videos];
+    if (this.filters.category) list = list.filter(v => v.category === this.filters.category);
+    if (this.filters.query) {
+      const q = this.filters.query.toLowerCase();
+      list = list.filter(v => [v.title, v.category, v.description].join(' ').toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  registerCard(card) {
+    this.cards.push(card);
+  }
+
+  setActive(index) {
+    if (index === this.activeIndex && this.cards[index]?.player?.video && !this.cards[index].player.video.paused) return;
+    this.activeIndex = index;
+    this.cards.forEach((card, i) => {
+      if (i === index) card.activate();
+      else {
+        card.deactivate();
+        if (Math.abs(i - index) <= 1) {
+          if (i === index + 1) card.preloadNext();
+          else card.setPreloadNone();
+        }
+      }
+    });
+  }
+
+  setMuted(muted) {
+    this.muted = muted;
+    this.cards.forEach(c => c.player?.setMuted(muted));
+  }
+
+  destroy() {
+    this.cards.forEach(c => c.destroy());
+    this.cards = [];
+  }
+}
+
+class VideoFeed {
+  constructor(container, videos) {
+    this.container = container;
+    this.manager = new VideoManager(videos);
+    this.feedEl = null;
+    this.observer = null;
+    this._onScroll = Utils.debounce(() => this.syncActiveFromScroll(), 80);
+  }
+
+  mount() {
+    const list = this.manager.getVideos();
+    if (!list.length) {
+      this.container.innerHTML = `
+        <div class="insights-empty">
+          <i class="fas fa-circle-play"></i>
+          <h2>No insights yet</h2>
+          <p>Add video URLs to the INSIGHT_VIDEOS array to build your feed.</p>
+        </div>`;
+      return;
+    }
+    this.feedEl = document.createElement('div');
+    this.feedEl.className = 'insights-feed';
+    list.forEach((meta, i) => {
+      const card = new VideoCard(meta, i, list.length, this.manager);
+      this.manager.registerCard(card);
+      this.feedEl.appendChild(card.el);
+    });
+    this.container.innerHTML = '';
+    this.container.appendChild(this.feedEl);
+    this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
+    this.observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting || entry.intersectionRatio < 0.65) return;
+          const idx = parseInt(entry.target.dataset.index, 10);
+          if (!isNaN(idx)) this.manager.setActive(idx);
+        });
+      },
+      { root: this.feedEl, threshold: [0.65, 0.85] }
+    );
+    this.manager.cards.forEach(c => this.observer.observe(c.el));
+    requestAnimationFrame(() => this.manager.setActive(0));
+  }
+
+  syncActiveFromScroll() {
+    if (!this.feedEl) return;
+    const mid = this.feedEl.scrollTop + this.feedEl.clientHeight / 2;
+    let closest = 0;
+    let minDist = Infinity;
+    this.manager.cards.forEach((card, i) => {
+      const top = card.el.offsetTop;
+      const center = top + card.el.offsetHeight / 2;
+      const dist = Math.abs(center - mid);
+      if (dist < minDist) { minDist = dist; closest = i; }
+    });
+    this.manager.setActive(closest);
+  }
+
+  destroy() {
+    this.feedEl?.removeEventListener('scroll', this._onScroll);
+    this.observer?.disconnect();
+    this.manager.destroy();
+    this.container.innerHTML = '';
+    this.feedEl = null;
+    this.observer = null;
+  }
+}
+
 // ========== FINANCE APP (Main Controller) ==========
 class FinanceApp {
   constructor() {
@@ -2067,6 +3059,7 @@ class FinanceApp {
     this.cashFlowPeriod = 'monthly';
     this.calMonth = new Date();
     this.dashboardChartPeriod = '7d';
+    this.insightsFeed = null;
     this.init();
   }
 
@@ -2109,7 +3102,7 @@ class FinanceApp {
 
   /** Sync mobile bottom nav active state */
   syncMobileNav(view) {
-    const primary = ['dashboard', 'accounts', 'crypto'];
+    const primary = ['dashboard', 'accounts', 'crypto', 'insights'];
     const mapped = primary.includes(view) ? view : 'more';
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.view === mapped);
@@ -2192,6 +3185,7 @@ class FinanceApp {
     const items = [
       { section: 'Main', links: [
         { id: 'dashboard', icon: 'gauge-high', label: 'Dashboard' },
+        { id: 'insights', icon: 'circle-play', label: 'VaultOne Insights' },
         { id: 'transactions', icon: 'exchange-alt', label: 'Transactions' },
         { id: 'income', icon: 'arrow-trend-up', label: 'Income' },
         { id: 'expenses', icon: 'arrow-trend-down', label: 'Expenses' }
@@ -2240,8 +3234,6 @@ class FinanceApp {
     document.getElementById('mobileMenuBtn').onclick = () => document.getElementById('sidebar').classList.toggle('mobile-open');
     document.getElementById('quickAddBtn').onclick = () => this.openTransactionModal();
     document.getElementById('fab').onclick = () => this.openTransactionModal();
-    const fabDesktop = document.getElementById('fabDesktop');
-    if (fabDesktop) fabDesktop.onclick = () => this.openTransactionModal();
     const searchCmd = document.getElementById('searchCommand');
     const searchInput = document.getElementById('globalSearch');
     const openSearch = () => {
@@ -2276,13 +3268,19 @@ class FinanceApp {
 
   /** Navigate to view */
   navigate(view) {
+    if (this.currentView === 'insights' && view !== 'insights') {
+      this.insightsFeed?.destroy();
+      this.insightsFeed = null;
+    }
     this.currentView = view;
     document.body.classList.toggle('view-dashboard', view === 'dashboard');
+    document.body.classList.toggle('view-insights', view === 'insights');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
     this.syncMobileNav(view);
     const content = document.getElementById('mainContent');
     const renderers = {
       dashboard: () => this.renderDashboard(),
+      insights: () => this.renderInsights(),
       transactions: () => this.renderTransactions(),
       income: () => this.renderIncomeExpenses('income'),
       expenses: () => this.renderIncomeExpenses('expense'),
@@ -2333,6 +3331,14 @@ class FinanceApp {
 
   // ========== DASHBOARD ==========
   /** Render dashboard view */
+  /** Render VaultOne Insights vertical video feed */
+  renderInsights() {
+    this.insightsFeed?.destroy();
+    document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
+    this.insightsFeed = new VideoFeed(document.getElementById('insightsMount'), INSIGHT_VIDEOS);
+    this.insightsFeed.mount();
+  }
+
   renderDashboard() {
     const c = this.calc;
     const flow = c.currentMonthFlow();
