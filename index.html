@@ -631,6 +631,7 @@ tr:last-child td{border-bottom:none}
 
 /* ========== MOBILE HOME (VaultOne Premium) ========== */
 .hide-on-desktop{display:none!important}
+.hide-on-mobile{display:block}
 .glass-card{
   background:rgba(17,17,17,0.72);backdrop-filter:blur(20px);
   border:1px solid rgba(212,175,55,0.18);border-radius:var(--radius-sm);
@@ -751,6 +752,10 @@ tr:last-child td{border-bottom:none}
   background:rgba(17,17,17,0.72);border:1px solid rgba(212,175,55,0.18);
   margin-bottom:8px;
 }
+.m-empty-hero .m-empty-icon{font-size:40px;color:var(--gold);opacity:0.45;margin:12px 0 8px}
+.m-empty-hero .m-empty-title{font-family:'Manrope',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px}
+.m-empty-hero .m-empty-desc{font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:16px;max-width:280px;margin-left:auto;margin-right:auto}
+.m-empty-hero .m-action-pill{margin:0 auto}
 
 /* ========== MOBILE ========== */
 .mobile-toggle{display:none}
@@ -784,6 +789,7 @@ tr:last-child td{border-bottom:none}
   .mobile-nav-item i{font-size:15px}
   .mobile-nav-item span{font-size:8px}
   .hide-mobile{display:none!important}
+  .hide-on-mobile{display:none!important}
   .hide-on-desktop{display:block!important}
   .dashboard-desktop{display:none!important}
   .dashboard-hero{padding:24px 20px}
@@ -1792,15 +1798,7 @@ class FinanceStore {
       version: 2,
       settings: { currency: 'USD', language: 'en', theme: 'dark', numberFormat: '1,234.56', dateFormat: 'MM/DD/YYYY', autoBackup: false, lastBackup: null, widgetOrder: ['balance','cashflow','recent','bills','categories','networth','insights','heatmap'], coingeckoApiKey: '', cryptoAutoRefresh: true },
       categories: cats.map((name, i) => ({ id: Utils.uid(), name, type: name === 'Salary' ? 'income' : (['Crypto','Stocks','Investment'].includes(name) ? 'both' : 'expense'), icon: 'tag', custom: false })),
-      accounts: [
-        { id: Utils.uid(), name: 'Cash Wallet', type: 'cash', openingBalance: 0, color: '#10b981' },
-        { id: Utils.uid(), name: 'Bank 1', type: 'bank', openingBalance: 0, color: '#3b82f6' },
-        { id: Utils.uid(), name: 'Bank 2', type: 'bank', openingBalance: 0, color: '#6366f1' },
-        { id: Utils.uid(), name: 'PayPal', type: 'bank', openingBalance: 0, color: '#0ea5e9' },
-        { id: Utils.uid(), name: 'Crypto Wallet', type: 'crypto', openingBalance: 0, color: '#f59e0b' },
-        { id: Utils.uid(), name: 'Savings Account', type: 'savings', openingBalance: 0, color: '#14b8a6' },
-        { id: Utils.uid(), name: 'Investment Account', type: 'investment', openingBalance: 0, color: '#8b5cf6' }
-      ],
+      accounts: [],
       transactions: [], creditCards: [], loans: [], savingsGoals: [], investments: [], assets: [],
       cryptoHoldings: [], cryptoMeta: { lastPriceUpdate: null, apiStatus: 'unknown', lastApiError: null },
       budgets: [], goals: [], recurring: [], reminders: [], undoStack: []
@@ -3112,6 +3110,26 @@ class FinanceApp {
   /** Render accounts view */
   renderAccounts() {
     const accounts = this.store.data.accounts;
+
+    if (!accounts.length) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="mobile-home mobile-accounts hide-on-desktop">
+          <section class="m-wealth-header glass-card m-empty-hero">
+            <div class="m-wealth-label">Accounts</div>
+            <div class="m-empty-icon"><i class="fas fa-wallet"></i></div>
+            <div class="m-empty-title">No accounts yet</div>
+            <p class="m-empty-desc">Add your cash, bank, or savings accounts to start tracking balances.</p>
+            <button type="button" class="m-action-pill" onclick="app.openAccountModal()"><i class="fas fa-plus"></i> Add Account</button>
+          </section>
+        </div>
+        <div class="hide-on-mobile">
+          <div class="page-header"><div><h1 class="page-title">Accounts</h1><p class="page-subtitle">Manage your financial accounts</p></div></div>
+          <div class="empty-state"><i class="fas fa-wallet"></i><h3>No accounts yet</h3><p>Add your cash, bank, or savings accounts to start tracking balances.</p><button class="btn btn-primary" onclick="app.openAccountModal()"><i class="fas fa-plus"></i> Add Account</button></div>
+        </div>
+        <div id="accountHistory"></div>`;
+      return;
+    }
+
     const c = this.calc;
     const totalBalance = c.totalBalance();
     const flow = c.currentMonthFlow();
