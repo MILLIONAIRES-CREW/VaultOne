@@ -796,9 +796,14 @@ tr:last-child td{border-bottom:none}
 }
 
 /* ========== VAULTONE INSIGHTS (Vertical Video Feed) ========== */
+html.view-insights,
+body.view-insights{
+  overflow:hidden;height:100%;overscroll-behavior:none;
+}
 body.view-insights .topbar{display:none}
-body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
-.insights-mount{width:100%;height:100%}
+body.view-insights .content{padding:0;max-width:none;margin:0;animation:none;height:100%}
+body.view-insights .main{height:100%;overflow:hidden}
+body.view-insights .insights-mount{width:100%;height:100%}
 .insights-feed-shell{
   position:relative;height:100dvh;overflow:hidden;background:#000;
 }
@@ -819,13 +824,13 @@ body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
 .insights-pull-zone.is-refreshing .insights-pull-spinner i{animation:spin 0.8s linear infinite}
 .insights-feed{
   height:100%;overflow-y:auto;scroll-snap-type:y mandatory;
-  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:none;
   background:#000;scrollbar-width:none;
   touch-action:pan-y;
 }
 .insights-feed::-webkit-scrollbar{display:none}
 .insights-slide{
-  height:100dvh;scroll-snap-align:start;scroll-snap-stop:normal;
+  height:100%;min-height:100%;scroll-snap-align:start;scroll-snap-stop:always;
   position:relative;overflow:hidden;background:#000;
 }
 .insights-video-placeholder{
@@ -1044,6 +1049,10 @@ body.view-insights .content{padding:0;max-width:none;margin:0;animation:none}
 .insights-sound-btn:active{transform:scale(0.94)}
 .insights-sound-btn.is-muted{color:var(--text-muted);border-color:rgba(255,255,255,0.12)}
 @media(max-width:768px){
+  body.view-insights .insights-feed-shell{
+    position:fixed;inset:0;z-index:1;
+    height:100%;height:100dvh;height:100svh;
+  }
   body.view-insights .insights-sound-btn{
     bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
   }
@@ -1306,7 +1315,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.66';
+const APP_VERSION = '0.70';
 
 const INSIGHT_VIDEOS = [
   {
@@ -1860,6 +1869,25 @@ const Utils = {
     return cacheAndReturn(await tryOembed(key));
   },
 
+  /** Warm image cache for instant curtain display */
+  prefetchImage(url) {
+    if (!url) return;
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = url;
+  },
+
+  /** Prefetch thumbnails for all insight videos (non-blocking) */
+  warmInsightThumbnails(videos) {
+    (videos || []).forEach((meta) => {
+      const key = String(meta.url || '').split('#')[0];
+      if (meta.thumbnail) this.prefetchImage(meta.thumbnail);
+      const cached = this._tiktokMetaCache.get(key);
+      if (cached?.thumbnail) this.prefetchImage(cached.thumbnail);
+      else this.resolveTikTokMeta(meta.url, meta);
+    });
+  },
+
   /** Fetch thumbnail in background and update cache */
   prefetchTikTokThumbnail(cacheKey, targetUrl) {
     const key = String(cacheKey || '').split('#')[0];
@@ -1872,6 +1900,7 @@ const Utils = {
         if (cached) {
           cached.thumbnail = thumb;
           this._tiktokMetaCache.set(key, cached);
+          this.prefetchImage(thumb);
           window.dispatchEvent(new CustomEvent('tiktok-thumb', { detail: { key, thumbnail: thumb } }));
         }
       })
@@ -3177,15 +3206,16 @@ class TikTokEmbedPlayer {
     clearTimeout(this._kickRetry);
     let attempts = 0;
     const tick = () => {
-      if (!this._shouldPlay || this._playing || attempts >= 30) {
+      if (!this._shouldPlay || this._playing || attempts >= 40) {
         if (this._shouldPlay && !this._playing && Utils.isIOS()) this.showTapToPlay();
         return;
       }
       attempts++;
       this.kick();
-      this._kickRetry = setTimeout(tick, 150);
+      const delay = attempts < 4 ? 30 + attempts * 20 : 90;
+      this._kickRetry = setTimeout(tick, delay);
     };
-    this._kickRetry = setTimeout(tick, 80);
+    this._kickRetry = setTimeout(tick, 20);
   }
 
   clearPlayRetry() {
@@ -3265,7 +3295,7 @@ class TikTokEmbedPlayer {
       }
     }
     if (e.data.type === 'onCurrentTime' && e.data.value?.duration > 0) {
-      if (this._shouldPlay && e.data.value.currentTime >= 0.12) this.revealPlayer();
+      if (this._shouldPlay && e.data.value.currentTime >= 0.04) this.revealPlayer();
       this.overlay?.setProgress((e.data.value.currentTime / e.data.value.duration) * 100);
     }
     if (e.data.type === 'onPlayerError' && this._shouldPlay && !this._playing) {
@@ -3834,15 +3864,7 @@ class VideoFeed {
     };
     this._onTouchEnd = () => {
       this.manager.noteUserGesture(true);
-      const vel = this._scrollVelocity || 0;
-      if (Math.abs(vel) > 0.25) {
-        const dir = vel > 0 ? 1 : -1;
-        const target = Math.max(0, Math.min(this.manager.cards.length - 1, this.manager.activeIndex + dir));
-        this.manager.setActive(target, true);
-        this.maybeLoadMore(target);
-      } else {
-        this.syncActiveFromScroll(true);
-      }
+      this.syncActiveFromScroll(true);
       this._scrollVelocity = 0;
     };
     this._onTouchMove = (e) => {
@@ -3856,12 +3878,20 @@ class VideoFeed {
       this._lastScrollT = now;
       if (Math.abs(y - this._touchStartY) > 12) {
         this.manager.noteUserGesture(true);
-        this.syncActiveFromScroll(true);
       }
       const dir = y < this._touchStartY ? 1 : -1;
       const idx = this.manager.activeIndex + dir;
       this.manager.cards[idx]?.preloadAdjacent();
     };
+  }
+
+  syncSlideHeights() {
+    if (!this.feedEl) return;
+    const h = this.feedEl.clientHeight;
+    if (!h) return;
+    this.manager.cards.forEach((card) => {
+      card.el.style.height = `${h}px`;
+    });
   }
 
   appendMoreVideos() {
@@ -3880,6 +3910,7 @@ class VideoFeed {
     });
     const active = this.manager.activeIndex;
     if (active >= 0) this.manager.preloadWindow(active);
+    this.syncSlideHeights();
     this._appending = false;
   }
 
@@ -3921,6 +3952,7 @@ class VideoFeed {
   }
 
   bindPullToRefresh() {
+    if (Utils.isIOS()) return;
     const feed = this.feedEl;
     let startY = 0;
     let tracking = false;
@@ -4017,6 +4049,8 @@ class VideoFeed {
     this.container.appendChild(this.shellEl);
     this.appendMoreVideos();
     this.bindPullToRefresh();
+    this._syncHeights = () => this.syncSlideHeights();
+    window.addEventListener('resize', this._syncHeights);
     this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
     this.feedEl.addEventListener('scrollend', this._onScrollEnd, { passive: true });
     this.feedEl.addEventListener('touchstart', this._onTouchStart, { passive: true });
@@ -4025,12 +4059,9 @@ class VideoFeed {
     this.feedEl.addEventListener('touchcancel', this._onTouchEnd, { passive: true });
     this.startIndex = Math.floor(Math.random() * this.manager.cards.length);
     const start = this.startIndex;
-    const slideH = this.feedEl.clientHeight || this.manager.cards[0]?.el?.offsetHeight || 0;
+    this.syncSlideHeights();
+    const slideH = this.feedEl.clientHeight || 0;
     if (slideH) this.feedEl.scrollTop = start * slideH;
-    else {
-      const target = this.manager.cards[start]?.el;
-      if (target) this.feedEl.scrollTop = target.offsetTop;
-    }
     this.observer = new IntersectionObserver(
       (entries) => {
         let bestEl = null;
@@ -4092,6 +4123,7 @@ class VideoFeed {
 
   destroy() {
     this._unbindPull?.();
+    window.removeEventListener('resize', this._syncHeights);
     this.feedEl?.removeEventListener('scroll', this._onScroll);
     this.feedEl?.removeEventListener('scrollend', this._onScrollEnd);
     this.feedEl?.removeEventListener('touchstart', this._onTouchStart);
@@ -4145,6 +4177,7 @@ class FinanceApp {
     this.store.subscribe(() => {
       if (!this.currentView) return;
       this.updateShellSummary();
+      if (this.currentView === 'insights') return;
       const active = document.activeElement;
       if (this.currentView === 'settings' && active?.closest('#mainContent input, #mainContent select, #mainContent textarea')) return;
       this.navigate(this.currentView);
@@ -4363,6 +4396,23 @@ class FinanceApp {
 
   /** Bind global UI events */
   bindGlobalEvents() {
+    this._insightsTouchY = 0;
+    document.addEventListener('touchstart', (e) => {
+      if (!document.body.classList.contains('view-insights')) return;
+      this._insightsTouchY = e.touches[0]?.clientY ?? 0;
+    }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+      if (!document.body.classList.contains('view-insights')) return;
+      const feed = this.insightsFeed?.feedEl;
+      if (!feed) return;
+      const y = e.touches[0]?.clientY ?? 0;
+      const dy = y - this._insightsTouchY;
+      const maxScroll = feed.scrollHeight - feed.clientHeight;
+      const atTop = feed.scrollTop <= 0;
+      const atBottom = feed.scrollTop >= maxScroll - 1;
+      if ((atTop && dy > 0) || (atBottom && dy < 0)) e.preventDefault();
+    }, { passive: false });
+
     document.getElementById('themeToggle').onclick = () => {
       const t = this.store.settings.theme === 'dark' ? 'light' : 'dark';
       this.store.updateSettings({ theme: t });
@@ -4423,6 +4473,7 @@ class FinanceApp {
       this.insightsFeed = null;
     }
     this.currentView = view;
+    document.documentElement.classList.toggle('view-insights', view === 'insights');
     document.body.classList.toggle('view-dashboard', view === 'dashboard');
     document.body.classList.toggle('view-insights', view === 'insights');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
@@ -4485,6 +4536,7 @@ class FinanceApp {
   renderInsights() {
     if (this.insightsFeed) return;
     this._insightsSoundUnlock = true;
+    Utils.warmInsightThumbnails(INSIGHT_VIDEOS);
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
     this._mountInsightsFeed(null, !Utils.isIOS());
     this._insightsSoundUnlock = false;
