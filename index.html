@@ -691,6 +691,8 @@ tr:last-child td{border-bottom:none}
 .m-kpi-icon{font-size:11px;color:var(--gold);opacity:0.8;margin-bottom:4px}
 .m-kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:600}
 .m-kpi-value{font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;margin-top:2px;letter-spacing:-0.02em}
+.m-kpi-value.positive{color:var(--income)}
+.m-kpi-value.negative{color:var(--expense)}
 .m-section-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:8px;padding-left:2px}
 .m-performance{padding:12px 14px}
 .m-perf-tabs{display:flex;gap:4px;margin-bottom:8px}
@@ -721,6 +723,34 @@ tr:last-child td{border-bottom:none}
 .activity-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .activity-meta{font-size:10px;color:var(--text-muted);margin-top:2px}
 .activity-amount{font-size:13px;font-weight:700;flex-shrink:0;font-family:'Manrope',sans-serif}
+.m-account-card,.m-holding-card{
+  padding:12px 14px;border-radius:var(--radius-sm);cursor:pointer;
+  background:rgba(17,17,17,0.72);backdrop-filter:blur(16px);
+  border:1px solid rgba(212,175,55,0.15);margin-bottom:8px;
+}
+.m-account-card:last-child,.m-holding-card:last-child{margin-bottom:0}
+.m-account-top,.m-holding-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.m-account-name,.m-holding-name{font-size:14px;font-weight:700;font-family:'Manrope',sans-serif}
+.m-account-meta,.m-holding-meta{font-size:10px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.06em}
+.m-account-balance,.m-holding-value{font-size:15px;font-weight:700;font-family:'Manrope',sans-serif;text-align:right}
+.m-card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(212,175,55,0.08)}
+.m-card-actions button{
+  flex:1;padding:8px;border-radius:8px;font-size:12px;
+  background:rgba(23,23,23,0.9);border:1px solid var(--border);color:var(--text-secondary);
+}
+.m-status-line{
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  font-size:11px;color:var(--text-muted);padding:4px 0 2px;
+}
+.m-chart-empty{
+  height:150px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--text-muted);text-align:center;padding:16px;
+}
+.m-search-input{
+  width:100%;padding:10px 14px;border-radius:999px;font-size:14px;
+  background:rgba(17,17,17,0.72);border:1px solid rgba(212,175,55,0.18);
+  margin-bottom:8px;
+}
 
 /* ========== MOBILE ========== */
 .mobile-toggle{display:none}
@@ -748,11 +778,7 @@ tr:last-child td{border-bottom:none}
   .widgets-grid,.chart-row,.form-grid{grid-template-columns:1fr}
   .page-header{flex-direction:column;align-items:flex-start;margin-bottom:16px}
   .page-title{font-size:20px;font-weight:700}
-  .topbar-brand{flex:1;gap:12px}
-  .topbar-brand .logo{width:40px;height:40px}
-  .topbar-brand .logo svg{width:36px;height:36px}
-  .topbar-brand .brand-title{font-size:16px}
-  .topbar-brand .brand-subtitle{font-size:8px}
+  .topbar-brand{flex:1;min-width:0;min-height:1px}
   .topbar-actions{gap:6px}
   .mobile-nav-item{max-width:64px;padding:5px 2px}
   .mobile-nav-item i{font-size:15px}
@@ -941,65 +967,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
           <span class="wealth-strip-value" id="topCashFlow">—</span>
         </div>
       </div>
-      <div class="topbar-brand" aria-label="VaultOne">
-        <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VaultOne">
-            <defs>
-              <linearGradient id="tb-v1-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#faf3e3"/>
-                <stop offset="32%" stop-color="#e8c872"/>
-                <stop offset="68%" stop-color="#c9a227"/>
-                <stop offset="100%" stop-color="#7a5c12"/>
-              </linearGradient>
-              <linearGradient id="tb-v1-gold-soft" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#f5e6c8"/>
-                <stop offset="100%" stop-color="#b8860b"/>
-              </linearGradient>
-              <linearGradient id="tb-v1-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#1a2433"/>
-                <stop offset="55%" stop-color="#0f1520"/>
-                <stop offset="100%" stop-color="#080c12"/>
-              </linearGradient>
-              <radialGradient id="tb-v1-sheen" cx="35%" cy="28%" r="55%">
-                <stop offset="0%" stop-color="rgba(255,255,255,0.14)"/>
-                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-              </radialGradient>
-              <radialGradient id="tb-v1-gem" cx="40%" cy="35%" r="65%">
-                <stop offset="0%" stop-color="#fff8e7"/>
-                <stop offset="100%" stop-color="#d4a853"/>
-              </radialGradient>
-            </defs>
-            <circle cx="20" cy="20" r="19" fill="url(#tb-v1-bg)"/>
-            <circle cx="20" cy="20" r="19" fill="url(#tb-v1-sheen)"/>
-            <circle cx="20" cy="20" r="18.2" fill="none" stroke="url(#tb-v1-gold)" stroke-width="0.9" opacity="0.95"/>
-            <circle cx="20" cy="20" r="15.8" fill="none" stroke="url(#tb-v1-gold)" stroke-width="0.35" opacity="0.45"/>
-            <g stroke="url(#tb-v1-gold-soft)" stroke-width="0.55" stroke-linecap="round" opacity="0.55">
-              <line x1="20" y1="4.5" x2="20" y2="6.8"/>
-              <line x1="20" y1="33.2" x2="20" y2="35.5"/>
-              <line x1="4.5" y1="20" x2="6.8" y2="20"/>
-              <line x1="33.2" y1="20" x2="35.5" y2="20"/>
-              <line x1="9.2" y1="9.2" x2="10.8" y2="10.8"/>
-              <line x1="29.2" y1="29.2" x2="30.8" y2="30.8"/>
-              <line x1="29.2" y1="10.8" x2="30.8" y2="9.2"/>
-              <line x1="9.2" y1="30.8" x2="10.8" y2="29.2"/>
-            </g>
-            <path d="M13.2 12.2 L15.1 14.8 L20 9.8 L24.9 14.8 L26.8 12.2 L20 8 Z" fill="url(#tb-v1-gold)" opacity="0.92"/>
-            <circle cx="20" cy="10.8" r="0.85" fill="url(#tb-v1-gem)"/>
-            <path d="M12.4 27.2 L20 14.6 L27.6 27.2" fill="none" stroke="url(#tb-v1-gold)" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M15.2 24.1 L20 17.2 L24.8 24.1 L20 28.6 Z" fill="url(#tb-v1-gold)" opacity="0.88"/>
-            <circle cx="20" cy="21.8" r="1.15" fill="url(#tb-v1-gem)"/>
-            <path d="M17.2 21.1 L20 24.2 L22.8 21.1" fill="none" stroke="#0a0f16" stroke-width="0.55" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
-          </svg>
-        </div>
-        <div class="brand-block">
-          <div class="brand-row">
-            <div class="brand-title">VaultOne</div>
-            <span class="brand-beta">Beta</span>
-            <span class="brand-version"></span>
-          </div>
-          <div class="brand-subtitle">by Millionaires Crew</div>
-        </div>
-      </div>
+      <div class="topbar-brand" aria-hidden="true"></div>
       <div class="search-command" id="searchCommand" aria-hidden="true">
         <div class="search-box">
           <i class="fas fa-search"></i>
@@ -1044,7 +1012,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.89';
+const APP_VERSION = '0.90';
 
 const Utils = {
   /** Generate unique ID */
@@ -1487,6 +1455,32 @@ class CoinGeckoProvider extends CryptoPriceProvider {
 
   /** Force clear price cache */
   clearPriceCache() { localStorage.removeItem(this.PRICES_KEY); }
+
+  /** Historical price series for charting */
+  async getMarketChart(coinId, days, vsCurrency = 'usd') {
+    const cacheStore = 'pfm_coingecko_charts';
+    const cacheKey = `${coinId}:${days}:${vsCurrency}`;
+    try {
+      const raw = localStorage.getItem(cacheStore);
+      if (raw) {
+        const cache = JSON.parse(raw);
+        const entry = cache[cacheKey];
+        if (entry && Date.now() - entry.fetchedAt < 20 * 60 * 1000) return entry.prices;
+      }
+    } catch (_) {}
+    const data = await this._fetch(`/coins/${encodeURIComponent(coinId)}/market_chart`, {
+      vs_currency: vsCurrency,
+      days: String(days)
+    });
+    const prices = (data.prices || []).map(([t, p]) => [t, p]);
+    try {
+      const raw = localStorage.getItem(cacheStore);
+      const cache = raw ? JSON.parse(raw) : {};
+      cache[cacheKey] = { fetchedAt: Date.now(), prices };
+      localStorage.setItem(cacheStore, JSON.stringify(cache));
+    } catch (_) {}
+    return prices;
+  }
 }
 
 // ========== CRYPTO PORTFOLIO SERVICE ==========
@@ -1622,6 +1616,79 @@ class CryptoPortfolioService {
       await this.provider.getCoinList(false);
     } catch (e) {
       if (!navigator.onLine) this.updateApiStatus('offline', 'No internet connection');
+    }
+  }
+
+  /** Portfolio value history for performance chart */
+  async getPortfolioValueHistory(period) {
+    const holdings = this.store.data.cryptoHoldings || [];
+    if (!holdings.length) return { labels: [], data: [], error: 'no_holdings' };
+
+    const periodDays = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
+    const days = periodDays[period] || 7;
+    const vs = this.getVsCurrency();
+
+    const priceAt = (priceSeries, ts) => {
+      let p = null;
+      for (const [t, price] of priceSeries) {
+        if (t <= ts) p = price;
+        else break;
+      }
+      return p;
+    };
+
+    try {
+      const charts = [];
+      for (let i = 0; i < holdings.length; i += 3) {
+        const chunk = holdings.slice(i, i + 3);
+        const batch = await Promise.all(chunk.map(async (h) => {
+          const prices = await this.provider.getMarketChart(h.coinGeckoId, days, vs);
+          return { holding: h, prices };
+        }));
+        charts.push(...batch);
+      }
+
+      const labels = [];
+      const dateKeys = [];
+      if (period === '1y') {
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(1);
+          d.setMonth(d.getMonth() - i);
+          const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+          const today = new Date();
+          const asOf = end > today ? today : end;
+          asOf.setHours(23, 59, 59, 999);
+          dateKeys.push(asOf.getTime());
+          labels.push(Utils.toISO(asOf).slice(5, 7));
+        }
+      } else {
+        for (let i = days - 1; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          d.setHours(23, 59, 59, 999);
+          dateKeys.push(d.getTime());
+          labels.push(Utils.toISO(d).slice(5));
+        }
+      }
+
+      const data = dateKeys.map((ts) => {
+        let total = 0;
+        charts.forEach(({ holding, prices }) => {
+          const p = priceAt(prices, ts);
+          if (p != null) total += holding.amount * p;
+        });
+        return total;
+      });
+
+      return { labels, data, error: null };
+    } catch (e) {
+      return {
+        labels: [],
+        data: [],
+        error: e.message || 'Unable to load chart',
+        fallback: this.getPortfolioTotalValue()
+      };
     }
   }
 
@@ -2121,6 +2188,8 @@ class FinanceApp {
     this.cashFlowPeriod = 'monthly';
     this.calMonth = new Date();
     this.dashboardChartPeriod = '7d';
+    this.accountsChartPeriod = '7d';
+    this.cryptoChartPeriod = '7d';
     this.init();
   }
 
@@ -2242,10 +2311,143 @@ class FinanceApp {
   /** Set dashboard performance chart period */
   setDashboardChartPeriod(period) {
     this.dashboardChartPeriod = period;
-    document.querySelectorAll('.m-perf-tab').forEach(el => {
+    document.querySelectorAll('.mobile-dashboard .m-perf-tab').forEach(el => {
       el.classList.toggle('active', el.dataset.period === period);
     });
     this.renderWidgetCharts();
+  }
+
+  /** Set accounts performance chart period */
+  setAccountsChartPeriod(period) {
+    this.accountsChartPeriod = period;
+    document.querySelectorAll('.mobile-accounts .m-perf-tab').forEach(el => {
+      el.classList.toggle('active', el.dataset.period === period);
+    });
+    this.renderAccountsPerformanceChart();
+  }
+
+  /** Set crypto performance chart period */
+  setCryptoChartPeriod(period) {
+    this.cryptoChartPeriod = period;
+    document.querySelectorAll('.mobile-crypto .m-perf-tab').forEach(el => {
+      el.classList.toggle('active', el.dataset.period === period);
+    });
+    this.renderCryptoPerformanceChart();
+  }
+
+  /** Build labels + values for mobile performance charts */
+  buildPeriodSeries(period, valueFn) {
+    const monthEndAsOf = (monthsAgo) => {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - monthsAgo);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      const today = new Date();
+      return Utils.toISO(end > today ? today : end);
+    };
+    const labels = [];
+    const data = [];
+    if (period === '1y') {
+      for (let i = 11; i >= 0; i--) {
+        const asOf = monthEndAsOf(i);
+        labels.push(asOf.slice(5, 7));
+        data.push(valueFn(asOf));
+      }
+    } else {
+      const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const asOf = Utils.toISO(d);
+        labels.push(asOf.slice(5));
+        data.push(valueFn(asOf));
+      }
+    }
+    return { labels, data };
+  }
+
+  /** Render a gold line chart in mobile performance sections */
+  renderMobileLineChart(chartKey, el, labels, data, label, period) {
+    if (!el || !data?.length) return;
+    const colors = this.charts.colors();
+    const minVal = Math.min(...data);
+    const maxVal = Math.max(...data);
+    const range = maxVal - minVal;
+    const pad = range > 0 ? range * 0.08 : (Math.abs(minVal) > 0 ? Math.abs(minVal) * 0.1 : 100);
+    this.charts.render(chartKey, el, 'line', {
+      labels,
+      datasets: [{
+        label,
+        data,
+        borderColor: colors.accent,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: colors.accent + '20',
+        pointRadius: period === '7d' ? 3 : period === '30d' ? 2 : 1
+      }]
+    }, {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+        y: {
+          ticks: { font: { size: 10 } },
+          suggestedMin: minVal - pad,
+          suggestedMax: maxVal + pad
+        }
+      }
+    });
+  }
+
+  renderAccountsPerformanceChart() {
+    const el = document.getElementById('chartAccountsBalance');
+    const empty = document.getElementById('accountsChartEmpty');
+    if (!el) return;
+    const period = this.accountsChartPeriod || '7d';
+    const { labels, data } = this.buildPeriodSeries(period, (asOf) => this.calc.totalBalanceAt(asOf));
+    if (empty) empty.style.display = 'none';
+    el.style.display = '';
+    this.renderMobileLineChart('accountsBalance', el, labels, data, 'Total Balance', period);
+  }
+
+  async renderCryptoPerformanceChart() {
+    const el = document.getElementById('chartCryptoValue');
+    const empty = document.getElementById('cryptoChartEmpty');
+    if (!el) return;
+    const period = this.cryptoChartPeriod || '7d';
+    const holdings = this.store.data.cryptoHoldings || [];
+    if (!holdings.length) {
+      if (empty) {
+        empty.style.display = 'flex';
+        empty.textContent = 'Add holdings to see performance';
+      }
+      el.style.display = 'none';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    el.style.display = '';
+    const history = await this.crypto.getPortfolioValueHistory(period);
+    if (history.error && history.error !== 'no_holdings') {
+      if (empty) {
+        empty.style.display = 'flex';
+        empty.textContent = history.error.includes('API key') ? history.error : 'Add CoinGecko API key in Settings to load chart';
+      }
+      el.style.display = 'none';
+      return;
+    }
+    this.renderMobileLineChart('cryptoValue', el, history.labels, history.data, 'Crypto Value', period);
+  }
+
+  /** Account balances grouped by type for mobile KPIs */
+  accountTypeTotals() {
+    const totals = { cash: 0, bank: 0, crypto: 0, other: 0 };
+    this.store.data.accounts.forEach((a) => {
+      const bal = this.calc.accountBalance(a.id);
+      if (a.type === 'cash') totals.cash += bal;
+      else if (a.type === 'bank' || a.type === 'savings') totals.bank += bal;
+      else if (a.type === 'crypto') totals.crypto += bal;
+      else totals.other += bal;
+    });
+    return totals;
   }
 
   /** Toggle secondary dashboard stats */
@@ -2486,7 +2688,7 @@ class FinanceApp {
     ];
 
     document.getElementById('mainContent').innerHTML = `
-      <div class="mobile-home hide-on-desktop">
+      <div class="mobile-home mobile-dashboard hide-on-desktop">
         <section class="m-wealth-header glass-card">
           <div class="m-wealth-label">Total Net Worth</div>
           <div class="m-wealth-value" data-value="${c.netWorth()}">${this.$(c.netWorth())}</div>
@@ -2648,59 +2850,9 @@ class FinanceApp {
   /** Render dashboard performance chart on a canvas */
   renderDashboardPerformanceChart(el) {
     if (!el) return;
-    const colors = this.charts.colors();
     const period = this.dashboardChartPeriod || '7d';
-    const monthEndAsOf = (monthsAgo) => {
-      const d = new Date();
-      d.setDate(1);
-      d.setMonth(d.getMonth() - monthsAgo);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-      const today = new Date();
-      return Utils.toISO(end > today ? today : end);
-    };
-    let labels, data;
-
-    if (period === '1y') {
-      labels = [];
-      data = [];
-      for (let i = 11; i >= 0; i--) {
-        const asOf = monthEndAsOf(i);
-        labels.push(asOf.slice(5, 7));
-        data.push(this.calc.netWorthAt(asOf));
-      }
-    } else {
-      const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-      labels = [];
-      data = [];
-      for (let i = days - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const asOf = Utils.toISO(d);
-        labels.push(asOf.slice(5));
-        data.push(this.calc.netWorthAt(asOf));
-      }
-    }
-
-    const minVal = Math.min(...data);
-    const maxVal = Math.max(...data);
-    const range = maxVal - minVal;
-    const pad = range > 0 ? range * 0.08 : (Math.abs(minVal) > 0 ? Math.abs(minVal) * 0.1 : 100);
-    const chartOpts = {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { maxTicksLimit: 6, font: { size: 10 } } },
-        y: {
-          ticks: { font: { size: 10 } },
-          suggestedMin: minVal - pad,
-          suggestedMax: maxVal + pad
-        }
-      }
-    };
-
-    this.charts.render('netWorth', el, 'line', {
-      labels,
-      datasets: [{ label: 'Net Worth', data, borderColor: colors.accent, tension: 0.4, fill: true, backgroundColor: colors.accent + '20', pointRadius: period === '7d' ? 3 : period === '30d' ? 2 : 1 }]
-    }, chartOpts);
+    const { labels, data } = this.buildPeriodSeries(period, (asOf) => this.calc.netWorthAt(asOf));
+    this.renderMobileLineChart('netWorth', el, labels, data, 'Net Worth', period);
   }
 
   /** Render dashboard widget charts */
@@ -2960,7 +3112,75 @@ class FinanceApp {
   /** Render accounts view */
   renderAccounts() {
     const accounts = this.store.data.accounts;
+    const c = this.calc;
+    const totalBalance = c.totalBalance();
+    const flow = c.currentMonthFlow();
+    const prev = new Date(); prev.setMonth(prev.getMonth() - 1);
+    const prevFlow = c.monthlyFlow(Utils.monthKey(prev));
+    const monthlyDelta = flow.savings - prevFlow.savings;
+    const todayKey = Utils.toISO(new Date());
+    const dailyDelta = this.store.data.transactions
+      .filter(t => t.date === todayKey)
+      .reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
+    const dailyCls = dailyDelta >= 0 ? 'positive' : 'negative';
+    const monthlyCls = monthlyDelta >= 0 ? 'positive' : 'negative';
+    const perfPeriod = this.accountsChartPeriod || '7d';
+    const typeTotals = this.accountTypeTotals();
+    const kpis = [
+      { label: 'Cash', value: typeTotals.cash, icon: 'money-bill' },
+      { label: 'Bank', value: typeTotals.bank, icon: 'building-columns' },
+      { label: 'Crypto Wallets', value: typeTotals.crypto, icon: 'coins' },
+      { label: 'Other', value: typeTotals.other, icon: 'wallet' }
+    ];
+
     document.getElementById('mainContent').innerHTML = `
+      <div class="mobile-home mobile-accounts hide-on-desktop">
+        <section class="m-wealth-header glass-card">
+          <div class="m-wealth-label">Total Balance</div>
+          <div class="m-wealth-value">${this.$(totalBalance)}</div>
+          <div class="m-wealth-trends">
+            <div class="m-trend-pill ${dailyCls}"><span>Today</span><i class="fas fa-${dailyDelta >= 0 ? 'arrow-up' : 'arrow-down'}"></i>${dailyDelta >= 0 ? '+' : ''}${this.$(dailyDelta)}</div>
+            <div class="m-trend-pill ${monthlyCls}"><span>Month</span><i class="fas fa-${monthlyDelta >= 0 ? 'arrow-up' : 'arrow-down'}"></i>${monthlyDelta >= 0 ? '+' : ''}${this.$(monthlyDelta)}</div>
+          </div>
+        </section>
+        <div class="m-quick-actions">
+          <button type="button" class="m-action-pill" onclick="app.openTransferModal()"><i class="fas fa-right-left"></i> Transfer</button>
+          <button type="button" class="m-action-pill" onclick="app.openAccountModal()"><i class="fas fa-plus"></i> Add Account</button>
+        </div>
+        <div class="m-kpi-grid">${kpis.map(k => `
+          <div class="m-kpi glass-card">
+            <div class="m-kpi-icon"><i class="fas fa-${k.icon}"></i></div>
+            <div class="m-kpi-label">${k.label}</div>
+            <div class="m-kpi-value">${this.$(k.value)}</div>
+          </div>`).join('')}
+        </div>
+        <section class="m-performance glass-card">
+          <div class="m-section-head">Performance</div>
+          <div class="m-perf-tabs">
+            ${['7d', '30d', '90d', '1y'].map(p => `
+              <button type="button" class="m-perf-tab${perfPeriod === p ? ' active' : ''}" data-period="${p}" onclick="app.setAccountsChartPeriod('${p}')">${p.toUpperCase()}</button>`).join('')}
+          </div>
+          <div class="m-chart-wrap"><canvas id="chartAccountsBalance"></canvas><div id="accountsChartEmpty" class="m-chart-empty" style="display:none"></div></div>
+        </section>
+        <section class="glass-card" style="padding:12px 14px">
+          <div class="m-section-head">Your Accounts</div>
+          ${accounts.length ? accounts.map(a => `
+            <div class="m-account-card" onclick="app.showAccountHistory('${a.id}')">
+              <div class="m-account-top">
+                <div>
+                  <div class="m-account-name">${Utils.esc(a.name)}</div>
+                  <div class="m-account-meta">${Utils.esc(a.type)}</div>
+                </div>
+                <div class="m-account-balance">${this.$(c.accountBalance(a.id))}</div>
+              </div>
+              <div class="m-card-actions" onclick="event.stopPropagation()">
+                <button type="button" onclick="app.openAccountModal('${a.id}')"><i class="fas fa-pen"></i> Edit</button>
+                <button type="button" onclick="app.deleteAccount('${a.id}')"><i class="fas fa-trash"></i> Delete</button>
+              </div>
+            </div>`).join('') : '<div class="empty-state" style="padding:20px"><p>No accounts yet</p><button class="btn btn-primary btn-sm" onclick="app.openAccountModal()">Add Account</button></div>'}
+        </section>
+      </div>
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Accounts</h1><p class="page-subtitle">Manage your financial accounts</p></div>
         <div><button class="btn btn-secondary" onclick="app.openTransferModal()"><i class="fas fa-right-left"></i> Transfer</button>
         <button class="btn btn-primary" onclick="app.openAccountModal()"><i class="fas fa-plus"></i> Add Account</button></div></div>
@@ -2975,7 +3195,10 @@ class FinanceApp {
           </div>
         </div>`).join('')}
       </div>
+      </div>
       <div id="accountHistory"></div>`;
+
+    setTimeout(() => this.renderAccountsPerformanceChart(), 80);
   }
 
   /** Show account transaction history */
@@ -3378,8 +3601,77 @@ class FinanceApp {
     const statusLabel = { online: 'Online', offline: 'Offline', rate_limited: 'Rate Limited', error: 'Error', unknown: 'Unknown' };
     const statusClass = summary.apiStatus === 'online' ? 'online' : (summary.apiStatus === 'rate_limited' || summary.apiStatus === 'error' ? 'rate_limited' : 'offline');
     const lastUpd = summary.lastUpdated ? new Date(summary.lastUpdated).toLocaleString() : 'Never';
+    const plCls = summary.totalPL >= 0 ? 'positive' : 'negative';
+    const roiCls = summary.roiPct >= 0 ? 'positive' : 'negative';
+    const perfPeriod = this.cryptoChartPeriod || '7d';
+    const kpis = [
+      { label: 'Invested', value: summary.totalInvested, icon: 'wallet' },
+      { label: 'P/L', value: summary.totalPL, icon: 'chart-line', cls: plCls },
+      { label: 'ROI', value: summary.roiPct.toFixed(2) + '%', icon: 'percent', cls: roiCls },
+      { label: 'Holdings', value: summary.count, icon: 'layer-group' }
+    ];
 
     document.getElementById('mainContent').innerHTML = `
+      <div class="mobile-home mobile-crypto hide-on-desktop">
+        <section class="m-wealth-header glass-card">
+          <div class="m-wealth-label">Total Crypto Value</div>
+          <div class="m-wealth-value">${this.$(summary.totalValue)}</div>
+          <div class="m-wealth-trends">
+            <div class="m-trend-pill ${plCls}"><span>P/L</span><i class="fas fa-${summary.totalPL >= 0 ? 'arrow-up' : 'arrow-down'}"></i>${summary.totalPL >= 0 ? '+' : ''}${this.$(summary.totalPL)}</div>
+            <div class="m-trend-pill ${roiCls}"><span>ROI</span><i class="fas fa-${summary.roiPct >= 0 ? 'arrow-up' : 'arrow-down'}"></i>${summary.roiPct >= 0 ? '+' : ''}${summary.roiPct.toFixed(2)}%</div>
+          </div>
+        </section>
+        <div class="m-status-line">
+          <span class="api-status ${statusClass}"><i class="fas fa-circle" style="font-size:7px"></i> ${statusLabel[summary.apiStatus] || 'Unknown'}</span>
+          <span>Updated ${lastUpd}</span>
+          ${this.crypto.loading ? '<span class="price-loading"><span class="spinner" style="width:12px;height:12px;border-width:2px"></span></span>' : ''}
+        </div>
+        <div class="m-quick-actions">
+          <button type="button" class="m-action-pill" onclick="app.refreshCryptoPrices(true)"><i class="fas fa-rotate"></i> Refresh</button>
+          <button type="button" class="m-action-pill" onclick="app.openCryptoModal()"><i class="fas fa-plus"></i> Add Holding</button>
+        </div>
+        <div class="m-kpi-grid">${kpis.map(k => `
+          <div class="m-kpi glass-card">
+            <div class="m-kpi-icon"><i class="fas fa-${k.icon}"></i></div>
+            <div class="m-kpi-label">${k.label}</div>
+            <div class="m-kpi-value${k.cls ? ' ' + k.cls : ''}">${typeof k.value === 'number' ? this.$(k.value) : k.value}</div>
+          </div>`).join('')}
+        </div>
+        <section class="m-performance glass-card">
+          <div class="m-section-head">Performance</div>
+          <div class="m-perf-tabs">
+            ${['7d', '30d', '90d', '1y'].map(p => `
+              <button type="button" class="m-perf-tab${perfPeriod === p ? ' active' : ''}" data-period="${p}" onclick="app.setCryptoChartPeriod('${p}')">${p.toUpperCase()}</button>`).join('')}
+          </div>
+          <div class="m-chart-wrap"><canvas id="chartCryptoValue"></canvas><div id="cryptoChartEmpty" class="m-chart-empty" style="display:none"></div></div>
+        </section>
+        <section class="glass-card" style="padding:12px 14px">
+          <div class="m-section-head">Holdings</div>
+          <input type="text" class="m-search-input" placeholder="Search holdings..." value="${Utils.esc(search)}" oninput="app.cryptoState.search=this.value;app.renderCryptoPortfolio()">
+          ${holdings.length ? holdings.map(r => {
+            const h = r.holding;
+            const rowPlCls = (r.profitLoss ?? 0) >= 0 ? 'positive' : 'negative';
+            return `
+            <div class="m-holding-card">
+              <div class="m-holding-top">
+                <div>
+                  <div class="m-holding-name">${Utils.esc(h.symbol)} <small style="font-weight:400;color:var(--text-muted)">${Utils.esc(h.name)}</small></div>
+                  <div class="m-holding-meta">${h.amount} · ${r.allocationPct != null ? r.allocationPct.toFixed(1) + '% alloc' : '—'}</div>
+                </div>
+                <div class="m-holding-value">
+                  <div>${r.currentValue != null ? this.$(r.currentValue) : '—'}</div>
+                  <div class="m-trend-pill ${rowPlCls}" style="display:inline-flex;margin-top:4px;font-size:10px;padding:2px 8px">${r.profitLoss != null ? (r.profitLoss >= 0 ? '+' : '') + this.$(r.profitLoss) : '—'}</div>
+                </div>
+              </div>
+              <div class="m-card-actions">
+                <button type="button" onclick="app.openCryptoModal('${h.id}')"><i class="fas fa-pen"></i> Edit</button>
+                <button type="button" onclick="app.deleteCryptoHolding('${h.id}')"><i class="fas fa-trash"></i> Delete</button>
+              </div>
+            </div>`;
+          }).join('') : '<div class="empty-state" style="padding:20px"><p>No crypto holdings yet</p><button class="btn btn-primary btn-sm" onclick="app.openCryptoModal()">Add Holding</button></div>'}
+        </section>
+      </div>
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Crypto Portfolio</h1>
         <div class="crypto-status-bar" style="margin-top:8px">
           <span class="api-status ${statusClass}"><i class="fas fa-circle" style="font-size:8px"></i> ${statusLabel[summary.apiStatus] || 'Unknown'}</span>
@@ -3406,20 +3698,21 @@ class FinanceApp {
           ${[['name','Coin'],['amount','Amount'],['avgBuy','Avg Buy'],['live','Live Price'],['cost','Total Cost'],['value','Value'],['profit','P/L $'],['roi','P/L %'],['alloc','Alloc %'],['notes','Notes']].map(([k,l]) =>
             `<th class="${sort===k?'sorted':''}" onclick="app.cryptoSort('${k}')">${l}</th>`).join('')}
           <th>Actions</th></tr></thead><tbody>
-          ${holdings.map(r => { const h = r.holding; const plCls = (r.profitLoss ?? 0) >= 0 ? 'amount-income' : 'amount-expense';
+          ${holdings.map(r => { const h = r.holding; const rowPlCls = (r.profitLoss ?? 0) >= 0 ? 'amount-income' : 'amount-expense';
             return `<tr>
               <td><img class="coin-logo sm" src="${Utils.esc(h.logoUrl||'')}" alt="" onerror="this.style.display='none'"> ${Utils.esc(h.name)} <small style="color:var(--text-muted)">${h.symbol}</small></td>
               <td>${h.amount}</td><td>${this.$(h.avgBuyPrice)}</td>
               <td>${r.livePrice != null ? this.$(r.livePrice) : '—'}</td>
               <td>${this.$(r.totalCost)}</td><td>${r.currentValue != null ? this.$(r.currentValue) : '—'}</td>
-              <td class="${plCls}">${r.profitLoss != null ? this.$(r.profitLoss) : '—'}</td>
-              <td class="${plCls}">${r.roiPct != null ? r.roiPct.toFixed(2) + '%' : '—'}</td>
+              <td class="${rowPlCls}">${r.profitLoss != null ? this.$(r.profitLoss) : '—'}</td>
+              <td class="${rowPlCls}">${r.roiPct != null ? r.roiPct.toFixed(2) + '%' : '—'}</td>
               <td>${r.allocationPct != null ? r.allocationPct.toFixed(1) + '%' : '—'}</td>
               <td>${Utils.esc(h.notes||'')}</td>
               <td class="actions"><button onclick="app.openCryptoModal('${h.id}')"><i class="fas fa-pen"></i></button><button onclick="app.deleteCryptoHolding('${h.id}')"><i class="fas fa-trash"></i></button></td>
             </tr>`; }).join('')}
         </tbody></table></div></div></div>` :
-      '<div class="empty-state"><i class="fas fa-bitcoin-sign"></i><h3>No crypto holdings</h3><p>Add your cryptocurrency holdings to track live prices and portfolio performance.</p><button class="btn btn-primary" onclick="app.openCryptoModal()">Add Holding</button></div>'}`;
+      '<div class="empty-state"><i class="fas fa-bitcoin-sign"></i><h3>No crypto holdings</h3><p>Add your cryptocurrency holdings to track live prices and portfolio performance.</p><button class="btn btn-primary" onclick="app.openCryptoModal()">Add Holding</button></div>'}
+      </div>`;
 
     if (holdings.length) {
       setTimeout(() => {
@@ -3430,6 +3723,7 @@ class FinanceApp {
         });
       }, 50);
     }
+    setTimeout(() => this.renderCryptoPerformanceChart(), 80);
   }
 
   /** Sort crypto holdings table */
