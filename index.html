@@ -1204,7 +1204,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.86';
+const APP_VERSION = '0.87';
 
 /** GitHub repo that hosts insight videos in /videos (auto-discovered when pushed) */
 const INSIGHTS_GITHUB = {
@@ -1216,7 +1216,7 @@ const INSIGHTS_GITHUB = {
 
 /** Local fallback filenames in videos/ — used when GitHub API is unavailable */
 const INSIGHT_VIDEO_FILES = [
-  'vidssave.com Steve Harvey- Inspirational Speech _ Motivational Short Video _ Incredible You 480P.mp4'
+  'steve-harvey.mp4'
 ];
 
 const INSIGHT_VIDEO_EXT = /\.(mp4|webm|mov|m4v)$/i;
@@ -1414,18 +1414,43 @@ const Utils = {
     };
   },
 
-  /** Resolve playback URL — local videos/ path first, GitHub raw as fallback */
+  /** Resolve playback URL — first candidate from insightVideoCandidates */
   insightVideoUrl(meta) {
-    if (!meta) return '';
-    if (meta.url) return meta.url;
-    const path = String(meta.file || '').trim();
-    if (!path) return '';
-    if (/^https?:/i.test(path)) return path;
+    const candidates = this.insightVideoCandidates(meta);
+    return candidates[0] || '';
+  },
+
+  /** All URLs to try for a video (remote first on iOS / file://) */
+  insightVideoCandidates(meta) {
+    const list = [];
+    const add = (u) => {
+      const url = String(u || '').trim();
+      if (url && !list.includes(url)) list.push(url);
+    };
+    const path = String(meta?.file || '').trim();
+    const name = this.insightVideoBasename(path);
+    const { folder } = this.insightsGithub();
+    const relPath = path || `${folder}/${name}`;
+    const gh = this.insightsGithub();
+
+    if (meta?.url) add(meta.url);
+    add(this.githubInsightVideoUrl(relPath));
+    add(`https://cdn.jsdelivr.net/gh/${gh.owner}/${gh.repo}@${gh.branch}/${gh.folder}/${encodeURIComponent(name)}`);
+    add(`https://${gh.owner}.github.io/${gh.repo}/${gh.folder}/${encodeURIComponent(name)}`);
+
+    try { add(new URL(relPath, location.href).href); } catch (_) {}
     try {
-      return new URL(path, location.href).href;
-    } catch {
-      return this.githubInsightVideoUrl(path);
+      const encoded = relPath.split('/').map((part) => encodeURIComponent(part)).join('/');
+      add(new URL(encoded, location.href).href);
+    } catch (_) {}
+
+    const preferRemote = location.protocol === 'file:' || this.isIOS();
+    if (preferRemote) {
+      const remote = list.filter((u) => /^https?:/i.test(u));
+      const local = list.filter((u) => !/^https?:/i.test(u));
+      return [...remote, ...local];
     }
+    return list;
   },
 
   /** @deprecated use insightVideoUrl */
@@ -2460,17 +2485,69 @@ class VideoOverlay {
 }
 
 class VideoPlayer {
-  constructor(container, url, onError, manager) {
+  constructor(container, meta, onError, manager) {
     this.container = container;
-    this.url = url;
+    this.meta = meta;
+    this.candidates = Utils.insightVideoCandidates(meta);
+    this.candidateIndex = 0;
+    this.url = this.candidates[0] || '';
     this.onError = onError;
     this.manager = manager;
     this.mounted = false;
     this.video = null;
     this.tapZone = null;
     this.muteHint = null;
+    this._blobUrl = null;
+    this._triedBlob = false;
     this._lastTap = 0;
     this._onTap = (e) => this.handleTap(e);
+    this._onVideoError = () => this.handleVideoError();
+  }
+
+  setVideoSource(url) {
+    if (!this.video || !url) return;
+    this.url = url;
+    this.video.src = url;
+  }
+
+  async tryBlobLoad(url) {
+    if (!url || !/^https?:/i.test(url)) return false;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return false;
+      const blob = await res.blob();
+      if (this._blobUrl) URL.revokeObjectURL(this._blobUrl);
+      this._blobUrl = URL.createObjectURL(blob);
+      this.setVideoSource(this._blobUrl);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async tryBlobCandidates() {
+    for (const url of this.candidates) {
+      if (await this.tryBlobLoad(url)) return true;
+    }
+    return false;
+  }
+
+  handleVideoError() {
+    this.candidateIndex += 1;
+    if (this.candidateIndex < this.candidates.length) {
+      this.setVideoSource(this.candidates[this.candidateIndex]);
+      this.video.play().catch(() => {});
+      return;
+    }
+    if (!this._triedBlob && /^https?:/.test(location.protocol)) {
+      this._triedBlob = true;
+      this.tryBlobCandidates().then((ok) => {
+        if (ok) this.video.play().catch(() => {});
+        else this.onError?.();
+      });
+      return;
+    }
+    this.onError?.();
   }
 
   mount() {
@@ -2483,9 +2560,10 @@ class VideoPlayer {
     this.video.loop = true;
     this.video.muted = this.manager?.muted
       || (Utils.isIOS() && !this.manager?.soundUnlocked);
-    this.video.preload = 'none';
-    this.video.src = this.url;
-    this.video.addEventListener('error', () => this.onError?.());
+    this.video.preload = 'metadata';
+    this.video.addEventListener('error', this._onVideoError);
+    if (this.url) this.setVideoSource(this.url);
+    else this.handleVideoError();
     this.tapZone = document.createElement('div');
     this.tapZone.className = 'insights-tap-zone';
     this.tapZone.addEventListener('click', this._onTap);
@@ -2621,11 +2699,13 @@ class VideoPlayer {
   destroy() {
     if (this.tapZone) this.tapZone.removeEventListener('click', this._onTap);
     if (this.video) {
+      this.video.removeEventListener('error', this._onVideoError);
       this.video.pause();
       this.video.removeAttribute('src');
       this.video.load();
       this.video.remove();
     }
+    if (this._blobUrl) URL.revokeObjectURL(this._blobUrl);
     this.tapZone?.remove();
     this.muteHint?.remove();
     this.video = null;
@@ -2654,13 +2734,12 @@ class VideoCard {
   ensureLoaded() {
     if (this.loaded) return;
     this.loaded = true;
-    const url = Utils.insightVideoUrl(this.meta);
-    if (!url) {
+    if (!this.meta?.file && !this.meta?.url) {
       this.showError();
       return;
     }
     this.el.classList.add('insights-slide--native');
-    this.player = new VideoPlayer(this.el, url, () => this.showError(), this.manager);
+    this.player = new VideoPlayer(this.el, this.meta, () => this.showError(), this.manager);
     this.player.mount();
     this.player.setMuted(this.manager.muted);
     this.overlay = new VideoOverlay(this.player.video, this.meta, this.index, this.total);
@@ -2669,9 +2748,12 @@ class VideoCard {
 
   showError() {
     if (this.errorEl) return;
+    const iosHint = Utils.isIOS()
+      ? ' On iPhone, open the app via GitHub Pages or <code>http://your-mac-ip:8000</code> — local file shortcuts cannot play videos.'
+      : '';
     this.errorEl = document.createElement('div');
     this.errorEl.className = 'insights-error';
-    this.errorEl.innerHTML = '<i class="fas fa-circle-exclamation"></i><p>Unable to load this video. Check that the file exists in the videos/ folder.</p>';
+    this.errorEl.innerHTML = `<i class="fas fa-circle-exclamation"></i><p>Unable to load this video. Push <code>videos/</code> to GitHub or serve the app over HTTP.${iosHint}</p>`;
     this.el.appendChild(this.errorEl);
   }
 
