@@ -1306,7 +1306,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.65';
+const APP_VERSION = '0.66';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3150,7 +3150,6 @@ class TikTokEmbedPlayer {
 
   kickFromGesture() {
     this.manager?.noteUserGesture?.(true);
-    if (!this.manager?.muted) this.manager.soundUnlocked = true;
     this.hideTapToPlay();
     this.container?.classList.add('insights-slide--loading');
     const id = this.getVideoIdSync();
@@ -3168,7 +3167,6 @@ class TikTokEmbedPlayer {
     if (!this._shouldPlay) this._shouldPlay = true;
     if (this._ready) this.kick();
     else this.schedulePlayRetry();
-    if (!this.manager?.muted && this.manager?.soundUnlocked) this.unlockAudio();
   }
 
   resume() {
@@ -3252,10 +3250,7 @@ class TikTokEmbedPlayer {
       this.hideFallback();
       if (this._shouldPlay) {
         this.kick();
-        if (!this.manager?.muted && (this.manager?.soundUnlocked || this.manager?.hasRecentGesture?.())) {
-          this.manager.soundUnlocked = true;
-          this.unlockAudio();
-        }
+        if (!this.manager?.muted && this.manager?.soundUnlocked) this.unlockAudio();
       } else {
         this.silence();
       }
@@ -3341,9 +3336,9 @@ class TikTokEmbedPlayer {
 
   handleTap(e) {
     e.stopPropagation();
-    this.manager?.noteUserGesture?.();
-    this.manager?.enableSound?.();
-    this.kickFromGesture();
+    this.manager?.noteUserGesture?.(true);
+    if (!this._shouldPlay || !this._playing) this.kickFromGesture();
+    if (Utils.isIOS() || !this.manager?.muted) this.manager?.enableSound();
   }
 
   async setPreload(mode) {
@@ -3417,6 +3412,12 @@ class VideoPlayer {
 
   handleTap(e) {
     e.stopPropagation();
+    this.manager?.noteUserGesture?.(true);
+    if (!this._shouldPlay || !this._playing) this.kickFromGesture();
+    if (!this.manager?.muted && Utils.isIOS() && !this.manager?.soundUnlocked) {
+      this.manager.enableSound();
+      return;
+    }
     if (this.manager && (this.manager.muted || !this.manager.soundUnlocked)) {
       this.manager.enableSound();
       if (this.video) {
@@ -3664,13 +3665,20 @@ class VideoManager {
   }
 
   enableSound() {
-    this.noteUserGesture();
+    this.noteUserGesture(true);
     this.muted = false;
     this.soundUnlocked = true;
     this.cards.forEach((c, i) => {
       if (i !== this.activeIndex) c.player?.silence?.();
     });
     this.unmuteActive();
+    this.onSoundChange?.();
+  }
+
+  /** iOS: new slide always starts muted until user taps for sound */
+  resetIOSSound() {
+    if (!Utils.isIOS()) return;
+    this.soundUnlocked = false;
     this.onSoundChange?.();
   }
 
@@ -3722,6 +3730,7 @@ class VideoManager {
     if (changed) {
       this.cards[this.activeIndex]?.deactivate();
       this.activeIndex = index;
+      if (Utils.isIOS()) this.resetIOSSound();
     }
     this.cards.forEach((c, i) => {
       if (i !== this.activeIndex) c.player?.silence?.();
@@ -3738,7 +3747,6 @@ class VideoManager {
     const p = card?.player;
     if (gesture) {
       this.noteUserGesture(true);
-      if (!this.muted) this.soundUnlocked = true;
       p?.kickFromGesture?.();
     } else if (Utils.isIOS()) {
       p?.go?.();
@@ -3817,7 +3825,6 @@ class VideoFeed {
     this._onScrollEnd = () => this.syncActiveFromScroll(true);
     this._onTouchStart = (e) => {
       this.manager.noteUserGesture(true);
-      if (!this.manager.muted) this.manager.soundUnlocked = true;
       this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
       this._touchStartY = e.touches[0]?.clientY ?? 0;
       this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
@@ -3827,7 +3834,6 @@ class VideoFeed {
     };
     this._onTouchEnd = () => {
       this.manager.noteUserGesture(true);
-      if (Utils.isIOS() && !this.manager.muted) this.manager.soundUnlocked = true;
       const vel = this._scrollVelocity || 0;
       if (Math.abs(vel) > 0.25) {
         const dir = vel > 0 ? 1 : -1;
@@ -3850,7 +3856,6 @@ class VideoFeed {
       this._lastScrollT = now;
       if (Math.abs(y - this._touchStartY) > 12) {
         this.manager.noteUserGesture(true);
-        if (Utils.isIOS() && !this.manager.muted) this.manager.soundUnlocked = true;
         this.syncActiveFromScroll(true);
       }
       const dir = y < this._touchStartY ? 1 : -1;
@@ -4050,14 +4055,14 @@ class VideoFeed {
     this.maybeLoadMore(start);
     if (this._bootFromGesture) {
       this.manager.noteUserGesture(true);
-      if (!this.manager.muted) this.manager.soundUnlocked = true;
       this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
     }
   }
 
   updateSoundBtn() {
     if (!this.soundBtn) return;
-    const muted = this.manager.muted;
+    const muted = this.manager.muted
+      || (Utils.isIOS() && !this.manager.soundUnlocked);
     this.soundBtn.innerHTML = muted
       ? '<i class="fas fa-volume-xmark"></i>'
       : '<i class="fas fa-volume-high"></i>';
@@ -4067,8 +4072,7 @@ class VideoFeed {
 
   noteUserGesture() {
     this.manager.noteUserGesture(true);
-    const p = this.manager.cards[this.manager.activeIndex]?.player;
-    p?.kickFromGesture?.();
+    this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
   }
 
   syncActiveFromScroll(fromGesture = false) {
@@ -4235,7 +4239,6 @@ class FinanceApp {
           const feed = this.insightsFeed;
           if (feed?.manager) {
             feed.manager.noteUserGesture(true);
-            if (!feed.manager.muted) feed.manager.soundUnlocked = true;
             feed.manager.cards[feed.manager.activeIndex]?.player?.kickFromGesture?.();
           }
           return;
@@ -4352,7 +4355,6 @@ class FinanceApp {
         if (view === 'insights' && this.insightsFeed?.manager) {
           const feed = this.insightsFeed;
           feed.manager.noteUserGesture(true);
-          if (!feed.manager.muted) feed.manager.soundUnlocked = true;
           feed.manager.cards[feed.manager.activeIndex]?.player?.kickFromGesture?.();
         }
       };
@@ -4484,7 +4486,7 @@ class FinanceApp {
     if (this.insightsFeed) return;
     this._insightsSoundUnlock = true;
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed(null, true);
+    this._mountInsightsFeed(null, !Utils.isIOS());
     this._insightsSoundUnlock = false;
   }
 
