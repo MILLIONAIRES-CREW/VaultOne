@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VaultOne">
+<meta name="theme-color" content="#050505">
 <title>VaultOne — Personal Finance Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -55,6 +59,8 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px;scroll-behavior:smooth;color-scheme:dark}
+html,body{background:var(--bg-primary,#050505)}
+html.standalone,html.standalone body{background:#050505}
 body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
   background:var(--bg-primary);
@@ -799,6 +805,11 @@ tr:last-child td{border-bottom:none}
 html.view-insights,
 body.view-insights{
   overflow:hidden;height:100%;overscroll-behavior:none;
+  touch-action:none;background:#000;
+}
+html.standalone.view-insights,
+html.standalone body.view-insights{
+  min-height:100%;min-height:-webkit-fill-available;
 }
 body.view-insights .topbar{display:none}
 body.view-insights .content{padding:0;max-width:none;margin:0;animation:none;height:100%}
@@ -1051,8 +1062,16 @@ body.view-insights .insights-mount{width:100%;height:100%}
 @media(max-width:768px){
   body.view-insights .insights-feed-shell{
     position:fixed;inset:0;z-index:1;
-    height:100%;height:100dvh;height:100svh;
+    height:100%;height:100dvh;height:-webkit-fill-available;
+    background:#000;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+    box-sizing:border-box;
   }
+  html.standalone body.view-insights .insights-feed-shell{
+    height:100%;height:-webkit-fill-available;
+  }
+  body.view-insights .insights-slide{scroll-snap-stop:normal}
   body.view-insights .insights-sound-btn{
     bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
   }
@@ -1315,7 +1334,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.70';
+const APP_VERSION = '0.72';
 
 const INSIGHT_VIDEOS = [
   {
@@ -1691,6 +1710,32 @@ const Utils = {
   isIOS() {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent)
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  },
+
+  /** Launched from iOS/Android Add to Home Screen */
+  isStandalone() {
+    return window.navigator.standalone === true
+      || window.matchMedia('(display-mode: standalone)').matches
+      || window.matchMedia('(display-mode: fullscreen)').matches;
+  },
+
+  /** iOS home-screen PWA — strictest scroll/memory limits */
+  isIOSStandalone() {
+    return this.isIOS() && this.isStandalone();
+  },
+
+  saveActiveView(view) {
+    try {
+      sessionStorage.setItem('pfm_active_view', view);
+      if (Utils.isStandalone()) localStorage.setItem('pfm_active_view', view);
+    } catch (_) {}
+  },
+
+  loadActiveView() {
+    try {
+      return localStorage.getItem('pfm_active_view')
+        || sessionStorage.getItem('pfm_active_view');
+    } catch (_) { return null; }
   },
 
   needsGesturePlay() {
@@ -3167,6 +3212,18 @@ class TikTokEmbedPlayer {
     this.applyCachedThumbnail();
   }
 
+  unloadIframe() {
+    if (this._shouldPlay || !this.iframe) return;
+    this.clearPlayRetry();
+    this._ready = false;
+    this._playing = false;
+    this._revealed = false;
+    if (this.iframe.src && this.iframe.src !== 'about:blank') {
+      this.iframe.src = 'about:blank';
+    }
+    this.coverPlayer();
+  }
+
   silence() {
     if (!this.iframe?.contentWindow) return;
     this.post('mute');
@@ -3537,6 +3594,15 @@ class VideoPlayer {
     this.silence();
   }
 
+  unloadIframe() {
+    this.stop();
+    if (this.video) {
+      this.video.pause();
+      this.video.removeAttribute('src');
+      this.video.load();
+    }
+  }
+
   pause() {
     if (this.video) this.video.pause();
   }
@@ -3622,6 +3688,7 @@ class VideoCard {
 
   deactivate() {
     this.player?.stop?.();
+    if (Utils.isIOSStandalone()) this.player?.unloadIframe?.();
   }
 
   preloadAdjacent() {
@@ -3747,40 +3814,47 @@ class VideoManager {
   }
 
   preloadWindow(index) {
-    [-2, -1, 1, 2].forEach((off) => {
+    if (Utils.isIOSStandalone()) return;
+    [-1, 1].forEach((off) => {
       const card = this.cards[index + off];
       if (card) card.preloadAdjacent();
+    });
+  }
+
+  trimIframes(index) {
+    const keep = Utils.isIOSStandalone() ? 0 : 1;
+    this.cards.forEach((c, i) => {
+      if (Math.abs(i - index) > keep) c.player?.unloadIframe?.();
     });
   }
 
   setActive(index, fromGesture = false) {
     if (index < 0 || index >= this.cards.length) return;
     const gesture = fromGesture || this.hasRecentGesture();
-    const changed = index !== this.activeIndex;
-    if (changed) {
-      this.cards[this.activeIndex]?.deactivate();
+    const prev = this.activeIndex;
+    if (index === prev) {
+      const p = this.cards[prev]?.player;
+      if (p?._playing || (p?.video && !p.video.paused)) return;
+    } else {
+      this.cards[prev]?.deactivate();
       this.activeIndex = index;
       if (Utils.isIOS()) this.resetIOSSound();
     }
     this.cards.forEach((c, i) => {
       if (i !== this.activeIndex) c.player?.silence?.();
     });
+    this.trimIframes(this.activeIndex);
     const card = this.cards[this.activeIndex];
-    if (changed) {
-      card?.activate();
-    } else {
-      const p = card?.player;
-      const playing = p?._playing || (p?.video && !p.video.paused);
-      if (!playing) card?.activate();
-    }
-    this.preloadWindow(this.activeIndex);
+    card?.ensureLoaded();
     const p = card?.player;
     if (gesture) {
       this.noteUserGesture(true);
       p?.kickFromGesture?.();
-    } else if (Utils.isIOS()) {
+    } else {
       p?.go?.();
-    } else if (!this.muted && this.soundUnlocked) {
+    }
+    this.preloadWindow(this.activeIndex);
+    if (!gesture && !Utils.isIOS() && !this.muted && this.soundUnlocked) {
       this.unmuteActive();
     }
   }
@@ -3846,43 +3920,92 @@ class VideoFeed {
     this.pullDistance = 0;
     this._pullThreshold = 72;
     this._appending = false;
+    this._shuffledPool = null;
+    this._useScrollObserver = !Utils.isIOSStandalone();
     this._touchStartY = 0;
     this._lastScrollTop = 0;
     this._lastScrollT = 0;
     this._scrollVelocity = 0;
-    this._onScroll = () => this._scrollSync();
+    this._isScrolling = false;
+    this._touchMoved = false;
+    this._pendingIndex = null;
+    this._scrollSettleTimer = null;
+    this._onScroll = () => {
+      this._markScrolling();
+      if (!Utils.isIOS()) this._scrollSync();
+      this._scheduleSettle();
+    };
     this._scrollSync = Utils.debounce(() => this.syncActiveFromScroll(false), 80);
-    this._onScrollEnd = () => this.syncActiveFromScroll(true);
+    this._onScrollEnd = () => this._scheduleSettle(60);
     this._onTouchStart = (e) => {
+      this._touchMoved = false;
+      this._markScrolling();
       this.manager.noteUserGesture(true);
-      this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
       this._touchStartY = e.touches[0]?.clientY ?? 0;
       this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
       this._lastScrollT = Date.now();
       this._scrollVelocity = 0;
-      this.manager.warmNeighborsForGesture();
     };
     this._onTouchEnd = () => {
       this.manager.noteUserGesture(true);
-      this.syncActiveFromScroll(true);
+      if (!this._touchMoved) {
+        this.manager.cards[this.manager.activeIndex]?.player?.kickFromGesture?.();
+      }
+      this._scheduleSettle(80);
       this._scrollVelocity = 0;
     };
     this._onTouchMove = (e) => {
       if (!this.feedEl) return;
       const y = e.touches[0]?.clientY ?? 0;
+      const dy = y - this._touchStartY;
       const now = Date.now();
       const top = this.feedEl.scrollTop;
       const dt = now - this._lastScrollT;
       if (dt > 0) this._scrollVelocity = (top - this._lastScrollTop) / dt;
       this._lastScrollTop = top;
       this._lastScrollT = now;
-      if (Math.abs(y - this._touchStartY) > 12) {
-        this.manager.noteUserGesture(true);
+      if (Math.abs(dy) > 10) {
+        this._touchMoved = true;
+        this._markScrolling();
       }
-      const dir = y < this._touchStartY ? 1 : -1;
-      const idx = this.manager.activeIndex + dir;
-      this.manager.cards[idx]?.preloadAdjacent();
+      const maxScroll = this.feedEl.scrollHeight - this.feedEl.clientHeight;
+      if ((top <= 0 && dy > 0) || (top >= maxScroll - 1 && dy < 0)) {
+        e.preventDefault();
+      }
+      if (Math.abs(dy) > 12) this.manager.noteUserGesture(true);
+      if (!Utils.isIOSStandalone()) {
+        const dir = dy < 0 ? 1 : -1;
+        this.manager.cards[this.manager.activeIndex + dir]?.preloadAdjacent();
+      }
     };
+  }
+
+  _markScrolling() {
+    this._isScrolling = true;
+    clearTimeout(this._scrollSettleTimer);
+  }
+
+  _scheduleSettle(delay = 100) {
+    clearTimeout(this._scrollSettleTimer);
+    this._scrollSettleTimer = setTimeout(() => this._settleScroll(), delay);
+  }
+
+  _settleScroll() {
+    this._isScrolling = false;
+    if (this._pendingIndex !== null) {
+      const idx = this._pendingIndex;
+      this._pendingIndex = null;
+      this.manager.setActive(idx, true);
+      this.maybeLoadMore(idx);
+      return;
+    }
+    this.syncActiveFromScroll(true);
+  }
+
+  _queueActiveIndex(idx) {
+    this._pendingIndex = idx;
+    const delay = Utils.isIOSStandalone() ? 200 : (Utils.isIOS() ? 130 : 90);
+    this._scheduleSettle(delay);
   }
 
   syncSlideHeights() {
@@ -3897,14 +4020,22 @@ class VideoFeed {
   appendMoreVideos() {
     if (this._appending || !this.sourceVideos.length) return;
     this._appending = true;
-    const batch = Utils.shuffleArray(this.sourceVideos);
+    if (!this._shuffledPool?.length) {
+      this._shuffledPool = Utils.shuffleArray([...this.sourceVideos]);
+    }
+    const batchSize = Utils.isIOSStandalone() ? 8 : this._shuffledPool.length;
+    let batch = this._shuffledPool.splice(0, batchSize);
+    if (!batch.length) {
+      this._shuffledPool = Utils.shuffleArray([...this.sourceVideos]);
+      batch = this._shuffledPool.splice(0, batchSize);
+    }
     const startIdx = this.manager.cards.length;
     batch.forEach((meta, i) => {
       const index = startIdx + i;
       const card = new VideoCard(meta, index, 0, this.manager);
       this.manager.registerCard(card);
       this.feedEl?.appendChild(card.el);
-      this.observer?.observe(card.el);
+      if (this.observer) this.observer.observe(card.el);
       Utils.resolveTikTokMeta(meta.url, meta);
       Utils.prefetchTikTokThumbnail(meta.url, meta.canonicalUrl || meta.url);
     });
@@ -4054,7 +4185,7 @@ class VideoFeed {
     this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
     this.feedEl.addEventListener('scrollend', this._onScrollEnd, { passive: true });
     this.feedEl.addEventListener('touchstart', this._onTouchStart, { passive: true });
-    this.feedEl.addEventListener('touchmove', this._onTouchMove, { passive: true });
+    this.feedEl.addEventListener('touchmove', this._onTouchMove, { passive: false });
     this.feedEl.addEventListener('touchend', this._onTouchEnd, { passive: true });
     this.feedEl.addEventListener('touchcancel', this._onTouchEnd, { passive: true });
     this.startIndex = Math.floor(Math.random() * this.manager.cards.length);
@@ -4062,26 +4193,32 @@ class VideoFeed {
     this.syncSlideHeights();
     const slideH = this.feedEl.clientHeight || 0;
     if (slideH) this.feedEl.scrollTop = start * slideH;
-    this.observer = new IntersectionObserver(
-      (entries) => {
-        let bestEl = null;
-        let bestRatio = 0;
-        entries.forEach((entry) => {
-          if (entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            bestEl = entry.target;
+    if (this._useScrollObserver) {
+      this.observer = new IntersectionObserver(
+        (entries) => {
+          let bestEl = null;
+          let bestRatio = 0;
+          entries.forEach((entry) => {
+            if (entry.intersectionRatio > bestRatio) {
+              bestRatio = entry.intersectionRatio;
+              bestEl = entry.target;
+            }
+          });
+          if (!bestEl || bestRatio < 0.55) return;
+          const idx = parseInt(bestEl.dataset.index, 10);
+          if (isNaN(idx)) return;
+          if (Utils.isIOS() || this._isScrolling) {
+            this._queueActiveIndex(idx);
+            this.maybeLoadMore(idx);
+            return;
           }
-        });
-        if (!bestEl || bestRatio < 0.55) return;
-        const idx = parseInt(bestEl.dataset.index, 10);
-        if (!isNaN(idx)) {
           this.manager.setActive(idx, this.manager.hasRecentGesture());
           this.maybeLoadMore(idx);
-        }
-      },
-      { root: this.feedEl, threshold: [0.55, 0.7, 0.85] }
-    );
-    this.manager.cards.forEach((c) => this.observer.observe(c.el));
+        },
+        { root: this.feedEl, threshold: [0.55, 0.7, 0.85] }
+      );
+      this.manager.cards.forEach((c) => this.observer.observe(c.el));
+    }
     this.manager.setActive(start, false);
     this.maybeLoadMore(start);
     if (this._bootFromGesture) {
@@ -4123,6 +4260,7 @@ class VideoFeed {
 
   destroy() {
     this._unbindPull?.();
+    clearTimeout(this._scrollSettleTimer);
     window.removeEventListener('resize', this._syncHeights);
     this.feedEl?.removeEventListener('scroll', this._onScroll);
     this.feedEl?.removeEventListener('scrollend', this._onScrollEnd);
@@ -4171,6 +4309,9 @@ class FinanceApp {
   init() {
     document.querySelectorAll('.brand-version').forEach(el => { el.textContent = APP_VERSION; });
     document.documentElement.setAttribute('data-theme', 'dark');
+    const standalone = Utils.isStandalone();
+    document.documentElement.classList.toggle('standalone', standalone);
+    document.body.classList.toggle('standalone', standalone);
     this.buildNav();
     this.bindGlobalEvents();
     this.bindMobileBottomNav();
@@ -4183,7 +4324,21 @@ class FinanceApp {
       this.navigate(this.currentView);
     });
     window.addEventListener('beforeunload', () => this.store.persistNow());
-    this.navigate('dashboard');
+    let startView = 'dashboard';
+    if (Utils.loadActiveView() === 'insights') startView = 'insights';
+    this.navigate(startView);
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) return;
+      if (Utils.loadActiveView() === 'insights' && this.currentView !== 'insights') {
+        this.navigate('insights');
+      }
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Utils.loadActiveView() === 'insights' && this.currentView !== 'insights') {
+        this.navigate('insights');
+      }
+    });
     this.checkReminders();
     this.initCrypto();
     window.addEventListener('beforeunload', () => this.crypto.stopAutoRefresh());
@@ -4396,23 +4551,6 @@ class FinanceApp {
 
   /** Bind global UI events */
   bindGlobalEvents() {
-    this._insightsTouchY = 0;
-    document.addEventListener('touchstart', (e) => {
-      if (!document.body.classList.contains('view-insights')) return;
-      this._insightsTouchY = e.touches[0]?.clientY ?? 0;
-    }, { passive: true });
-    document.addEventListener('touchmove', (e) => {
-      if (!document.body.classList.contains('view-insights')) return;
-      const feed = this.insightsFeed?.feedEl;
-      if (!feed) return;
-      const y = e.touches[0]?.clientY ?? 0;
-      const dy = y - this._insightsTouchY;
-      const maxScroll = feed.scrollHeight - feed.clientHeight;
-      const atTop = feed.scrollTop <= 0;
-      const atBottom = feed.scrollTop >= maxScroll - 1;
-      if ((atTop && dy > 0) || (atBottom && dy < 0)) e.preventDefault();
-    }, { passive: false });
-
     document.getElementById('themeToggle').onclick = () => {
       const t = this.store.settings.theme === 'dark' ? 'light' : 'dark';
       this.store.updateSettings({ theme: t });
@@ -4462,6 +4600,7 @@ class FinanceApp {
 
   /** Navigate to view */
   navigate(view) {
+    Utils.saveActiveView(view);
     if (view === 'insights' && this.currentView === 'insights') {
       this.closeMobileSidebar();
       document.getElementById('sidebar')?.classList.remove('mobile-open');
@@ -4536,7 +4675,8 @@ class FinanceApp {
   renderInsights() {
     if (this.insightsFeed) return;
     this._insightsSoundUnlock = true;
-    Utils.warmInsightThumbnails(INSIGHT_VIDEOS);
+    if (Utils.isIOSStandalone()) Utils.warmInsightThumbnails(INSIGHT_VIDEOS.slice(0, 12));
+    else Utils.warmInsightThumbnails(INSIGHT_VIDEOS);
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
     this._mountInsightsFeed(null, !Utils.isIOS());
     this._insightsSoundUnlock = false;
