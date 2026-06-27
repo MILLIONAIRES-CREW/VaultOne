@@ -619,6 +619,15 @@ tr:last-child td{border-bottom:none}
   box-shadow:0 0 20px rgba(212,175,55,0.12),inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .mobile-nav-item.active i{filter:drop-shadow(0 0 8px rgba(212,175,55,0.5))}
+.mobile-nav-fab-slot{
+  flex:0 0 56px;display:flex;align-items:center;justify-content:center;
+  margin-top:-20px;position:relative;z-index:2;
+}
+.fab--nav{
+  position:relative;bottom:auto;right:auto;width:52px;height:52px;font-size:20px;
+  box-shadow:0 6px 28px rgba(212,175,55,0.4),inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
 
 /* ========== MOBILE HOME (VaultOne Premium) ========== */
 .hide-on-desktop{display:none!important}
@@ -719,6 +728,7 @@ tr:last-child td{border-bottom:none}
   .mobile-home{display:none!important}
 }
 @media(max-width:768px){
+  .fab:not(.fab--nav){display:none!important}
   .sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;z-index:250}
   .sidebar.collapsed{width:var(--sidebar-w)!important}
   .sidebar.collapsed .brand-block,
@@ -747,11 +757,6 @@ tr:last-child td{border-bottom:none}
   .mobile-nav-item{max-width:64px;padding:5px 2px}
   .mobile-nav-item i{font-size:15px}
   .mobile-nav-item span{font-size:8px}
-  body.view-insights .content{padding:0!important}
-  .fab{
-    bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
-    right:16px;width:52px;height:52px;font-size:20px;z-index:185;
-  }
   .hide-mobile{display:none!important}
   .hide-on-desktop{display:block!important}
   .dashboard-desktop{display:none!important}
@@ -801,172 +806,6 @@ tr:last-child td{border-bottom:none}
   .topbar-profile-name{display:none}
 }
 
-/* ========== VAULTONE INSIGHTS (Vertical Video Feed) ========== */
-html.view-insights,
-body.view-insights{
-  overflow:hidden;height:100%;overscroll-behavior:none;
-  touch-action:none;background:#000;
-}
-html.standalone.view-insights,
-html.standalone body.view-insights{
-  min-height:100%;min-height:-webkit-fill-available;
-}
-body.view-insights .topbar{display:none}
-body.view-insights .content{padding:0;max-width:none;margin:0;animation:none;height:100%}
-body.view-insights .main{height:100%;overflow:hidden}
-body.view-insights .insights-mount{width:100%;height:100%}
-.insights-feed-shell{
-  position:relative;height:100dvh;overflow:hidden;background:#000;
-}
-.insights-pull-zone{
-  position:absolute;top:0;left:0;right:0;z-index:25;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-  padding-bottom:10px;height:0;opacity:0;pointer-events:none;
-  color:var(--gold-premium);font-size:11px;font-weight:600;
-  letter-spacing:0.06em;text-transform:uppercase;gap:8px;
-  transition:opacity 0.15s ease;
-}
-.insights-pull-zone.is-visible{opacity:1}
-.insights-pull-zone.is-ready span{color:var(--gold)}
-.insights-pull-spinner{
-  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:rgba(17,17,17,0.88);border:1px solid rgba(212,175,55,0.28);font-size:13px;
-}
-.insights-pull-zone.is-refreshing .insights-pull-spinner i{animation:spin 0.8s linear infinite}
-.insights-feed{
-  height:100%;overflow-y:auto;scroll-snap-type:y mandatory;
-  -webkit-overflow-scrolling:touch;overscroll-behavior-y:none;
-  background:#000;scrollbar-width:none;
-  touch-action:pan-y;
-  scroll-behavior:auto;
-}
-.insights-feed::-webkit-scrollbar{display:none}
-.insights-slide{
-  height:100%;min-height:100%;scroll-snap-align:start;scroll-snap-stop:always;
-  position:relative;overflow:hidden;background:#000;
-}
-.insights-video-placeholder{
-  position:absolute;inset:0;z-index:0;
-  background:linear-gradient(160deg,#1a1a2e 0%,#0d0d0d 50%,#1a1510 100%) center/cover no-repeat;
-  pointer-events:none;
-}
-.insights-video{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;background:#000;
-}
-.insights-slide--native .insights-progress{
-  top:0;z-index:20;
-}
-.insights-counter,.insights-meta{display:none!important}
-.insights-progress-bar.indeterminate{
-  width:35%;animation:insightsProgressPulse 1.6s ease-in-out infinite;
-}
-@keyframes insightsProgressPulse{
-  0%{transform:translateX(-120%)}
-  100%{transform:translateX(320%)}
-}
-.insights-progress{
-  position:absolute;top:0;left:0;right:0;height:2px;z-index:20;
-  background:rgba(255,255,255,0.08);overflow:hidden;
-}
-.insights-progress-bar{
-  height:100%;width:0;
-  background:linear-gradient(90deg,var(--gold),var(--gold-premium));
-  box-shadow:0 0 8px rgba(212,175,55,0.6);
-  transition:width 0.1s linear;
-}
-.insights-overlay{position:absolute;inset:0;z-index:10;pointer-events:none}
-.insights-counter{
-  position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;
-  padding:6px 10px;border-radius:999px;
-  background:rgba(11,11,11,0.55);backdrop-filter:blur(12px);
-  border:1px solid rgba(212,175,55,0.22);
-  font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
-  color:var(--text-secondary);
-}
-.insights-meta{
-  position:absolute;left:14px;right:14px;bottom:calc(88px + env(safe-area-inset-bottom));
-  padding:14px 16px;border-radius:var(--radius-sm);
-  background:rgba(11,11,11,0.55);backdrop-filter:blur(16px);
-  border:1px solid rgba(212,175,55,0.2);
-  box-shadow:0 8px 32px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04);
-  pointer-events:none;
-}
-.insights-category{
-  display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
-  padding:4px 8px;border-radius:999px;margin-bottom:8px;
-  background:linear-gradient(135deg,rgba(212,175,55,0.22),rgba(212,175,55,0.06));
-  border:1px solid rgba(212,175,55,0.35);color:var(--gold-premium);
-}
-.insights-title{
-  font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;
-  color:var(--text-primary);letter-spacing:-0.02em;line-height:1.25;
-}
-.insights-desc{
-  margin-top:6px;font-size:12px;line-height:1.45;color:var(--text-secondary);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
-.insights-error{
-  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;padding:24px;text-align:center;z-index:5;
-}
-.insights-error i{font-size:28px;color:var(--gold);opacity:0.7}
-.insights-error p{font-size:13px;color:var(--text-secondary);max-width:260px;line-height:1.5}
-.insights-empty{
-  height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;padding:32px;text-align:center;background:#000;
-}
-.insights-empty i{font-size:36px;color:var(--gold);opacity:0.6}
-.insights-empty h2{font-family:'Manrope',sans-serif;font-size:20px;font-weight:700}
-.insights-empty p{font-size:13px;color:var(--text-muted);max-width:280px;line-height:1.5}
-.insights-sound-btn{
-  position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:30;
-  width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:rgba(11,11,11,0.72);backdrop-filter:blur(12px);
-  border:1px solid rgba(212,175,55,0.28);color:var(--gold-premium);font-size:18px;
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
-  transition:background 0.2s,border-color 0.2s,transform 0.15s;
-}
-.insights-sound-btn:active{transform:scale(0.94)}
-.insights-sound-btn.is-muted{color:var(--text-muted);border-color:rgba(255,255,255,0.12)}
-@media(max-width:768px){
-  body.view-insights .insights-feed-shell{
-    position:fixed;inset:0;z-index:1;
-    height:100%;height:100dvh;height:-webkit-fill-available;
-    background:#000;
-    padding-top:env(safe-area-inset-top);
-    padding-bottom:env(safe-area-inset-bottom);
-    box-sizing:border-box;
-  }
-  html.standalone body.view-insights .insights-feed-shell{
-    height:100%;height:-webkit-fill-available;
-  }
-  body.view-insights .insights-slide{scroll-snap-stop:always}
-  body.view-insights .insights-sound-btn{
-    bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
-  }
-}
-.insights-tap-zone{
-  position:absolute;inset:0;z-index:8;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-.insights-mute-hint{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);
-  width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:rgba(11,11,11,0.65);backdrop-filter:blur(8px);
-  border:1px solid rgba(212,175,55,0.3);color:var(--gold-premium);font-size:22px;
-  opacity:0;pointer-events:none;transition:opacity 0.25s,transform 0.25s;z-index:15;
-}
-.insights-mute-hint.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-@media(min-width:769px){
-  body.view-insights .content{min-height:calc(100vh - var(--topbar-h))}
-  body.view-insights .topbar{display:flex}
-  .insights-feed-shell{height:calc(100vh - var(--topbar-h));max-width:430px;margin:0 auto}
-  .insights-feed{height:100%}
-  .insights-slide{height:calc(100vh - var(--topbar-h))}
-  .insights-empty{height:calc(100vh - var(--topbar-h))}
-  .insights-meta{bottom:24px}
-}
 @media(min-width:1440px){
   .content{padding:32px 48px}
 }
@@ -1186,12 +1025,13 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
   <div class="mobile-bottom-nav-inner">
     <button type="button" class="mobile-nav-item active" data-view="dashboard"><i class="fas fa-house"></i><span>Home</span></button>
     <button type="button" class="mobile-nav-item" data-view="accounts"><i class="fas fa-wallet"></i><span>Accounts</span></button>
+    <div class="mobile-nav-fab-slot">
+      <button class="fab fab--nav" id="fab" type="button" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
+    </div>
     <button type="button" class="mobile-nav-item" data-view="crypto"><i class="fas fa-coins"></i><span>Crypto</span></button>
-    <button type="button" class="mobile-nav-item" data-view="insights"><i class="fas fa-circle-play"></i><span>Insights</span></button>
     <button type="button" class="mobile-nav-item" data-view="more" id="mobileNavMore"><i class="fas fa-grip"></i><span>More</span></button>
   </div>
 </nav>
-<button class="fab" id="fab" title="Quick add transaction" aria-label="Quick add transaction"><i class="fas fa-plus"></i></button>
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal"><div class="modal-header"><h2 id="modalTitle"></h2><button class="btn-icon" id="modalClose"><i class="fas fa-times"></i></button></div><div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div></div></div>
 <div class="modal-overlay" id="confirmOverlay"><div class="modal" style="max-width:400px"><div class="modal-header"><h2 id="confirmTitle">Confirm</h2></div><div class="modal-body" id="confirmBody"></div><div class="modal-footer"><button class="btn btn-secondary" id="confirmCancel">Cancel</button><button class="btn btn-danger" id="confirmOk">Confirm</button></div></div></div>
 <div class="toast-container" id="toastContainer"></div>
@@ -1204,23 +1044,8 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.88';
+const APP_VERSION = '0.89';
 
-/** GitHub repo — videos live in /videos (VaultOne on MILLIONAIRES-CREW) */
-const INSIGHTS_GITHUB = {
-  owner: 'MILLIONAIRES-CREW',
-  repo: 'VaultOne',
-  branch: 'main',
-  folder: 'videos'
-};
-
-/** Fallback filenames when GitHub API is unavailable (private repo) */
-const INSIGHT_VIDEO_FILES = [
-  'steve-harvey.mp4',
-  'vidssave.com Steve Harvey- Inspirational Speech _ Motivational Short Video _ Incredible You 480P.mp4'
-];
-
-const INSIGHT_VIDEO_EXT = /\.(mp4|webm|mov|m4v)$/i;
 const Utils = {
   /** Generate unique ID */
   uid() { return crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2); },
@@ -1235,22 +1060,11 @@ const Utils = {
     return a;
   },
 
-  /** True on phones/tablets where autoplay needs a gesture or muted start */
-  isIOS() {
-    return /iPhone|iPad|iPod/i.test(navigator.userAgent)
-      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  },
-
   /** Launched from iOS/Android Add to Home Screen */
   isStandalone() {
     return window.navigator.standalone === true
       || window.matchMedia('(display-mode: standalone)').matches
       || window.matchMedia('(display-mode: fullscreen)').matches;
-  },
-
-  /** iOS home-screen PWA — strictest scroll/memory limits */
-  isIOSStandalone() {
-    return this.isIOS() && this.isStandalone();
   },
 
   saveActiveView(view) {
@@ -1265,10 +1079,6 @@ const Utils = {
       return localStorage.getItem('pfm_active_view')
         || sessionStorage.getItem('pfm_active_view');
     } catch (_) { return null; }
-  },
-
-  needsGesturePlay() {
-    return this.isIOS() || window.matchMedia('(pointer: coarse)').matches;
   },
 
   /** Debounce function calls */
@@ -1362,203 +1172,6 @@ const Utils = {
   /** Escape HTML */
   esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; },
 
-  titleFromFilename(name) {
-    return String(name || '')
-      .replace(/\.[^.]+$/, '')
-      .replace(/[-_]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim() || 'Insight';
-  },
-
-  insightsGithub() {
-    if (this._insightsGithub) return this._insightsGithub;
-    try {
-      const host = location.hostname.toLowerCase();
-      const repoMatch = location.pathname.match(/^\/([^/?#]+)/);
-      if (host.endsWith('.github.io') && repoMatch?.[1]) {
-        this._insightsGithub = {
-          owner: INSIGHTS_GITHUB.owner,
-          repo: decodeURIComponent(repoMatch[1]),
-          branch: INSIGHTS_GITHUB.branch,
-          folder: INSIGHTS_GITHUB.folder
-        };
-        return this._insightsGithub;
-      }
-    } catch (_) {}
-    this._insightsGithub = { ...INSIGHTS_GITHUB };
-    return this._insightsGithub;
-  },
-
-  githubPagesBase() {
-    const gh = this.insightsGithub();
-    const owner = String(gh.owner).toLowerCase();
-    return `https://${owner}.github.io/${gh.repo}`;
-  },
-
-  githubPagesVideoUrl(relPath) {
-    const gh = this.insightsGithub();
-    const name = this.insightVideoBasename(relPath);
-    return `${this.githubPagesBase()}/${gh.folder}/${encodeURIComponent(name)}`;
-  },
-
-  /** Build a raw GitHub URL for a file under the repo videos/ folder */
-  githubInsightVideoUrl(filename) {
-    const { owner, repo, branch, folder } = this.insightsGithub();
-    const name = String(filename || '').replace(new RegExp(`^${folder}/`), '');
-    if (!name) return '';
-    const segments = name.split('/').map((s) => encodeURIComponent(s));
-    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${folder}/${segments.join('/')}`;
-  },
-
-  insightVideoBasename(fileOrUrl) {
-    const path = String(fileOrUrl || '').replace(/^videos\//, '');
-    return path.split('/').pop() || path;
-  },
-
-  insightVideoFromFilename(filename) {
-    const { folder } = this.insightsGithub();
-    const name = this.insightVideoBasename(filename);
-    const file = `${folder}/${name}`;
-    return {
-      id: name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 48) || this.uid(),
-      title: this.titleFromFilename(name),
-      category: 'Insights',
-      description: '',
-      file,
-      url: this.githubPagesVideoUrl(file)
-    };
-  },
-
-  /** Resolve playback URL — first candidate from insightVideoCandidates */
-  insightVideoUrl(meta) {
-    const candidates = this.insightVideoCandidates(meta);
-    return candidates[0] || '';
-  },
-
-  /** All URLs to try for a video */
-  insightVideoCandidates(meta) {
-    const list = [];
-    const add = (u) => {
-      const url = String(u || '').trim();
-      if (url && !list.includes(url)) list.push(url);
-    };
-    const path = String(meta?.file || '').trim();
-    const name = this.insightVideoBasename(path);
-    const { folder } = this.insightsGithub();
-    const relPath = path || `${folder}/${name}`;
-    const gh = this.insightsGithub();
-    const onGitHubPages = location.hostname.toLowerCase().endsWith('.github.io');
-
-    if (meta?.url) add(meta.url);
-    add(this.githubPagesVideoUrl(relPath));
-
-    try { add(new URL(relPath, location.href).href); } catch (_) {}
-    try {
-      const encoded = relPath.split('/').map((part) => encodeURIComponent(part)).join('/');
-      add(new URL(encoded, location.href).href);
-    } catch (_) {}
-
-    add(this.githubInsightVideoUrl(relPath));
-    add(`https://cdn.jsdelivr.net/gh/${gh.owner}/${gh.repo}@${gh.branch}/${gh.folder}/${encodeURIComponent(name)}`);
-
-    if (onGitHubPages) {
-      const sameOrigin = list.filter((u) => u.startsWith(location.origin));
-      const other = list.filter((u) => !u.startsWith(location.origin));
-      return [...sameOrigin, ...other];
-    }
-
-    const preferPages = location.protocol === 'file:' || this.isIOS();
-    if (preferPages) {
-      const pages = list.filter((u) => /\.github\.io\//i.test(u));
-      const rest = list.filter((u) => !/\.github\.io\//i.test(u));
-      return [...pages, ...rest];
-    }
-    return list;
-  },
-
-  /** @deprecated use insightVideoUrl */
-  localVideoUrl(fileOrUrl) {
-    if (fileOrUrl && typeof fileOrUrl === 'object') return this.insightVideoUrl(fileOrUrl);
-    return this.insightVideoUrl({ file: String(fileOrUrl || '') });
-  },
-
-  insightVideosFromFilenames(filenames) {
-    return (filenames || [])
-      .map((name) => String(name || '').trim())
-      .filter((name) => name && INSIGHT_VIDEO_EXT.test(name))
-      .map((name) => this.insightVideoFromFilename(name));
-  },
-
-  /** List .mp4/.webm files in the repo videos/ folder via GitHub API */
-  async fetchGitHubInsightVideos() {
-    const gh = this.insightsGithub();
-    const branches = [gh.branch, 'main', 'master'].filter((b, i, a) => a.indexOf(b) === i);
-
-    for (const branch of branches) {
-      try {
-        const res = await fetch(
-          `https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${gh.folder}?ref=${encodeURIComponent(branch)}`,
-          { headers: { Accept: 'application/vnd.github+json' } }
-        );
-        if (!res.ok) continue;
-        const items = await res.json();
-        if (!Array.isArray(items)) continue;
-
-        const videos = items
-          .filter((item) => item.type === 'file' && INSIGHT_VIDEO_EXT.test(item.name))
-          .map((item) => ({
-            ...this.insightVideoFromFilename(item.name),
-            id: item.sha?.slice(0, 12) || this.insightVideoFromFilename(item.name).id
-          }));
-
-        if (videos.length) {
-          gh.branch = branch;
-          return videos;
-        }
-      } catch (_) {}
-    }
-    return null;
-  },
-
-  /** Probe GitHub Pages for known video files (works for private repos) */
-  async probeGitHubPagesVideos() {
-    const found = [];
-    for (const name of INSIGHT_VIDEO_FILES) {
-      const meta = this.insightVideoFromFilename(name);
-      try {
-        const res = await fetch(meta.url, { method: 'HEAD', cache: 'no-store' });
-        if (res.ok) found.push(meta);
-      } catch (_) {}
-    }
-    return found.length ? found : null;
-  },
-
-  /** Load insight videos: GitHub API → Pages probe → built-in list */
-  async loadInsightVideos() {
-    try {
-      const fromGitHub = await this.fetchGitHubInsightVideos();
-      if (fromGitHub?.length) return fromGitHub;
-    } catch (_) {}
-
-    try {
-      const fromPages = await this.probeGitHubPagesVideos();
-      if (fromPages?.length) return fromPages;
-    } catch (_) {}
-
-    return this.insightVideosFromFilenames(INSIGHT_VIDEO_FILES);
-  },
-
-  /** Prefetch local video metadata for smoother scroll */
-  warmInsightVideos(videos) {
-    (videos || []).forEach((meta) => {
-      const url = this.insightVideoUrl(meta);
-      if (!url) return;
-      const v = document.createElement('video');
-      v.preload = 'metadata';
-      v.muted = true;
-      v.src = url;
-    });
-  },
 
   /** Download blob */
   download(filename, content, type = 'application/json') {
@@ -2487,862 +2100,6 @@ class InsightEngine {
   }
 }
 
-// ========== VAULTONE INSIGHTS (Vertical Video Feed) ==========
-class VideoOverlay {
-  constructor(video, meta, index, total) {
-    this.video = video;
-    this.el = document.createElement('div');
-    this.el.className = 'insights-overlay';
-    this.el.innerHTML = '<div class="insights-progress"><div class="insights-progress-bar"></div></div>';
-    this.progressBar = this.el.querySelector('.insights-progress-bar');
-    this._onTime = () => this.updateProgress();
-    if (video) video.addEventListener('timeupdate', this._onTime);
-  }
-
-  updateProgress() {
-    if (!this.video || !this.progressBar) return;
-    if (!this.video.duration || !isFinite(this.video.duration)) {
-      this.progressBar.style.width = '0%';
-      return;
-    }
-    this.progressBar.style.width = `${(this.video.currentTime / this.video.duration) * 100}%`;
-  }
-
-  setProgress(percent) {
-    if (!this.progressBar) return;
-    this.progressBar.classList.remove('indeterminate');
-    this.progressBar.style.transform = 'none';
-    this.progressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-  }
-
-  destroy() {
-    if (this.video) this.video.removeEventListener('timeupdate', this._onTime);
-    this.el.remove();
-  }
-}
-
-class VideoPlayer {
-  constructor(container, meta, onError, manager) {
-    this.container = container;
-    this.meta = meta;
-    this.candidates = Utils.insightVideoCandidates(meta);
-    this.candidateIndex = 0;
-    this.url = this.candidates[0] || '';
-    this.onError = onError;
-    this.manager = manager;
-    this.mounted = false;
-    this.video = null;
-    this.tapZone = null;
-    this.muteHint = null;
-    this._blobUrl = null;
-    this._triedBlob = false;
-    this._lastTap = 0;
-    this._onTap = (e) => this.handleTap(e);
-    this._onVideoError = () => this.handleVideoError();
-  }
-
-  setVideoSource(url) {
-    if (!this.video || !url) return;
-    this.url = url;
-    this.video.src = url;
-  }
-
-  async tryBlobLoad(url) {
-    if (!url || !/^https?:/i.test(url)) return false;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return false;
-      const blob = await res.blob();
-      if (this._blobUrl) URL.revokeObjectURL(this._blobUrl);
-      this._blobUrl = URL.createObjectURL(blob);
-      this.setVideoSource(this._blobUrl);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  async tryBlobCandidates() {
-    for (const url of this.candidates) {
-      if (await this.tryBlobLoad(url)) return true;
-    }
-    return false;
-  }
-
-  handleVideoError() {
-    this.candidateIndex += 1;
-    if (this.candidateIndex < this.candidates.length) {
-      this.setVideoSource(this.candidates[this.candidateIndex]);
-      this.video.play().catch(() => {});
-      return;
-    }
-    if (!this._triedBlob && /^https?:/.test(location.protocol)) {
-      this._triedBlob = true;
-      this.tryBlobCandidates().then((ok) => {
-        if (ok) this.video.play().catch(() => {});
-        else this.onError?.();
-      });
-      return;
-    }
-    this.onError?.();
-  }
-
-  mount() {
-    if (this.mounted) return;
-    this.mounted = true;
-    this.video = document.createElement('video');
-    this.video.className = 'insights-video';
-    this.video.setAttribute('playsinline', '');
-    this.video.setAttribute('webkit-playsinline', '');
-    this.video.loop = true;
-    this.video.muted = this.manager?.muted
-      || (Utils.isIOS() && !this.manager?.soundUnlocked);
-    this.video.preload = 'metadata';
-    this.video.addEventListener('error', this._onVideoError);
-    if (this.url) this.setVideoSource(this.url);
-    else this.handleVideoError();
-    this.tapZone = document.createElement('div');
-    this.tapZone.className = 'insights-tap-zone';
-    this.tapZone.addEventListener('click', this._onTap);
-    this.muteHint = document.createElement('div');
-    this.muteHint.className = 'insights-mute-hint';
-    this.muteHint.innerHTML = this.manager?.muted
-      ? '<i class="fas fa-volume-xmark"></i>'
-      : '<i class="fas fa-volume-high"></i>';
-    this.container.appendChild(this.video);
-    this.container.appendChild(this.tapZone);
-    this.container.appendChild(this.muteHint);
-  }
-
-  handleTap(e) {
-    e.stopPropagation();
-    this.manager?.noteUserGesture?.(true);
-    if (!this.video || this.video.paused) this.kickFromGesture();
-    if (!this.manager?.muted && Utils.isIOS() && !this.manager?.soundUnlocked) {
-      this.manager.enableSound();
-      return;
-    }
-    if (this.manager && (this.manager.muted || !this.manager.soundUnlocked)) {
-      this.manager.enableSound();
-      if (this.video) {
-        this.video.muted = false;
-        this.video.play().catch(() => {});
-      }
-      this.flashMuteHint(false);
-      return;
-    }
-    const now = Date.now();
-    if (now - this._lastTap < 300) {
-      this.toggleMute();
-      this._lastTap = 0;
-      return;
-    }
-    this._lastTap = now;
-    setTimeout(() => {
-      if (this._lastTap !== now) return;
-      this.togglePlay();
-    }, 300);
-  }
-
-  togglePlay() {
-    if (!this.video) return;
-    if (this.video.paused) this.video.play().catch(() => {});
-    else this.video.pause();
-  }
-
-  toggleMute() {
-    if (!this.video) return;
-    this._needsGestureUnmute = false;
-    this.video.muted = !this.video.muted;
-    if (this.manager) this.manager.muted = this.video.muted;
-    this.flashMuteHint(this.video.muted);
-  }
-
-  flashMuteHint(muted) {
-    if (!this.muteHint) return;
-    this.muteHint.innerHTML = muted
-      ? '<i class="fas fa-volume-xmark"></i>'
-      : '<i class="fas fa-volume-high"></i>';
-    this.muteHint.classList.add('show');
-    clearTimeout(this._hintTimer);
-    this._hintTimer = setTimeout(() => this.muteHint.classList.remove('show'), 700);
-  }
-
-  setMuted(muted) {
-    if (this.video) this.video.muted = muted;
-  }
-
-  silence() {
-    if (!this.video) return;
-    this.video.muted = true;
-    this.video.pause();
-  }
-
-  warmForGesture() {}
-
-  kickFromGesture() {
-    this.manager?.noteUserGesture?.(true);
-    if (!this.video) return;
-    const wantSound = !this.manager?.muted
-      && (!Utils.isIOS() || this.manager?.soundUnlocked);
-    this.video.muted = !wantSound;
-    this.video.play().catch(() => {
-      if (!this.video) return;
-      this.video.muted = true;
-      this.video.play().catch(() => {});
-    });
-  }
-
-  play() {
-    if (!this.video) return;
-    const wantSound = !this.manager?.muted
-      && (!Utils.isIOS() || this.manager?.soundUnlocked);
-    this.video.muted = !wantSound;
-    this.video.play().catch(() => {
-      if (!this.video) return;
-      this.video.muted = true;
-      this.video.play().catch(() => {});
-    });
-  }
-
-  go() { this.play(); }
-
-  stop() {
-    this.silence();
-  }
-
-  unload() {
-    this.stop();
-    if (this.video) {
-      this.video.pause();
-      this.video.removeAttribute('src');
-      this.video.load();
-    }
-  }
-
-  pause() {
-    if (this.video) this.video.pause();
-  }
-
-  setPreload(mode) {
-    if (this.video) this.video.preload = mode === 'auto' ? 'auto' : 'metadata';
-  }
-
-  prime() {
-    if (!this.video || !this.video.paused) return;
-    this.video.preload = 'auto';
-  }
-
-  destroy() {
-    if (this.tapZone) this.tapZone.removeEventListener('click', this._onTap);
-    if (this.video) {
-      this.video.removeEventListener('error', this._onVideoError);
-      this.video.pause();
-      this.video.removeAttribute('src');
-      this.video.load();
-      this.video.remove();
-    }
-    if (this._blobUrl) URL.revokeObjectURL(this._blobUrl);
-    this.tapZone?.remove();
-    this.muteHint?.remove();
-    this.video = null;
-    this.mounted = false;
-  }
-}
-
-class VideoCard {
-  constructor(videoMeta, index, total, manager) {
-    this.meta = videoMeta;
-    this.index = index;
-    this.total = total;
-    this.manager = manager;
-    this.el = document.createElement('div');
-    this.el.className = 'insights-slide';
-    this.el.dataset.index = index;
-    this.placeholder = document.createElement('div');
-    this.placeholder.className = 'insights-video-placeholder';
-    this.el.appendChild(this.placeholder);
-    this.player = null;
-    this.overlay = null;
-    this.errorEl = null;
-    this.loaded = false;
-  }
-
-  ensureLoaded() {
-    if (this.loaded) return;
-    this.loaded = true;
-    if (!this.meta?.file && !this.meta?.url) {
-      this.showError();
-      return;
-    }
-    this.el.classList.add('insights-slide--native');
-    this.player = new VideoPlayer(this.el, this.meta, () => this.showError(), this.manager);
-    this.player.mount();
-    this.player.setMuted(this.manager.muted);
-    this.overlay = new VideoOverlay(this.player.video, this.meta, this.index, this.total);
-    this.el.appendChild(this.overlay.el);
-  }
-
-  showError() {
-    if (this.errorEl) return;
-    const pages = Utils.githubPagesBase();
-    this.errorEl = document.createElement('div');
-    this.errorEl.className = 'insights-error';
-    this.errorEl.innerHTML = `<i class="fas fa-circle-exclamation"></i><p>Unable to load this video. Open the app from <a href="${pages}/" style="color:var(--gold-premium)">${pages}/</a> and enable GitHub Pages on your VaultOne repo.</p>`;
-    this.el.appendChild(this.errorEl);
-  }
-
-  activate() {
-    this.ensureLoaded();
-    this.player?.play?.();
-  }
-
-  deactivate() {
-    this.player?.pause?.();
-  }
-
-  preloadAdjacent() {
-    this.player?.setPreload?.('metadata');
-    this.player?.prime?.();
-  }
-
-  preloadMeta() {
-    this.preloadAdjacent();
-  }
-
-  preloadNext() {
-    this.preloadMeta();
-  }
-
-  setPreloadNone() {
-    if (this.player?.unload) this.player.unload();
-    else this.player?.setPreload?.('none');
-  }
-
-  destroy() {
-    this.overlay?.destroy();
-    this.player?.destroy();
-    this.errorEl?.remove();
-    this.el.remove();
-  }
-}
-
-class VideoManager {
-  constructor(videos, options = {}) {
-    this.videos = videos;
-    this.options = options;
-    this.filters = { category: null, query: '' };
-    this.bookmarks = new Set();
-    this.cards = [];
-    this.activeIndex = 0;
-    this.muted = false;
-    this.soundUnlocked = !Utils.isIOS();
-    this._gestureAt = 0;
-    this._touchGesture = false;
-    this.onSoundChange = null;
-  }
-
-  unlockIOSAudio() {
-    if (!Utils.isIOS() || this.soundUnlocked) return;
-    this.soundUnlocked = true;
-    this.noteUserGesture();
-    this.unmuteActive();
-    this.onSoundChange?.();
-  }
-
-  unmuteActive() {
-    if (this.muted) return;
-    if (Utils.isIOS() && !this.soundUnlocked) return;
-    const p = this.cards[this.activeIndex]?.player;
-    if (!p) return;
-    p.setMuted?.(false);
-    p.unlockAudio?.();
-    if (p.video) {
-      p.video.muted = false;
-      if (p.video.paused) p.video.play?.().catch(() => {});
-    }
-  }
-
-  enableSound() {
-    this.noteUserGesture(true);
-    this.muted = false;
-    this.soundUnlocked = true;
-    this.cards.forEach((c, i) => {
-      if (i !== this.activeIndex) c.player?.silence?.();
-    });
-    this.unmuteActive();
-    this.onSoundChange?.();
-  }
-
-  /** iOS: new slide always starts muted until user taps for sound */
-  resetIOSSound() {
-    if (!Utils.isIOS()) return;
-    this.soundUnlocked = false;
-    this.onSoundChange?.();
-  }
-
-  toggleSound() {
-    this.noteUserGesture();
-    const effectivelyMuted = this.muted || (Utils.isIOS() && !this.soundUnlocked);
-    if (effectivelyMuted) {
-      this.enableSound();
-      return;
-    }
-    this.muted = true;
-    this.cards.forEach((c) => c.player?.setMuted?.(true));
-    this.onSoundChange?.();
-  }
-
-  hasRecentGesture(maxMs = 5000) {
-    return this._touchGesture && this._gestureAt > 0 && (Date.now() - this._gestureAt) < maxMs;
-  }
-
-  noteUserGesture(fromTouch = false) {
-    this._gestureAt = Date.now();
-    if (fromTouch) this._touchGesture = true;
-  }
-
-  warmNeighborsForGesture() {
-    const idx = this.activeIndex;
-    [-1, 1].forEach((off) => {
-      this.cards[idx + off]?.preloadAdjacent?.();
-    });
-  }
-
-  preloadWindow(index) {
-    [-1, 1].forEach((off) => {
-      this.cards[index + off]?.preloadAdjacent?.();
-    });
-  }
-
-  trimDistantVideos(index) {
-    if (Utils.isIOS()) return;
-    this.cards.forEach((c, i) => {
-      if (Math.abs(i - index) > 2) c.player?.unload?.();
-    });
-  }
-
-  setActive(index, fromGesture = false) {
-    if (index < 0 || index >= this.cards.length) return;
-    const gesture = fromGesture || this.hasRecentGesture();
-    const prev = this.activeIndex;
-    const player = this.cards[index]?.player;
-    if (index === prev && player?._playing) return;
-
-    if (index !== prev) {
-      this.cards[prev]?.deactivate();
-      this.activeIndex = index;
-      if (Utils.isIOS()) this.resetIOSSound();
-    }
-    this.cards.forEach((c, i) => {
-      if (i !== index) c.player?.silence?.();
-    });
-    this.trimDistantVideos(index);
-    this.cards[index]?.ensureLoaded();
-    player?.play?.(gesture);
-    this.preloadWindow(index);
-  }
-
-  getVideos() {
-    let list = [...this.videos];
-    if (this.filters.category) list = list.filter(v => v.category === this.filters.category);
-    if (this.filters.query) {
-      const q = this.filters.query.toLowerCase();
-      list = list.filter(v => [v.title, v.category, v.description].join(' ').toLowerCase().includes(q));
-    }
-    return list;
-  }
-
-  registerCard(card) {
-    this.cards.push(card);
-  }
-
-  setMuted(muted) {
-    this.muted = muted;
-    this.cards.forEach((c, i) => {
-      if (muted || i === this.activeIndex) c.player?.setMuted?.(muted);
-      else c.player?.silence?.();
-    });
-  }
-
-  destroy() {
-    this.cards.forEach(c => c.destroy());
-    this.cards = [];
-  }
-}
-
-class VideoFeed {
-  constructor(container, sourceVideos, options = {}) {
-    this.container = container;
-    this.sourceVideos = sourceVideos;
-    this.manager = new VideoManager([]);
-    if (Utils.isIOS()) {
-      this.manager.muted = false;
-      this.manager.soundUnlocked = false;
-      if (options.soundState) {
-        this.manager.muted = options.soundState.muted;
-        this.manager.soundUnlocked = options.soundState.soundUnlocked;
-      }
-    } else {
-      this.manager.muted = false;
-      this.manager.soundUnlocked = true;
-    }
-    if (options.unlockSound) {
-      this.manager.noteUserGesture(true);
-      if (!Utils.isIOS()) this.manager.soundUnlocked = true;
-    }
-    this._bootFromGesture = !!options.unlockSound;
-    this.soundBtn = null;
-    this.shellEl = null;
-    this.pullEl = null;
-    this.feedEl = null;
-    this.observer = null;
-    this.onRefresh = null;
-    this.refreshing = false;
-    this.pullDistance = 0;
-    this._pullThreshold = 72;
-    this._appending = false;
-    this._shuffledPool = null;
-    this._useScrollObserver = true;
-    this._touchStartY = 0;
-    this._lastScrollTop = 0;
-    this._lastScrollT = 0;
-    this._scrollVelocity = 0;
-    this._isScrolling = false;
-    this._touchMoved = false;
-    this._pendingIndex = null;
-    this._scrollSettleTimer = null;
-    this._onScroll = () => {
-      this._markScrolling();
-      if (!Utils.isIOS()) this._scrollSync();
-      this._scheduleSettle();
-    };
-    this._scrollSync = Utils.debounce(() => this.syncActiveFromScroll(false), 80);
-    this._onScrollEnd = () => this._scheduleSettle(60);
-    this._onTouchStart = (e) => {
-      this._touchMoved = false;
-      this._markScrolling();
-      this.manager.noteUserGesture(true);
-      this._touchStartY = e.touches[0]?.clientY ?? 0;
-      this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
-      this._lastScrollT = Date.now();
-      this._scrollVelocity = 0;
-      this.manager.warmNeighborsForGesture();
-    };
-    this._onTouchEnd = () => {
-      this.manager.noteUserGesture(true);
-      this._scheduleSettle(90);
-      this._scrollVelocity = 0;
-    };
-    this._onTouchMove = (e) => {
-      if (!this.feedEl) return;
-      const y = e.touches[0]?.clientY ?? 0;
-      const dy = y - this._touchStartY;
-      const now = Date.now();
-      const top = this.feedEl.scrollTop;
-      const dt = now - this._lastScrollT;
-      if (dt > 0) this._scrollVelocity = (top - this._lastScrollTop) / dt;
-      this._lastScrollTop = top;
-      this._lastScrollT = now;
-      if (Math.abs(dy) > 8) {
-        this._touchMoved = true;
-        this._markScrolling();
-      }
-      const maxScroll = this.feedEl.scrollHeight - this.feedEl.clientHeight;
-      if ((top <= 0 && dy > 0) || (top >= maxScroll - 1 && dy < 0)) {
-        e.preventDefault();
-      }
-      if (Math.abs(dy) > 10) this.manager.noteUserGesture(true);
-    };
-  }
-
-  _markScrolling() {
-    this._isScrolling = true;
-    clearTimeout(this._scrollSettleTimer);
-  }
-
-  _scheduleSettle(delay = 100) {
-    clearTimeout(this._scrollSettleTimer);
-    this._scrollSettleTimer = setTimeout(() => this._settleScroll(), delay);
-  }
-
-  _settleScroll() {
-    this._isScrolling = false;
-    if (this._pendingIndex !== null) {
-      const idx = this._pendingIndex;
-      this._pendingIndex = null;
-      this.manager.setActive(idx, true);
-      this.maybeLoadMore(idx);
-      return;
-    }
-    this.syncActiveFromScroll(true);
-  }
-
-  _queueActiveIndex(idx) {
-    this._pendingIndex = idx;
-    this._scheduleSettle(Utils.isIOS() ? 90 : 70);
-  }
-
-  syncSlideHeights() {
-    if (!this.feedEl) return;
-    const h = this.feedEl.clientHeight;
-    if (!h) return;
-    this.manager.cards.forEach((card) => {
-      card.el.style.height = `${h}px`;
-    });
-  }
-
-  appendMoreVideos() {
-    if (this._appending || !this.sourceVideos.length) return;
-    this._appending = true;
-    if (!this._shuffledPool?.length) {
-      this._shuffledPool = Utils.shuffleArray([...this.sourceVideos]);
-    }
-    const batchSize = Utils.isIOSStandalone() ? 12 : this._shuffledPool.length;
-    let batch = this._shuffledPool.splice(0, batchSize);
-    if (!batch.length) {
-      this._shuffledPool = Utils.shuffleArray([...this.sourceVideos]);
-      batch = this._shuffledPool.splice(0, batchSize);
-    }
-    const startIdx = this.manager.cards.length;
-    batch.forEach((meta, i) => {
-      const index = startIdx + i;
-      const card = new VideoCard(meta, index, 0, this.manager);
-      this.manager.registerCard(card);
-      this.feedEl?.appendChild(card.el);
-      if (this.observer) this.observer.observe(card.el);
-    });
-    const active = this.manager.activeIndex;
-    if (active >= 0) this.manager.preloadWindow(active);
-    this.syncSlideHeights();
-    this._appending = false;
-  }
-
-  maybeLoadMore(activeIndex) {
-    const count = this.manager.cards.length;
-    if (!count) return;
-    const remaining = count - 1 - activeIndex;
-    if (remaining <= 2) this.appendMoreVideos();
-  }
-
-  setPullDistance(px) {
-    this.pullDistance = Math.max(0, Math.min(px, 110));
-    if (!this.feedEl || !this.pullEl) return;
-    this.feedEl.style.transform = this.pullDistance ? `translateY(${this.pullDistance}px)` : '';
-    this.pullEl.style.height = `${this.pullDistance}px`;
-    const visible = this.pullDistance > 6;
-    this.pullEl.classList.toggle('is-visible', visible);
-    this.pullEl.classList.toggle('is-ready', this.pullDistance >= this._pullThreshold);
-    const label = this.pullEl.querySelector('.insights-pull-label');
-    if (label && !this.refreshing) {
-      label.textContent = this.pullDistance >= this._pullThreshold ? 'Release to refresh' : 'Pull to refresh';
-    }
-    const icon = this.pullEl.querySelector('.insights-pull-spinner i');
-    if (icon) icon.style.transform = `rotate(${Math.min(this.pullDistance * 2.5, 360)}deg)`;
-  }
-
-  resetPull(animate = true) {
-    if (animate && this.feedEl) {
-      this.feedEl.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
-      this.pullEl.style.transition = 'height 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
-    }
-    this.setPullDistance(0);
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        if (this.feedEl) this.feedEl.style.transition = '';
-        if (this.pullEl) this.pullEl.style.transition = '';
-      }, animate ? 280 : 0);
-    });
-  }
-
-  bindPullToRefresh() {
-    if (Utils.isIOS()) return;
-    const feed = this.feedEl;
-    let startY = 0;
-    let tracking = false;
-
-    const canPull = () => !this.refreshing && feed.scrollTop <= 1;
-
-    const onTouchStart = (e) => {
-      if (!canPull()) return;
-      startY = e.touches[0].clientY;
-      tracking = true;
-    };
-
-    const onTouchMove = (e) => {
-      if (!tracking || this.refreshing) return;
-      const dy = e.touches[0].clientY - startY;
-      if (dy > 0 && feed.scrollTop <= 1) {
-        if (dy > 8) e.preventDefault();
-        this.setPullDistance((dy - 8) * 0.45);
-      } else if (dy <= 0) {
-        tracking = false;
-        this.resetPull();
-      }
-    };
-
-    const endPull = () => {
-      if (!tracking) return;
-      tracking = false;
-      if (this.pullDistance >= this._pullThreshold) {
-        this.manager.noteUserGesture();
-        this.triggerRefresh();
-      } else this.resetPull();
-    };
-
-    feed.addEventListener('touchstart', onTouchStart, { passive: true });
-    feed.addEventListener('touchmove', onTouchMove, { passive: false });
-    feed.addEventListener('touchend', endPull, { passive: true });
-    feed.addEventListener('touchcancel', endPull, { passive: true });
-
-    this._unbindPull = () => {
-      feed.removeEventListener('touchstart', onTouchStart);
-      feed.removeEventListener('touchmove', onTouchMove);
-      feed.removeEventListener('touchend', endPull);
-      feed.removeEventListener('touchcancel', endPull);
-    };
-  }
-
-  async triggerRefresh() {
-    if (this.refreshing) return;
-    this.refreshing = true;
-    this.manager.noteUserGesture();
-    this.pullEl?.classList.add('is-refreshing');
-    const label = this.pullEl?.querySelector('.insights-pull-label');
-    if (label) label.textContent = 'Refreshing…';
-    this.setPullDistance(this._pullThreshold);
-    this.manager.cards.forEach(c => c.deactivate());
-    const cb = this.onRefresh;
-    this.destroy();
-    if (cb) cb();
-  }
-
-  mount() {
-    if (!this.sourceVideos.length) {
-      this.container.innerHTML = `
-        <div class="insights-empty">
-          <i class="fas fa-circle-play"></i>
-          <h2>No insights yet</h2>
-          <p>Add .mp4 files to <code>videos/</code> on GitHub. Open via <code>millionaires-crew.github.io/VaultOne</code>.</p>
-        </div>`;
-      return;
-    }
-    this.shellEl = document.createElement('div');
-    this.shellEl.className = 'insights-feed-shell';
-    this.pullEl = document.createElement('div');
-    this.pullEl.className = 'insights-pull-zone';
-    this.pullEl.innerHTML = `
-      <div class="insights-pull-spinner"><i class="fas fa-arrow-down"></i></div>
-      <span class="insights-pull-label">Pull to refresh</span>`;
-    this.feedEl = document.createElement('div');
-    this.feedEl.className = 'insights-feed';
-    this.shellEl.appendChild(this.pullEl);
-    this.shellEl.appendChild(this.feedEl);
-    this.soundBtn = document.createElement('button');
-    this.soundBtn.className = 'insights-sound-btn';
-    this.soundBtn.type = 'button';
-    this.soundBtn.setAttribute('aria-label', 'Toggle sound');
-    this.soundBtn.onclick = (e) => {
-      e.stopPropagation();
-      this.manager.toggleSound();
-    };
-    this.manager.onSoundChange = () => this.updateSoundBtn();
-    this.shellEl.appendChild(this.soundBtn);
-    this.updateSoundBtn();
-    this.container.innerHTML = '';
-    this.container.appendChild(this.shellEl);
-    this.appendMoreVideos();
-    this.bindPullToRefresh();
-    this._syncHeights = () => this.syncSlideHeights();
-    window.addEventListener('resize', this._syncHeights);
-    this.feedEl.addEventListener('scroll', this._onScroll, { passive: true });
-    this.feedEl.addEventListener('scrollend', this._onScrollEnd, { passive: true });
-    this.feedEl.addEventListener('touchstart', this._onTouchStart, { passive: true });
-    this.feedEl.addEventListener('touchmove', this._onTouchMove, { passive: false });
-    this.feedEl.addEventListener('touchend', this._onTouchEnd, { passive: true });
-    this.feedEl.addEventListener('touchcancel', this._onTouchEnd, { passive: true });
-    this.startIndex = Math.floor(Math.random() * this.manager.cards.length);
-    const start = this.startIndex;
-    this.syncSlideHeights();
-    const slideH = this.feedEl.clientHeight || 0;
-    if (slideH) this.feedEl.scrollTop = start * slideH;
-    if (this._useScrollObserver) {
-      this.observer = new IntersectionObserver(
-        (entries) => {
-          let bestEl = null;
-          let bestRatio = 0;
-          entries.forEach((entry) => {
-            if (entry.intersectionRatio > bestRatio) {
-              bestRatio = entry.intersectionRatio;
-              bestEl = entry.target;
-            }
-          });
-          if (!bestEl || bestRatio < 0.55) return;
-          const idx = parseInt(bestEl.dataset.index, 10);
-          if (isNaN(idx)) return;
-          if (Utils.isIOS() || this._isScrolling) {
-            this._queueActiveIndex(idx);
-            this.maybeLoadMore(idx);
-            return;
-          }
-          this.manager.setActive(idx, this.manager.hasRecentGesture());
-          this.maybeLoadMore(idx);
-        },
-        { root: this.feedEl, threshold: [0.55, 0.7, 0.85] }
-      );
-      this.manager.cards.forEach((c) => this.observer.observe(c.el));
-    }
-    this.manager.setActive(start, this._bootFromGesture);
-    this.maybeLoadMore(start);
-  }
-
-  updateSoundBtn() {
-    if (!this.soundBtn) return;
-    const muted = this.manager.muted
-      || (Utils.isIOS() && !this.manager.soundUnlocked);
-    this.soundBtn.innerHTML = muted
-      ? '<i class="fas fa-volume-xmark"></i>'
-      : '<i class="fas fa-volume-high"></i>';
-    this.soundBtn.classList.toggle('is-muted', muted);
-    this.soundBtn.setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off');
-  }
-
-  noteUserGesture() {
-    this.manager.noteUserGesture(true);
-    this.manager.cards[this.manager.activeIndex]?.player?.play?.(true);
-  }
-
-  syncActiveFromScroll(fromGesture = false) {
-    if (!this.feedEl || this.refreshing) return;
-    const h = this.feedEl.clientHeight;
-    if (!h) return;
-    const idx = Math.round(this.feedEl.scrollTop / h);
-    const clamped = Math.max(0, Math.min(idx, this.manager.cards.length - 1));
-    this.manager.setActive(clamped, fromGesture || this.manager.hasRecentGesture());
-    this.maybeLoadMore(clamped);
-  }
-
-  destroy() {
-    this._unbindPull?.();
-    clearTimeout(this._scrollSettleTimer);
-    window.removeEventListener('resize', this._syncHeights);
-    this.feedEl?.removeEventListener('scroll', this._onScroll);
-    this.feedEl?.removeEventListener('scrollend', this._onScrollEnd);
-    this.feedEl?.removeEventListener('touchstart', this._onTouchStart);
-    this.feedEl?.removeEventListener('touchmove', this._onTouchMove);
-    this.feedEl?.removeEventListener('touchend', this._onTouchEnd);
-    this.feedEl?.removeEventListener('touchcancel', this._onTouchEnd);
-    this.observer?.disconnect();
-    this.manager.destroy();
-    this.container.innerHTML = '';
-    this.shellEl = null;
-    this.pullEl = null;
-    this.feedEl = null;
-    this.observer = null;
-    this.refreshing = false;
-    this.pullDistance = 0;
-  }
-}
 
 // ========== FINANCE APP (Main Controller) ==========
 class FinanceApp {
@@ -3364,8 +2121,6 @@ class FinanceApp {
     this.cashFlowPeriod = 'monthly';
     this.calMonth = new Date();
     this.dashboardChartPeriod = '7d';
-    this.insightsFeed = null;
-    this._insightsSoundUnlock = false;
     this.init();
   }
 
@@ -3382,27 +2137,12 @@ class FinanceApp {
     this.store.subscribe(() => {
       if (!this.currentView) return;
       this.updateShellSummary();
-      if (this.currentView === 'insights') return;
       const active = document.activeElement;
       if (this.currentView === 'settings' && active?.closest('#mainContent input, #mainContent select, #mainContent textarea')) return;
       this.navigate(this.currentView);
     });
     window.addEventListener('beforeunload', () => this.store.persistNow());
-    let startView = 'dashboard';
-    if (Utils.loadActiveView() === 'insights') startView = 'insights';
-    this.navigate(startView);
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted) return;
-      if (Utils.loadActiveView() === 'insights' && this.currentView !== 'insights') {
-        this.navigate('insights');
-      }
-    });
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState !== 'visible') return;
-      if (Utils.loadActiveView() === 'insights' && this.currentView !== 'insights') {
-        this.navigate('insights');
-      }
-    });
+    this.navigate(Utils.loadActiveView() === 'insights' ? 'dashboard' : (Utils.loadActiveView() || 'dashboard'));
     this.checkReminders();
     this.initCrypto();
     window.addEventListener('beforeunload', () => this.crypto.stopAutoRefresh());
@@ -3459,7 +2199,7 @@ class FinanceApp {
 
   /** Sync mobile bottom nav active state */
   syncMobileNav(view) {
-    const primary = ['dashboard', 'accounts', 'crypto', 'insights'];
+    const primary = ['dashboard', 'accounts', 'crypto'];
     const mapped = primary.includes(view) ? view : 'more';
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.view === mapped);
@@ -3468,15 +2208,7 @@ class FinanceApp {
 
   /** Bind mobile bottom navigation */
   bindMobileBottomNav() {
-    const primeInsightsGesture = () => {
-      this._insightsSoundUnlock = true;
-      this.insightsFeed?.manager?.noteUserGesture?.();
-      this.insightsFeed?.manager?.cards?.[this.insightsFeed.manager.activeIndex]?.player?.kickFromGesture?.();
-    };
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
-      if (el.dataset.view === 'insights') {
-        el.addEventListener('pointerdown', primeInsightsGesture, { passive: true });
-      }
       el.onclick = () => {
         const view = el.dataset.view;
         if (view === 'more') {
@@ -3485,16 +2217,6 @@ class FinanceApp {
           return;
         }
         this.closeMobileSidebar();
-        if (view === 'insights') {
-          primeInsightsGesture();
-          this.navigate(view);
-          const feed = this.insightsFeed;
-          if (feed?.manager) {
-            feed.manager.noteUserGesture(true);
-            feed.manager.cards[feed.manager.activeIndex]?.player?.kickFromGesture?.();
-          }
-          return;
-        }
         this.navigate(view);
       };
     });
@@ -3559,7 +2281,6 @@ class FinanceApp {
     const items = [
       { section: 'Main', links: [
         { id: 'dashboard', icon: 'gauge-high', label: 'Dashboard' },
-        { id: 'insights', icon: 'circle-play', label: 'VaultOne Insights' },
         { id: 'transactions', icon: 'exchange-alt', label: 'Transactions' },
         { id: 'income', icon: 'arrow-trend-up', label: 'Income' },
         { id: 'expenses', icon: 'arrow-trend-down', label: 'Expenses' }
@@ -3593,22 +2314,9 @@ class FinanceApp {
       ${s.links.map(l => `<button class="nav-item" data-view="${l.id}"><i class="fas fa-${l.icon}"></i><span class="nav-label">${l.label}</span></button>`).join('')}
     `).join('');
     nav.querySelectorAll('.nav-item').forEach(el => {
-      if (el.dataset.view === 'insights') {
-        el.addEventListener('pointerdown', () => {
-          this._insightsSoundUnlock = true;
-          this.insightsFeed?.manager?.noteUserGesture?.();
-        }, { passive: true });
-      }
       el.onclick = () => {
-        const view = el.dataset.view;
-        if (view === 'insights') this._insightsSoundUnlock = true;
-        this.navigate(view);
+        this.navigate(el.dataset.view);
         this.closeMobileSidebar();
-        if (view === 'insights' && this.insightsFeed?.manager) {
-          const feed = this.insightsFeed;
-          feed.manager.noteUserGesture(true);
-          feed.manager.cards[feed.manager.activeIndex]?.player?.kickFromGesture?.();
-        }
       };
     });
   }
@@ -3665,26 +2373,12 @@ class FinanceApp {
   /** Navigate to view */
   navigate(view) {
     Utils.saveActiveView(view);
-    if (view === 'insights' && this.currentView === 'insights') {
-      this.closeMobileSidebar();
-      document.getElementById('sidebar')?.classList.remove('mobile-open');
-      this.syncMobileNav(view);
-      return;
-    }
-    if (this.currentView === 'insights' && view !== 'insights') {
-      this.insightsFeed?.destroy();
-      this.insightsFeed = null;
-    }
     this.currentView = view;
-    document.documentElement.classList.toggle('view-insights', view === 'insights');
     document.body.classList.toggle('view-dashboard', view === 'dashboard');
-    document.body.classList.toggle('view-insights', view === 'insights');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
     this.syncMobileNav(view);
-    const content = document.getElementById('mainContent');
     const renderers = {
       dashboard: () => this.renderDashboard(),
-      insights: () => { if (!this.insightsFeed) this.renderInsights(); },
       transactions: () => this.renderTransactions(),
       income: () => this.renderIncomeExpenses('income'),
       expenses: () => this.renderIncomeExpenses('expense'),
@@ -3734,47 +2428,6 @@ class FinanceApp {
   }
 
   // ========== DASHBOARD ==========
-  /** Render dashboard view */
-  /** Render VaultOne Insights vertical video feed */
-  async renderInsights() {
-    if (this.insightsFeed?.sourceVideos?.length) return;
-    if (this.insightsFeed) {
-      this.insightsFeed.destroy();
-      this.insightsFeed = null;
-    }
-    this._insightsSoundUnlock = true;
-    this._insightVideos = await Utils.loadInsightVideos();
-    const videos = this._insightVideos;
-    if (Utils.isIOSStandalone()) Utils.warmInsightVideos(videos.slice(0, 12));
-    else Utils.warmInsightVideos(videos);
-    document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed(null, true);
-    this._insightsSoundUnlock = false;
-  }
-
-  /** Rebuild insights feed (pull-to-refresh) */
-  async refreshInsightsFeed() {
-    const mount = document.getElementById('insightsMount');
-    if (!mount) return;
-    const prev = this.insightsFeed?.manager;
-    const soundState = prev ? { muted: prev.muted, soundUnlocked: prev.soundUnlocked } : null;
-    this._insightVideos = await Utils.loadInsightVideos();
-    this._mountInsightsFeed(mount, true, soundState);
-    this.toast.show('Feed refreshed', 'success', 1800);
-  }
-
-  _mountInsightsFeed(mountEl, unlockSound = false, soundState = null) {
-    const mount = mountEl || document.getElementById('insightsMount');
-    if (!mount) return;
-    const videos = this._insightVideos || [];
-    this.insightsFeed = new VideoFeed(mount, videos, { unlockSound, soundState });
-    this.insightsFeed.onRefresh = () => {
-      this.insightsFeed = null;
-      this.refreshInsightsFeed();
-    };
-    this.insightsFeed.mount();
-  }
-
   renderDashboard() {
     const c = this.calc;
     const flow = c.currentMonthFlow();
