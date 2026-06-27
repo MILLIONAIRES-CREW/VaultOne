@@ -2448,6 +2448,24 @@ class FinanceApp {
     return totals;
   }
 
+  /** Consistent mobile glass empty state + desktop empty state (single CTA each) */
+  mobileEmptyView({ section, icon, title, desc, actionLabel, actionOnclick, desktopSubtitle = '' }) {
+    return `
+      <div class="mobile-home hide-on-desktop">
+        <section class="m-wealth-header glass-card m-empty-hero">
+          <div class="m-wealth-label">${Utils.esc(section)}</div>
+          <div class="m-empty-icon"><i class="fas fa-${icon}"></i></div>
+          <div class="m-empty-title">${Utils.esc(title)}</div>
+          <p class="m-empty-desc">${Utils.esc(desc)}</p>
+          <button type="button" class="m-action-pill" onclick="${actionOnclick}"><i class="fas fa-plus"></i> ${Utils.esc(actionLabel)}</button>
+        </section>
+      </div>
+      <div class="hide-on-mobile">
+        <div class="page-header"><div><h1 class="page-title">${Utils.esc(section)}</h1>${desktopSubtitle ? `<p class="page-subtitle">${desktopSubtitle}</p>` : ''}</div></div>
+        <div class="empty-state"><i class="fas fa-${icon}"></i><h3>${Utils.esc(title)}</h3><p>${Utils.esc(desc)}</p><button class="btn btn-primary" onclick="${actionOnclick}"><i class="fas fa-plus"></i> ${Utils.esc(actionLabel)}</button></div>
+      </div>`;
+  }
+
   /** Toggle secondary dashboard stats */
   toggleDashboardStats() {
     const el = document.getElementById('dashboardStatsSecondary');
@@ -3112,21 +3130,15 @@ class FinanceApp {
     const accounts = this.store.data.accounts;
 
     if (!accounts.length) {
-      document.getElementById('mainContent').innerHTML = `
-        <div class="mobile-home mobile-accounts hide-on-desktop">
-          <section class="m-wealth-header glass-card m-empty-hero">
-            <div class="m-wealth-label">Accounts</div>
-            <div class="m-empty-icon"><i class="fas fa-wallet"></i></div>
-            <div class="m-empty-title">No accounts yet</div>
-            <p class="m-empty-desc">Add your cash, bank, or savings accounts to start tracking balances.</p>
-            <button type="button" class="m-action-pill" onclick="app.openAccountModal()"><i class="fas fa-plus"></i> Add Account</button>
-          </section>
-        </div>
-        <div class="hide-on-mobile">
-          <div class="page-header"><div><h1 class="page-title">Accounts</h1><p class="page-subtitle">Manage your financial accounts</p></div></div>
-          <div class="empty-state"><i class="fas fa-wallet"></i><h3>No accounts yet</h3><p>Add your cash, bank, or savings accounts to start tracking balances.</p><button class="btn btn-primary" onclick="app.openAccountModal()"><i class="fas fa-plus"></i> Add Account</button></div>
-        </div>
-        <div id="accountHistory"></div>`;
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Accounts',
+        icon: 'wallet',
+        title: 'No accounts yet',
+        desc: 'Add your cash, bank, or savings accounts to start tracking balances.',
+        actionLabel: 'Add Account',
+        actionOnclick: 'app.openAccountModal()',
+        desktopSubtitle: 'Manage your financial accounts'
+      }) + '<div id="accountHistory"></div>';
       return;
     }
 
@@ -3283,10 +3295,24 @@ class FinanceApp {
   /** Render credit cards view */
   renderCreditCards() {
     const cards = this.store.data.creditCards;
+    if (!cards.length) {
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Credit Cards',
+        icon: 'credit-card',
+        title: 'No credit cards',
+        desc: 'Add your credit cards to track debt and payments.',
+        actionLabel: 'Add Card',
+        actionOnclick: 'app.openCCModal()',
+        desktopSubtitle: `Total debt: <strong class="amount-expense">${this.$(this.calc.ccDebt())}</strong>`
+      });
+      return;
+    }
     document.getElementById('mainContent').innerHTML = `
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Credit Cards</h1><p class="page-subtitle">Total debt: <strong class="amount-expense">${this.$(this.calc.ccDebt())}</strong></p></div>
         <button class="btn btn-primary" onclick="app.openCCModal()"><i class="fas fa-plus"></i> Add Card</button></div>
-      ${cards.length ? `<div class="stats-grid">${cards.map(c => {
+      </div>
+      <div class="stats-grid">${cards.map(c => {
         const avail = c.limit - c.balance;
         const util = c.limit ? (c.balance / c.limit * 100).toFixed(1) : 0;
         const canPay = c.linkedAccountId && c.nextPaymentDate;
@@ -3305,9 +3331,9 @@ class FinanceApp {
           </div>
         </div>`;
       }).join('')}</div>
-      <div class="card"><div class="card-title">Credit Usage</div><div class="chart-container"><canvas id="chartCC"></canvas></div></div>` :
-      '<div class="empty-state"><i class="fas fa-credit-card"></i><h3>No credit cards</h3><p>Add your credit cards to track debt and payments.</p><button class="btn btn-primary" onclick="app.openCCModal()">Add Card</button></div>'}`;
-    if (cards.length) setTimeout(() => {
+      <div class="card"><div class="card-title">Credit Usage</div><div class="chart-container"><canvas id="chartCC"></canvas></div></div>`;
+
+    setTimeout(() => {
       const el = document.getElementById('chartCC');
       if (el) this.charts.render('cc', el, 'bar', {
         labels: cards.map(c => c.name),
@@ -3349,12 +3375,26 @@ class FinanceApp {
   /** Render loans view */
   renderLoans() {
     const loans = this.store.data.loans;
+    if (!loans.length) {
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Loans',
+        icon: 'landmark',
+        title: 'No loans',
+        desc: 'Track your loans and payment schedules.',
+        actionLabel: 'Add Loan',
+        actionOnclick: 'app.openLoanModal()',
+        desktopSubtitle: `Total: <strong class="amount-expense">${this.$(this.calc.loansTotal())}</strong>`
+      });
+      return;
+    }
     document.getElementById('mainContent').innerHTML = `
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Loans</h1><p class="page-subtitle">Total: <strong class="amount-expense">${this.$(this.calc.loansTotal())}</strong></p></div>
         <div><button class="btn btn-secondary" onclick="app.openAmortModal()"><i class="fas fa-calculator"></i> Amortization</button>
         <button class="btn btn-secondary" onclick="app.openPayoffModal()"><i class="fas fa-calculator"></i> Payoff Calc</button>
         <button class="btn btn-primary" onclick="app.openLoanModal()"><i class="fas fa-plus"></i> Add Loan</button></div></div>
-      ${loans.length ? loans.map(l => {
+      </div>
+      ${loans.map(l => {
         const progress = l.originalAmount ? ((l.originalAmount - l.currentBalance) / l.originalAmount * 100).toFixed(1) : 0;
         const amort = this.calc.amortization(l.currentBalance, l.interestRate, l.remainingMonths);
         const canPay = l.linkedAccountId && l.nextPaymentDate;
@@ -3378,9 +3418,9 @@ class FinanceApp {
           <div class="progress-bar"><div class="progress-fill green" style="width:${progress}%"></div></div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${progress}% paid | Remaining interest: ${this.$(amort.totalInterest)}</div>
         </div>`;
-      }).join('') + '<div class="card"><div class="card-title">Loan Progress</div><div class="chart-container"><canvas id="chartLoans"></canvas></div></div>' :
-      '<div class="empty-state"><i class="fas fa-landmark"></i><h3>No loans</h3><p>Track your loans and payment schedules.</p><button class="btn btn-primary" onclick="app.openLoanModal()">Add Loan</button></div>'}`;
-    if (loans.length) setTimeout(() => {
+      }).join('') + '<div class="card"><div class="card-title">Loan Progress</div><div class="chart-container"><canvas id="chartLoans"></canvas></div></div>'}`;
+
+    setTimeout(() => {
       const el = document.getElementById('chartLoans');
       if (el) this.charts.render('loans', el, 'bar', {
         labels: loans.map(l => l.name),
@@ -3504,10 +3544,23 @@ class FinanceApp {
   /** Render savings goals view */
   renderSavings() {
     const goals = this.store.data.savingsGoals;
+    if (!goals.length) {
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Savings Goals',
+        icon: 'piggy-bank',
+        title: 'No savings goals',
+        desc: 'Create goals to track your savings progress.',
+        actionLabel: 'Add Goal',
+        actionOnclick: 'app.openSavingsModal()'
+      });
+      return;
+    }
     document.getElementById('mainContent').innerHTML = `
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Savings Goals</h1></div>
         <button class="btn btn-primary" onclick="app.openSavingsModal()"><i class="fas fa-plus"></i> Add Goal</button></div>
-      ${goals.length ? `<div class="widgets-grid">${goals.map(g => {
+      </div>
+      <div class="widgets-grid">${goals.map(g => {
         const pct = Math.min(100, (g.currentAmount / g.targetAmount * 100)).toFixed(0);
         const remaining = g.targetAmount - g.currentAmount;
         const circ = 2 * Math.PI * 40;
@@ -3524,9 +3577,9 @@ class FinanceApp {
           </div>
         </div>`;
       }).join('')}</div>
-      <div class="card"><div class="card-title">Savings Growth</div><div class="chart-container"><canvas id="chartSavings"></canvas></div></div>` :
-      '<div class="empty-state"><i class="fas fa-piggy-bank"></i><h3>No savings goals</h3><p>Create goals to track your savings progress.</p><button class="btn btn-primary" onclick="app.openSavingsModal()">Add Goal</button></div>'}`;
-    if (goals.length) setTimeout(() => {
+      <div class="card"><div class="card-title">Savings Growth</div><div class="chart-container"><canvas id="chartSavings"></canvas></div></div>`;
+
+    setTimeout(() => {
       const el = document.getElementById('chartSavings');
       if (el) this.charts.render('savings', el, 'line', {
         labels: goals.map(g => g.name),
@@ -3563,17 +3616,31 @@ class FinanceApp {
   renderInvestments() {
     const invs = this.store.data.investments;
     const total = this.calc.investmentsTotal();
+    if (!invs.length) {
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Investments',
+        icon: 'chart-line',
+        title: 'No investments',
+        desc: 'Track stocks, crypto, and other investments.',
+        actionLabel: 'Add Investment',
+        actionOnclick: 'app.openInvModal()',
+        desktopSubtitle: `Portfolio: <strong>${this.$(total)}</strong>`
+      });
+      return;
+    }
     document.getElementById('mainContent').innerHTML = `
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Investments</h1><p class="page-subtitle">Portfolio: <strong>${this.$(total)}</strong></p></div>
         <button class="btn btn-primary" onclick="app.openInvModal()"><i class="fas fa-plus"></i> Add Investment</button></div>
-      ${invs.length ? `<div class="chart-row"><div class="card"><div class="card-title">Allocation</div><div class="chart-container"><canvas id="chartInvAlloc"></canvas></div></div>
+      </div>
+      <div class="chart-row"><div class="card"><div class="card-title">Allocation</div><div class="chart-container"><canvas id="chartInvAlloc"></canvas></div></div>
         <div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Value</th><th>P/L</th><th>ROI</th><th>Alloc %</th><th></th></tr></thead><tbody>
           ${invs.map(i => { const cost = (i.purchasePrice||0)*(i.quantity||1); const pl = i.currentValue - cost; const roi = this.calc.investmentROI(i); const alloc = total ? (i.currentValue/total*100).toFixed(1) : 0;
             return `<tr><td>${Utils.esc(i.name)}</td><td>${i.type}</td><td>${this.$(i.currentValue)}</td><td class="${pl>=0?'amount-income':'amount-expense'}">${this.$(pl)}</td><td>${roi.toFixed(1)}%</td><td>${alloc}%</td>
             <td class="actions"><button onclick="app.openInvModal('${i.id}')"><i class="fas fa-pen"></i></button><button onclick="app.deleteInv('${i.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }).join('')}
-        </tbody></table></div></div></div>` :
-      '<div class="empty-state"><i class="fas fa-chart-line"></i><h3>No investments</h3><p>Track stocks, crypto, and other investments.</p><button class="btn btn-primary" onclick="app.openInvModal()">Add Investment</button></div>'}`;
-    if (invs.length) setTimeout(() => {
+        </tbody></table></div></div></div>`;
+
+    setTimeout(() => {
       const el = document.getElementById('chartInvAlloc');
       if (el) this.charts.render('invAlloc', el, 'doughnut', {
         labels: invs.map(i => i.name), datasets: [{ data: invs.map(i => i.currentValue), backgroundColor: this.charts.colors().palette }]
@@ -3608,6 +3675,18 @@ class FinanceApp {
   // ========== CRYPTO PORTFOLIO ==========
   /** Render crypto portfolio view */
   renderCryptoPortfolio() {
+    const allHoldings = this.store.data.cryptoHoldings || [];
+    if (!allHoldings.length) {
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Crypto',
+        icon: 'coins',
+        title: 'No crypto holdings',
+        desc: 'Add your cryptocurrency holdings to track live prices and portfolio performance.',
+        actionLabel: 'Add Holding',
+        actionOnclick: 'app.openCryptoModal()'
+      });
+      return;
+    }
     const summary = this.crypto.computePortfolioSummary();
     const { sort, dir, search } = this.cryptoState;
     let holdings = summary.rows;
@@ -3864,10 +3943,24 @@ class FinanceApp {
   renderAssets() {
     const assets = this.store.data.assets;
     const total = this.calc.assetsTotal();
+    if (!assets.length) {
+      document.getElementById('mainContent').innerHTML = this.mobileEmptyView({
+        section: 'Assets',
+        icon: 'house',
+        title: 'No assets',
+        desc: 'Track property, vehicles, and valuables.',
+        actionLabel: 'Add Asset',
+        actionOnclick: 'app.openAssetModal()',
+        desktopSubtitle: `Total value: <strong>${this.$(total)}</strong>`
+      });
+      return;
+    }
     document.getElementById('mainContent').innerHTML = `
+      <div class="hide-on-mobile">
       <div class="page-header"><div><h1 class="page-title">Assets</h1><p class="page-subtitle">Total value: <strong>${this.$(total)}</strong></p></div>
         <button class="btn btn-primary" onclick="app.openAssetModal()"><i class="fas fa-plus"></i> Add Asset</button></div>
-      ${assets.length ? `<div class="stats-grid">${assets.map(a => `
+      </div>
+      <div class="stats-grid">${assets.map(a => `
         <div class="stat-card neutral">
           <div class="stat-icon"><i class="fas fa-${a.type==='Car'?'car':a.type==='House'?'house':'gem'}"></i></div>
           <div class="stat-label">${Utils.esc(a.name)} (${a.type})</div>
@@ -3875,9 +3968,9 @@ class FinanceApp {
           <div class="stat-change">Purchase: ${this.$(a.purchaseValue||0)}</div>
           <div class="actions" style="margin-top:8px"><button onclick="app.openAssetModal('${a.id}')"><i class="fas fa-pen"></i></button><button onclick="app.deleteAsset('${a.id}')"><i class="fas fa-trash"></i></button></div>
         </div>`).join('')}</div>
-        <div class="card"><div class="card-title">Asset Breakdown</div><div class="chart-container"><canvas id="chartAssets"></canvas></div></div>` :
-      '<div class="empty-state"><i class="fas fa-house"></i><h3>No assets</h3><p>Track property, vehicles, and valuables.</p><button class="btn btn-primary" onclick="app.openAssetModal()">Add Asset</button></div>'}`;
-    if (assets.length) setTimeout(() => {
+        <div class="card"><div class="card-title">Asset Breakdown</div><div class="chart-container"><canvas id="chartAssets"></canvas></div></div>`;
+
+    setTimeout(() => {
       const el = document.getElementById('chartAssets');
       if (el) this.charts.render('assets', el, 'pie', {
         labels: assets.map(a => a.name), datasets: [{ data: assets.map(a => a.currentValue), backgroundColor: this.charts.colors().palette }]
