@@ -838,10 +838,11 @@ body.view-insights .insights-mount{width:100%;height:100%}
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:none;
   background:#000;scrollbar-width:none;
   touch-action:pan-y;
+  scroll-behavior:auto;
 }
 .insights-feed::-webkit-scrollbar{display:none}
 .insights-slide{
-  height:100%;min-height:100%;scroll-snap-align:start;scroll-snap-stop:always;
+  height:100%;min-height:100%;scroll-snap-align:center;scroll-snap-stop:always;
   position:relative;overflow:hidden;background:#000;
 }
 .insights-video-placeholder{
@@ -1071,7 +1072,7 @@ body.view-insights .insights-mount{width:100%;height:100%}
   html.standalone body.view-insights .insights-feed-shell{
     height:100%;height:-webkit-fill-available;
   }
-  body.view-insights .insights-slide{scroll-snap-stop:normal}
+  body.view-insights .insights-slide{scroll-snap-stop:always}
   body.view-insights .insights-sound-btn{
     bottom:calc(8px + env(safe-area-inset-bottom) + var(--mobile-nav-h) + 14px);
   }
@@ -1334,7 +1335,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.73';
+const APP_VERSION = '0.74';
 
 const INSIGHT_VIDEOS = [
   {
@@ -3141,6 +3142,14 @@ class TikTokEmbedPlayer {
     });
   }
 
+  embedUrlPrime(id) {
+    return Utils.tiktokPlayerUrl(id, {
+      soundUnlocked: false,
+      muted: true,
+      autoplay: false
+    });
+  }
+
   loadedVideoId() {
     const m = this.iframe?.src?.match(/\/player\/v1\/(\d+)/);
     return m ? m[1] : null;
@@ -3154,6 +3163,19 @@ class TikTokEmbedPlayer {
     this.post('play');
     if (wantSound) this.unlockAudio();
     if (!this._playing) this.schedulePlayRetry();
+  }
+
+  startPlayback(id) {
+    const sid = String(id);
+    if (this.loadedVideoId() !== sid) {
+      this._ready = false;
+      this._playing = false;
+      this.showCurtain();
+      this.iframe.src = this.embedUrl(id);
+    }
+    this.container?.classList.add('insights-slide--loading');
+    if (this._ready) this.kick();
+    else this.schedulePlayRetry();
   }
 
   go() {
@@ -3174,16 +3196,7 @@ class TikTokEmbedPlayer {
       return;
     }
     this.hideTapToPlay();
-    this.container?.classList.add('insights-slide--loading');
-    const sid = String(id);
-    if (this.loadedVideoId() !== sid) {
-      this._ready = false;
-      this._playing = false;
-      this.showCurtain();
-      this.iframe.src = this.embedUrl(id);
-    }
-    if (this._ready) this.kick();
-    else this.schedulePlayRetry();
+    this.startPlayback(id);
   }
 
   stop() {
@@ -3195,15 +3208,22 @@ class TikTokEmbedPlayer {
     this.silence();
   }
 
-  prime() {
+  prime(loadIframe = false) {
     if (!this.iframe || this._shouldPlay) return;
     const id = this.getVideoIdSync();
     if (!id) {
       this.ensureVideoId().then((resolved) => {
-        if (resolved && !this._shouldPlay) this.prime();
+        if (resolved && !this._shouldPlay) this.prime(loadIframe);
       });
+      return;
     }
     this.applyCachedThumbnail();
+    if (!loadIframe) return;
+    const sid = String(id);
+    if (this.loadedVideoId() === sid) return;
+    this._ready = false;
+    this._playing = false;
+    this.iframe.src = this.embedUrlPrime(id);
   }
 
   unloadIframe() {
@@ -3231,22 +3251,13 @@ class TikTokEmbedPlayer {
   kickFromGesture() {
     this.manager?.noteUserGesture?.(true);
     this.hideTapToPlay();
-    this.container?.classList.add('insights-slide--loading');
     const id = this.getVideoIdSync();
     if (!id) {
       this.go();
       return;
     }
-    const sid = String(id);
-    if (this.loadedVideoId() !== sid) {
-      this._ready = false;
-      this._playing = false;
-      this.showCurtain();
-      this.iframe.src = this.embedUrl(id);
-    }
     if (!this._shouldPlay) this._shouldPlay = true;
-    if (this._ready) this.kick();
-    else this.schedulePlayRetry();
+    this.startPlayback(id);
   }
 
   resume() {
@@ -3337,7 +3348,12 @@ class TikTokEmbedPlayer {
       }
     }
     if (e.data.type === 'onStateChange') {
-      this._playing = e.data.value === 1;
+      const state = e.data.value;
+      this._playing = state === 1;
+      if (state === 0 && this._shouldPlay) {
+        this.post('seek', 0);
+        this.post('play');
+      }
       if (this._playing) {
         this.revealPlayer();
         this.clearPlayRetry();
@@ -3685,7 +3701,7 @@ class VideoCard {
     if (Utils.isIOSStandalone()) this.player?.unloadIframe?.();
   }
 
-  preloadAdjacent() {
+  preloadAdjacent(loadIframe = false) {
     const key = String(this.meta.url || '').split('#')[0];
     const cached = Utils._tiktokMetaCache?.get(key);
     if (cached?.thumbnail) {
@@ -3694,7 +3710,7 @@ class VideoCard {
     }
     this.placeholder.classList.add('has-thumb');
     this.ensureLoaded();
-    this.player?.prime?.();
+    this.player?.prime?.(loadIframe);
   }
 
   preloadMeta() {
@@ -3728,7 +3744,7 @@ class VideoManager {
     this.cards = [];
     this.activeIndex = 0;
     this.muted = false;
-    this.soundUnlocked = !Utils.isIOS() || Utils.isIOSStandalone();
+    this.soundUnlocked = !Utils.isIOS();
     this._gestureAt = 0;
     this._touchGesture = false;
     this.onSoundChange = null;
@@ -3768,14 +3784,15 @@ class VideoManager {
 
   /** iOS: new slide always starts muted until user taps for sound */
   resetIOSSound() {
-    if (!Utils.isIOS() || Utils.isIOSStandalone()) return;
+    if (!Utils.isIOS()) return;
     this.soundUnlocked = false;
     this.onSoundChange?.();
   }
 
   toggleSound() {
     this.noteUserGesture();
-    if (this.muted) {
+    const effectivelyMuted = this.muted || (Utils.isIOS() && !this.soundUnlocked);
+    if (effectivelyMuted) {
       this.enableSound();
       return;
     }
@@ -3795,11 +3812,11 @@ class VideoManager {
 
   warmNeighborsForGesture() {
     const idx = this.activeIndex;
+    const primeIframe = Utils.isIOSStandalone();
     [-1, 1].forEach((off) => {
       const card = this.cards[idx + off];
       if (!card) return;
-      card.ensureLoaded();
-      card.player?.prime?.();
+      card.preloadAdjacent(primeIframe);
     });
   }
 
@@ -3808,17 +3825,16 @@ class VideoManager {
   }
 
   preloadWindow(index) {
-    if (Utils.isIOSStandalone()) return;
+    const primeIframe = Utils.isIOSStandalone();
     [-1, 1].forEach((off) => {
       const card = this.cards[index + off];
-      if (card) card.preloadAdjacent();
+      if (card) card.preloadAdjacent(primeIframe);
     });
   }
 
   trimIframes(index) {
-    const keep = Utils.isIOSStandalone() ? 0 : 1;
     this.cards.forEach((c, i) => {
-      if (Math.abs(i - index) > keep) c.player?.unloadIframe?.();
+      if (Math.abs(i - index) > 1) c.player?.unloadIframe?.();
     });
   }
 
@@ -3888,7 +3904,7 @@ class VideoFeed {
     this.manager = new VideoManager([]);
     if (Utils.isIOS()) {
       this.manager.muted = false;
-      this.manager.soundUnlocked = Utils.isIOSStandalone();
+      this.manager.soundUnlocked = false;
       if (options.soundState) {
         this.manager.muted = options.soundState.muted;
         this.manager.soundUnlocked = options.soundState.soundUnlocked;
@@ -3898,7 +3914,7 @@ class VideoFeed {
       this.manager.soundUnlocked = true;
     }
     if (options.unlockSound) {
-      if (!Utils.isIOS() || Utils.isIOSStandalone()) {
+      if (!Utils.isIOS()) {
         this.manager.noteUserGesture(true);
         this.manager.soundUnlocked = true;
       }
@@ -3915,7 +3931,7 @@ class VideoFeed {
     this._pullThreshold = 72;
     this._appending = false;
     this._shuffledPool = null;
-    this._useScrollObserver = !Utils.isIOSStandalone();
+    this._useScrollObserver = true;
     this._touchStartY = 0;
     this._lastScrollTop = 0;
     this._lastScrollT = 0;
@@ -3939,6 +3955,7 @@ class VideoFeed {
       this._lastScrollTop = this.feedEl?.scrollTop ?? 0;
       this._lastScrollT = Date.now();
       this._scrollVelocity = 0;
+      this.manager.warmNeighborsForGesture();
     };
     this._onTouchEnd = () => {
       this.manager.noteUserGesture(true);
@@ -3967,10 +3984,8 @@ class VideoFeed {
         e.preventDefault();
       }
       if (Math.abs(dy) > 12) this.manager.noteUserGesture(true);
-      if (!Utils.isIOSStandalone()) {
-        const dir = dy < 0 ? 1 : -1;
-        this.manager.cards[this.manager.activeIndex + dir]?.preloadAdjacent();
-      }
+      const dir = dy < 0 ? 1 : -1;
+      this.manager.cards[this.manager.activeIndex + dir]?.preloadAdjacent(Utils.isIOSStandalone());
     };
   }
 
@@ -3998,7 +4013,7 @@ class VideoFeed {
 
   _queueActiveIndex(idx) {
     this._pendingIndex = idx;
-    const delay = Utils.isIOSStandalone() ? 200 : (Utils.isIOS() ? 130 : 90);
+    const delay = Utils.isIOSStandalone() ? 90 : (Utils.isIOS() ? 120 : 80);
     this._scheduleSettle(delay);
   }
 
@@ -4017,7 +4032,7 @@ class VideoFeed {
     if (!this._shuffledPool?.length) {
       this._shuffledPool = Utils.shuffleArray([...this.sourceVideos]);
     }
-    const batchSize = Utils.isIOSStandalone() ? 8 : this._shuffledPool.length;
+    const batchSize = Utils.isIOSStandalone() ? 12 : this._shuffledPool.length;
     let batch = this._shuffledPool.splice(0, batchSize);
     if (!batch.length) {
       this._shuffledPool = Utils.shuffleArray([...this.sourceVideos]);
@@ -4224,7 +4239,7 @@ class VideoFeed {
   updateSoundBtn() {
     if (!this.soundBtn) return;
     const muted = this.manager.muted
-      || (Utils.isIOS() && !Utils.isIOSStandalone() && !this.manager.soundUnlocked);
+      || (Utils.isIOS() && !this.manager.soundUnlocked);
     this.soundBtn.innerHTML = muted
       ? '<i class="fas fa-volume-xmark"></i>'
       : '<i class="fas fa-volume-high"></i>';
@@ -4672,7 +4687,7 @@ class FinanceApp {
     if (Utils.isIOSStandalone()) Utils.warmInsightThumbnails(INSIGHT_VIDEOS.slice(0, 12));
     else Utils.warmInsightThumbnails(INSIGHT_VIDEOS);
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed(null, !Utils.isIOS() || Utils.isIOSStandalone());
+    this._mountInsightsFeed(null, !Utils.isIOS());
     this._insightsSoundUnlock = false;
   }
 
@@ -4682,7 +4697,7 @@ class FinanceApp {
     if (!mount) return;
     const prev = this.insightsFeed?.manager;
     const soundState = prev ? { muted: prev.muted, soundUnlocked: prev.soundUnlocked } : null;
-    this._mountInsightsFeed(mount, !Utils.isIOS() || Utils.isIOSStandalone(), soundState);
+    this._mountInsightsFeed(mount, !Utils.isIOS(), soundState);
     this.toast.show('Feed refreshed', 'success', 1800);
   }
 
