@@ -1204,17 +1204,22 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.84';
+const APP_VERSION = '0.86';
 
-const INSIGHT_VIDEOS = [
-  {
-    id: 'steve-harvey-motivation',
-    title: 'Take a Chance',
-    category: 'Motivation',
-    description: 'Steve Harvey motivational short.',
-    file: 'videos/vidssave.com Steve Harvey- Inspirational Speech _ Motivational Short Video _ Incredible You 480P.mp4'
-  }
+/** GitHub repo that hosts insight videos in /videos (auto-discovered when pushed) */
+const INSIGHTS_GITHUB = {
+  owner: 'alazoabi',
+  repo: 'personal-finance-manager',
+  branch: 'main',
+  folder: 'videos'
+};
+
+/** Local fallback filenames in videos/ — used when GitHub API is unavailable */
+const INSIGHT_VIDEO_FILES = [
+  'vidssave.com Steve Harvey- Inspirational Speech _ Motivational Short Video _ Incredible You 480P.mp4'
 ];
+
+const INSIGHT_VIDEO_EXT = /\.(mp4|webm|mov|m4v)$/i;
 const Utils = {
   /** Generate unique ID */
   uid() { return crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2); },
@@ -1356,18 +1361,6 @@ const Utils = {
   /** Escape HTML */
   esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; },
 
-  /** Resolve a local video path relative to the app */
-  localVideoUrl(fileOrUrl) {
-    const path = String(fileOrUrl || '').trim();
-    if (!path) return '';
-    if (/^https?:/i.test(path)) return path;
-    try {
-      return new URL(path, location.href).href;
-    } catch {
-      return path;
-    }
-  },
-
   titleFromFilename(name) {
     return String(name || '')
       .replace(/\.[^.]+$/, '')
@@ -1376,34 +1369,127 @@ const Utils = {
       .trim() || 'Insight';
   },
 
-  /** Load insight videos from videos/manifest.json when served over HTTP */
-  async loadInsightVideos() {
-    if (location.protocol === 'http:' || location.protocol === 'https:') {
+  insightsGithub() {
+    if (this._insightsGithub) return this._insightsGithub;
+    try {
+      const host = location.hostname;
+      const repoMatch = location.pathname.match(/^\/([^/?#]+)/);
+      if (host.endsWith('.github.io') && repoMatch?.[1]) {
+        this._insightsGithub = {
+          owner: host.replace('.github.io', ''),
+          repo: decodeURIComponent(repoMatch[1]),
+          branch: 'main',
+          folder: 'videos'
+        };
+        return this._insightsGithub;
+      }
+    } catch (_) {}
+    this._insightsGithub = { ...INSIGHTS_GITHUB };
+    return this._insightsGithub;
+  },
+
+  /** Build a raw GitHub URL for a file under the repo videos/ folder */
+  githubInsightVideoUrl(filename) {
+    const { owner, repo, branch, folder } = this.insightsGithub();
+    const name = String(filename || '').replace(new RegExp(`^${folder}/`), '');
+    if (!name) return '';
+    const segments = name.split('/').map((s) => encodeURIComponent(s));
+    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${folder}/${segments.join('/')}`;
+  },
+
+  insightVideoBasename(fileOrUrl) {
+    const path = String(fileOrUrl || '').replace(/^videos\//, '');
+    return path.split('/').pop() || path;
+  },
+
+  insightVideoFromFilename(filename) {
+    const { folder } = this.insightsGithub();
+    const name = this.insightVideoBasename(filename);
+    return {
+      id: name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 48) || this.uid(),
+      title: this.titleFromFilename(name),
+      category: 'Insights',
+      description: '',
+      file: `${folder}/${name}`
+    };
+  },
+
+  /** Resolve playback URL — local videos/ path first, GitHub raw as fallback */
+  insightVideoUrl(meta) {
+    if (!meta) return '';
+    if (meta.url) return meta.url;
+    const path = String(meta.file || '').trim();
+    if (!path) return '';
+    if (/^https?:/i.test(path)) return path;
+    try {
+      return new URL(path, location.href).href;
+    } catch {
+      return this.githubInsightVideoUrl(path);
+    }
+  },
+
+  /** @deprecated use insightVideoUrl */
+  localVideoUrl(fileOrUrl) {
+    if (fileOrUrl && typeof fileOrUrl === 'object') return this.insightVideoUrl(fileOrUrl);
+    return this.insightVideoUrl({ file: String(fileOrUrl || '') });
+  },
+
+  insightVideosFromFilenames(filenames) {
+    return (filenames || [])
+      .map((name) => String(name || '').trim())
+      .filter((name) => name && INSIGHT_VIDEO_EXT.test(name))
+      .map((name) => this.insightVideoFromFilename(name));
+  },
+
+  /** List .mp4/.webm files in the repo videos/ folder via GitHub API */
+  async fetchGitHubInsightVideos() {
+    const gh = this.insightsGithub();
+    const branches = [gh.branch, 'main', 'master'].filter((b, i, a) => a.indexOf(b) === i);
+
+    for (const branch of branches) {
       try {
-        const res = await fetch(new URL('videos/manifest.json', location.href).href);
-        if (res.ok) {
-          const items = await res.json();
-          if (Array.isArray(items) && items.length) {
-            return items.map((item) => ({
-              id: item.id || this.uid(),
-              title: item.title || this.titleFromFilename(item.file),
-              category: item.category || 'Insights',
-              description: item.description || '',
-              file: String(item.file || '').startsWith('videos/')
-                ? item.file
-                : `videos/${item.file}`
-            }));
-          }
+        const res = await fetch(
+          `https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${gh.folder}?ref=${encodeURIComponent(branch)}`,
+          { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) continue;
+        const items = await res.json();
+        if (!Array.isArray(items)) continue;
+
+        const videos = items
+          .filter((item) => item.type === 'file' && INSIGHT_VIDEO_EXT.test(item.name))
+          .map((item) => ({
+            ...this.insightVideoFromFilename(item.name),
+            id: item.sha?.slice(0, 12) || this.insightVideoFromFilename(item.name).id,
+            url: item.download_url || this.githubInsightVideoUrl(item.name)
+          }));
+
+        if (videos.length) {
+          gh.branch = branch;
+          return videos;
         }
       } catch (_) {}
     }
-    return INSIGHT_VIDEOS;
+    return null;
+  },
+
+  /** Load insight videos: GitHub folder scan, then local videos/ fallback */
+  async loadInsightVideos() {
+    try {
+      const fromGitHub = await this.fetchGitHubInsightVideos();
+      if (fromGitHub?.length) return fromGitHub;
+    } catch (_) {}
+
+    const local = this.insightVideosFromFilenames(INSIGHT_VIDEO_FILES);
+    if (local.length) return local;
+
+    return [];
   },
 
   /** Prefetch local video metadata for smoother scroll */
   warmInsightVideos(videos) {
     (videos || []).forEach((meta) => {
-      const url = this.localVideoUrl(meta.file || meta.url);
+      const url = this.insightVideoUrl(meta);
       if (!url) return;
       const v = document.createElement('video');
       v.preload = 'metadata';
@@ -2568,7 +2654,7 @@ class VideoCard {
   ensureLoaded() {
     if (this.loaded) return;
     this.loaded = true;
-    const url = Utils.localVideoUrl(this.meta.file || this.meta.url);
+    const url = Utils.insightVideoUrl(this.meta);
     if (!url) {
       this.showError();
       return;
@@ -2585,7 +2671,7 @@ class VideoCard {
     if (this.errorEl) return;
     this.errorEl = document.createElement('div');
     this.errorEl.className = 'insights-error';
-    this.errorEl.innerHTML = '<i class="fas fa-circle-exclamation"></i><p>Unable to load this video. Add .mp4 or .webm files to the videos/ folder.</p>';
+    this.errorEl.innerHTML = '<i class="fas fa-circle-exclamation"></i><p>Unable to load this video. Check that the file exists in the videos/ folder.</p>';
     this.el.appendChild(this.errorEl);
   }
 
@@ -3020,7 +3106,7 @@ class VideoFeed {
         <div class="insights-empty">
           <i class="fas fa-circle-play"></i>
           <h2>No insights yet</h2>
-          <p>Add .mp4 or .webm files to the videos/ folder and list them in videos/manifest.json.</p>
+          <p>Add .mp4 or .webm files to the <code>videos/</code> folder. On GitHub they are picked up automatically.</p>
         </div>`;
       return;
     }
@@ -3534,7 +3620,11 @@ class FinanceApp {
   /** Render dashboard view */
   /** Render VaultOne Insights vertical video feed */
   async renderInsights() {
-    if (this.insightsFeed) return;
+    if (this.insightsFeed?.sourceVideos?.length) return;
+    if (this.insightsFeed) {
+      this.insightsFeed.destroy();
+      this.insightsFeed = null;
+    }
     this._insightsSoundUnlock = true;
     this._insightVideos = await Utils.loadInsightVideos();
     const videos = this._insightVideos;
@@ -3559,7 +3649,7 @@ class FinanceApp {
   _mountInsightsFeed(mountEl, unlockSound = false, soundState = null) {
     const mount = mountEl || document.getElementById('insightsMount');
     if (!mount) return;
-    const videos = this._insightVideos || INSIGHT_VIDEOS;
+    const videos = this._insightVideos || [];
     this.insightsFeed = new VideoFeed(mount, videos, { unlockSound, soundState });
     this.insightsFeed.onRefresh = () => {
       this.insightsFeed = null;
