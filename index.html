@@ -932,7 +932,7 @@ body.view-insights .insights-mount{width:100%;height:100%}
 .insights-slide--tiktok.insights-slide--live .insights-tiktok-chrome::before{
   opacity:0;
 }
-.insights-counter{display:none}
+.insights-counter,.insights-meta{display:none!important}
 .insights-slide--tiktok .insights-meta{
   left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));
   margin:0;
@@ -1334,7 +1334,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.72';
+const APP_VERSION = '0.73';
 
 const INSIGHT_VIDEOS = [
   {
@@ -2921,13 +2921,7 @@ class VideoOverlay {
       ? '<div class="insights-progress"><div class="insights-progress-bar indeterminate"></div></div>'
       : '<div class="insights-progress"><div class="insights-progress-bar"></div></div>';
     this.el.innerHTML = `
-      ${progress}
-      <div class="insights-counter">${index + 1} / ${total}</div>
-      <div class="insights-meta">
-        <span class="insights-category">${Utils.esc(meta.category || 'Finance')}</span>
-        <div class="insights-title">${Utils.esc(meta.title)}</div>
-        ${meta.description ? `<div class="insights-desc">${Utils.esc(meta.description)}</div>` : ''}
-      </div>`;
+      ${progress}`;
     this.progressBar = this.el.querySelector('.insights-progress-bar');
     this._onTime = () => this.updateProgress();
     if (video) video.addEventListener('timeupdate', this._onTime);
@@ -3734,7 +3728,7 @@ class VideoManager {
     this.cards = [];
     this.activeIndex = 0;
     this.muted = false;
-    this.soundUnlocked = !Utils.isIOS();
+    this.soundUnlocked = !Utils.isIOS() || Utils.isIOSStandalone();
     this._gestureAt = 0;
     this._touchGesture = false;
     this.onSoundChange = null;
@@ -3774,7 +3768,7 @@ class VideoManager {
 
   /** iOS: new slide always starts muted until user taps for sound */
   resetIOSSound() {
-    if (!Utils.isIOS()) return;
+    if (!Utils.isIOS() || Utils.isIOSStandalone()) return;
     this.soundUnlocked = false;
     this.onSoundChange?.();
   }
@@ -3894,7 +3888,7 @@ class VideoFeed {
     this.manager = new VideoManager([]);
     if (Utils.isIOS()) {
       this.manager.muted = false;
-      this.manager.soundUnlocked = false;
+      this.manager.soundUnlocked = Utils.isIOSStandalone();
       if (options.soundState) {
         this.manager.muted = options.soundState.muted;
         this.manager.soundUnlocked = options.soundState.soundUnlocked;
@@ -3904,7 +3898,7 @@ class VideoFeed {
       this.manager.soundUnlocked = true;
     }
     if (options.unlockSound) {
-      if (!Utils.isIOS()) {
+      if (!Utils.isIOS() || Utils.isIOSStandalone()) {
         this.manager.noteUserGesture(true);
         this.manager.soundUnlocked = true;
       }
@@ -4230,7 +4224,7 @@ class VideoFeed {
   updateSoundBtn() {
     if (!this.soundBtn) return;
     const muted = this.manager.muted
-      || (Utils.isIOS() && !this.manager.soundUnlocked);
+      || (Utils.isIOS() && !Utils.isIOSStandalone() && !this.manager.soundUnlocked);
     this.soundBtn.innerHTML = muted
       ? '<i class="fas fa-volume-xmark"></i>'
       : '<i class="fas fa-volume-high"></i>';
@@ -4678,7 +4672,7 @@ class FinanceApp {
     if (Utils.isIOSStandalone()) Utils.warmInsightThumbnails(INSIGHT_VIDEOS.slice(0, 12));
     else Utils.warmInsightThumbnails(INSIGHT_VIDEOS);
     document.getElementById('mainContent').innerHTML = '<div class="insights-mount" id="insightsMount"></div>';
-    this._mountInsightsFeed(null, !Utils.isIOS());
+    this._mountInsightsFeed(null, !Utils.isIOS() || Utils.isIOSStandalone());
     this._insightsSoundUnlock = false;
   }
 
@@ -4688,7 +4682,7 @@ class FinanceApp {
     if (!mount) return;
     const prev = this.insightsFeed?.manager;
     const soundState = prev ? { muted: prev.muted, soundUnlocked: prev.soundUnlocked } : null;
-    this._mountInsightsFeed(mount, !Utils.isIOS(), soundState);
+    this._mountInsightsFeed(mount, !Utils.isIOS() || Utils.isIOSStandalone(), soundState);
     this.toast.show('Feed refreshed', 'success', 1800);
   }
 
