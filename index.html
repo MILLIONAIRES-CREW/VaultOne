@@ -496,6 +496,122 @@ tr:last-child td{border-bottom:none}
 .modal-header h2{font-size:18px;font-weight:600}
 .modal-body{padding:24px}
 .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ========== TRANSACTION FORM (shared app forms) ========== */
+.app-form,.tx-form{display:flex;flex-direction:column;gap:18px}
+.tx-hero{
+  text-align:center;padding:20px 16px 18px;border-radius:var(--radius-sm);
+  background:linear-gradient(160deg,rgba(23,23,23,0.95),rgba(11,11,11,0.88));
+  border:1px solid rgba(212,175,55,0.18);
+}
+.tx-type-toggle{
+  display:inline-flex;padding:4px;border-radius:999px;
+  background:rgba(0,0,0,0.35);border:1px solid var(--border);margin-bottom:16px;
+}
+.tx-type-btn{
+  padding:8px 20px;border-radius:999px;font-size:12px;font-weight:700;
+  letter-spacing:0.04em;text-transform:uppercase;color:var(--text-muted);
+  transition:var(--transition);min-height:36px;
+}
+.tx-type-btn.active.expense{background:rgba(229,72,77,0.18);color:var(--expense);box-shadow:inset 0 0 0 1px rgba(229,72,77,0.35)}
+.tx-type-btn.active.income{background:rgba(35,193,107,0.18);color:var(--income);box-shadow:inset 0 0 0 1px rgba(35,193,107,0.35)}
+.tx-amount-wrap{
+  display:flex;align-items:baseline;justify-content:center;gap:4px;margin-bottom:10px;
+}
+.tx-amount-prefix{font-size:28px;font-weight:700;color:var(--gold-premium);font-family:'Manrope',sans-serif;line-height:1}
+.tx-amount-input{
+  width:min(220px,70vw);background:transparent!important;border:none!important;
+  box-shadow:none!important;padding:0!important;min-height:auto!important;
+  font-family:'Manrope',sans-serif;font-size:42px;font-weight:800;
+  letter-spacing:-0.03em;text-align:left;color:var(--text-primary);
+}
+.tx-amount-input:focus{box-shadow:none!important}
+.tx-amount-input::placeholder{color:var(--text-muted);opacity:0.45}
+.tx-desc-input{
+  width:100%;background:transparent!important;border:none!important;
+  box-shadow:none!important;padding:4px 0!important;min-height:auto!important;
+  font-size:15px;text-align:center;color:var(--text-secondary);
+}
+.tx-desc-input:focus{box-shadow:none!important;color:var(--text-primary)}
+.tx-desc-input::placeholder{color:var(--text-muted)}
+.tx-section{display:flex;flex-direction:column;gap:10px}
+.tx-section-label{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;
+  color:var(--gold);opacity:0.85;padding-left:2px;
+}
+.tx-field{display:flex;flex-direction:column;gap:5px}
+.tx-field label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.03em}
+.tx-field input,.tx-field select,.tx-field textarea{
+  background:rgba(23,23,23,0.9);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:12px 14px;min-height:46px;font-size:15px;
+}
+.tx-field input:focus,.tx-field select:focus,.tx-field textarea:focus{
+  border-color:rgba(212,175,55,0.45);box-shadow:0 0 0 2px rgba(212,175,55,0.1);
+}
+.tx-field textarea{min-height:88px;resize:vertical}
+.tx-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tx-optional{
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:rgba(23,23,23,0.45);overflow:hidden;
+}
+.tx-optional summary{
+  padding:12px 14px;font-size:12px;font-weight:600;color:var(--text-secondary);
+  cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;
+}
+.tx-optional summary::-webkit-details-marker{display:none}
+.tx-optional summary::after{content:'+';font-size:16px;color:var(--gold);font-weight:400}
+.tx-optional[open] summary::after{content:'−'}
+.tx-optional[open] summary{border-bottom:1px solid var(--border)}
+.tx-optional-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.tx-hero-icon{font-size:28px;color:var(--gold);margin-bottom:10px}
+.tx-hero-crypto .tx-field label{text-align:center;display:block}
+.tx-hero-crypto .coin-autocomplete-wrap{max-width:320px;margin:0 auto}
+.coin-search-input{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  background:rgba(23,23,23,0.9);border:1px solid var(--border);font-size:15px;
+}
+.coin-search-input:focus{border-color:rgba(212,175,55,0.45);box-shadow:0 0 0 2px rgba(212,175,55,0.1)}
+.tx-coin-chip{margin-top:10px;justify-content:center}
+.tx-amount-wrap--sm{margin:0}
+.tx-amount-wrap--sm .tx-amount-prefix{font-size:18px}
+.tx-amount-input--sm{font-size:22px!important;width:100%}
+.tx-chip-grid{display:flex;flex-wrap:wrap;gap:8px}
+.tx-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
+  font-size:12px;font-weight:600;background:rgba(23,23,23,0.9);border:1px solid var(--border);
+  color:var(--text-secondary);transition:var(--transition);
+}
+.tx-chip i{font-size:11px;opacity:0.85}
+.tx-chip.active{background:rgba(212,175,55,0.14);border-color:rgba(212,175,55,0.4);color:var(--gold-premium)}
+.tx-chip:active{transform:scale(0.97)}
+.tx-transfer-arrow{text-align:center;color:var(--gold);font-size:14px;padding:2px 0}
+.tx-field-hint{font-size:11px;color:var(--text-muted);margin-top:2px}
+.tx-calc-actions{margin-top:4px}
+.tx-calc-actions .btn{width:100%}
+.modal.tx-sheet .tx-save-btn{min-width:120px}
+@keyframes txSheetIn{from{transform:translateY(100%);opacity:0.6}to{transform:none;opacity:1}}
+@media(max-width:768px){
+  .modal-overlay.tx-sheet-open{align-items:flex-end;padding:0}
+  .modal.tx-sheet{
+    max-width:100%;width:100%;max-height:min(92vh,780px);margin:0;
+    border-radius:20px 20px 0 0;border-bottom:none;
+    display:flex;flex-direction:column;animation:txSheetIn 0.28s ease;
+  }
+  .modal.tx-sheet .modal-header{padding:14px 18px 12px;flex-shrink:0}
+  .modal.tx-sheet .modal-header h2{font-size:17px;font-weight:700;font-family:'Manrope',sans-serif}
+  .modal.tx-sheet .modal-body{flex:1;overflow-y:auto;padding:0 18px 12px;-webkit-overflow-scrolling:touch}
+  .modal.tx-sheet .modal-footer{
+    flex-shrink:0;padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+    gap:10px;border-top:1px solid var(--border);
+  }
+  .modal.tx-sheet .modal-footer .btn{flex:1;justify-content:center}
+  .modal.tx-sheet .tx-save-btn{flex:1.4}
+  .tx-amount-input{font-size:38px}
+}
+@media(min-width:769px){
+  .modal.tx-sheet{max-width:480px}
+  .modal.tx-sheet .modal-body{padding:0 24px 8px}
+}
 .toast-container{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px}
 .toast{
   padding:16px 20px;border-radius:var(--radius-sm);background:rgba(11,11,11,0.98);
@@ -1210,16 +1326,21 @@ class ModalManager {
   }
 
   /** Open modal with content */
-  open(title, bodyHTML, footerHTML = '', large = false) {
+  open(title, bodyHTML, footerHTML = '', large = false, sheet = false) {
     this.title.textContent = title;
     this.body.innerHTML = bodyHTML;
     this.footer.innerHTML = footerHTML;
     this.modal.classList.toggle('lg', large);
+    this.modal.classList.toggle('tx-sheet', sheet);
+    this.overlay.classList.toggle('tx-sheet-open', sheet);
     this.overlay.classList.add('open');
   }
 
   /** Close modal */
-  close() { this.overlay.classList.remove('open'); }
+  close() {
+    this.overlay.classList.remove('open', 'tx-sheet-open');
+    this.modal.classList.remove('tx-sheet');
+  }
 
   /** Confirm dialog */
   confirm(title, message) {
@@ -3016,25 +3137,214 @@ class FinanceApp {
     });
   }
 
+  /** Currency symbol for forms */
+  currencySymbol() {
+    const sym = { USD: '$', EUR: '€', GBP: '£', SAR: '﷼', JPY: '¥', CAD: 'C$', AUD: 'A$', ILS: '₪' };
+    return sym[this.store.settings.currency || 'USD'] || '$';
+  }
+
+  /** Sheet modal footer with save action */
+  formFooter(saveLabel, saveHandler, icon = 'check') {
+    return `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button>
+      <button class="btn btn-primary tx-save-btn" onclick="${saveHandler}"><i class="fas fa-${icon}"></i> ${Utils.esc(saveLabel)}</button>`;
+  }
+
+  /** Open bottom-sheet style modal */
+  openSheetModal(title, body, footer, large = false) {
+    this.modal.open(title, body, footer, large, true);
+  }
+
+  formSection(label, inner) {
+    return `<section class="tx-section"><div class="tx-section-label">${label}</div>${inner}</section>`;
+  }
+
+  formField(label, control, forId = '') {
+    const attr = forId ? ` for="${forId}"` : '';
+    return `<div class="tx-field"><label${attr}>${label}</label>${control}</div>`;
+  }
+
+  formRow(...cells) {
+    return `<div class="tx-field-row">${cells.join('')}</div>`;
+  }
+
+  formOptional(summary, inner, open = false) {
+    return `<details class="tx-optional"${open ? ' open' : ''}><summary>${summary}</summary><div class="tx-optional-body">${inner}</div></details>`;
+  }
+
+  heroAmount(id, value, opts = {}) {
+    const sym = opts.symbol ?? this.currencySymbol();
+    return `<div class="tx-amount-wrap${opts.small ? ' tx-amount-wrap--sm' : ''}"><span class="tx-amount-prefix" aria-hidden="true">${sym}</span>
+      <input type="number" id="${id}" class="tx-amount-input${opts.small ? ' tx-amount-input--sm' : ''}" placeholder="${opts.placeholder ?? '0.00'}" step="${opts.step ?? '0.01'}" inputmode="decimal" value="${value ?? ''}" aria-label="${opts.label ?? 'Amount'}"></div>`;
+  }
+
+  heroText(id, value, placeholder, label) {
+    return `<input type="text" id="${id}" class="tx-desc-input" placeholder="${placeholder}" value="${Utils.esc(value || '')}" aria-label="${label}">`;
+  }
+
+  typeToggleHtml(hiddenId, value, options) {
+    const btns = options.map(o => {
+      const cls = [o.className || '', value === o.value ? 'active' : ''].filter(Boolean).join(' ');
+      return `<button type="button" class="tx-type-btn ${cls}" data-type="${o.value}">${o.label}</button>`;
+    }).join('');
+    return `<input type="hidden" id="${hiddenId}" value="${value}">
+      <div class="tx-type-toggle" role="tablist">${btns}</div>`;
+  }
+
+  bindFormTypeToggle(formSel, hiddenId, onChange) {
+    const form = document.querySelector(formSel);
+    const typeEl = document.getElementById(hiddenId);
+    if (!form || !typeEl) return;
+    const setType = (type) => {
+      typeEl.value = type;
+      form.querySelectorAll('.tx-type-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.type === type));
+      form.classList.toggle('is-income', type === 'income');
+      form.classList.toggle('is-expense', type === 'expense');
+      if (onChange) onChange(type);
+    };
+    form.querySelectorAll('.tx-type-btn').forEach(btn => btn.addEventListener('click', () => setType(btn.dataset.type)));
+    setType(typeEl.value || form.querySelector('.tx-type-btn')?.dataset.type || '');
+  }
+
+  bindChipSelect(hiddenId, chipSel) {
+    const el = document.getElementById(hiddenId);
+    if (!el) return;
+    const set = (val) => {
+      el.value = val;
+      document.querySelectorAll(chipSel).forEach(c => c.classList.toggle('active', c.dataset.value === val));
+    };
+    document.querySelectorAll(chipSel).forEach(c => c.addEventListener('click', () => set(c.dataset.value)));
+    if (el.value) set(el.value);
+  }
+
+  focusFormInput(id, delay = 120) {
+    const el = document.getElementById(id);
+    if (el) setTimeout(() => el.focus(), delay);
+  }
+
+  rcCategoryOptions(type, selectedId = '') {
+    const cats = this.store.data.categories.filter(c => c.type === type || c.type === 'both');
+    if (!cats.length) return '<option value="">No categories</option>';
+    const pick = selectedId && cats.some(c => c.id === selectedId) ? selectedId : cats[0].id;
+    return cats.map(c => `<option value="${c.id}" ${c.id === pick ? 'selected' : ''}>${Utils.esc(c.name)}</option>`).join('');
+  }
+
+  refreshRcCategories() {
+    const type = document.getElementById('rcType')?.value;
+    const select = document.getElementById('rcCat');
+    if (!type || !select) return;
+    const prev = select.value;
+    select.innerHTML = this.rcCategoryOptions(type, prev);
+  }
+
+  /** Category options filtered by transaction type */
+  txCategoryOptions(type, selectedId = '') {
+    const cats = this.store.data.categories.filter(c => c.type === type || c.type === 'both');
+    if (!cats.length) return '<option value="">No categories</option>';
+    const pick = selectedId && cats.some(c => c.id === selectedId) ? selectedId : cats[0].id;
+    return cats.map(c => `<option value="${c.id}" ${c.id === pick ? 'selected' : ''}>${Utils.esc(c.name)}</option>`).join('');
+  }
+
+  /** Refresh category dropdown when type changes */
+  refreshTxCategories() {
+    const typeEl = document.getElementById('txType');
+    const select = document.getElementById('txCategory');
+    if (!typeEl || !select) return;
+    const type = typeEl.value;
+    const prev = select.value;
+    select.innerHTML = this.txCategoryOptions(type, prev);
+  }
+
+  /** Wire transaction form interactions */
+  bindTransactionForm() {
+    const form = document.querySelector('.tx-form');
+    const typeEl = document.getElementById('txType');
+    if (!form || !typeEl) return;
+    const setType = (type) => {
+      typeEl.value = type;
+      form.classList.toggle('is-income', type === 'income');
+      form.classList.toggle('is-expense', type === 'expense');
+      document.querySelectorAll('.tx-type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+      this.refreshTxCategories();
+    };
+    document.querySelectorAll('.tx-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => setType(btn.dataset.type));
+    });
+    setType(typeEl.value || 'expense');
+    const amountEl = document.getElementById('txAmount');
+    if (amountEl && !amountEl.value) setTimeout(() => amountEl.focus(), 120);
+  }
+
   /** Open transaction modal */
   openTransactionModal(id = null) {
     const t = id ? this.store.get('transactions', id) : {};
     const isEdit = !!id;
-    const body = `<div class="form-grid">
-      <div class="form-group"><label>Date</label><input type="date" id="txDate" value="${t.date || Utils.toISO(new Date())}"></div>
-      <div class="form-group"><label>Time</label><input type="time" id="txTime" value="${t.time || '12:00'}"></div>
-      <div class="form-group"><label>Type</label><select id="txType"><option value="expense" ${t.type!=='income'?'selected':''}>Expense</option><option value="income" ${t.type==='income'?'selected':''}>Income</option></select></div>
-      <div class="form-group"><label>Amount</label><input type="number" id="txAmount" step="0.01" value="${t.amount || ''}"></div>
-      <div class="form-group"><label>Category</label><select id="txCategory">${this.store.data.categories.map(c => `<option value="${c.id}" ${t.categoryId===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Account</label><select id="txAccount">${this.store.data.accounts.map(a => `<option value="${a.id}" ${t.accountId===a.id?'selected':''}>${a.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Payment Method</label><select id="txPayment"><option ${t.paymentMethod==='Cash'?'selected':''}>Cash</option><option ${t.paymentMethod==='Debit Card'?'selected':''}>Debit Card</option><option ${t.paymentMethod==='Credit Card'?'selected':''}>Credit Card</option><option ${t.paymentMethod==='Bank Transfer'?'selected':''}>Bank Transfer</option><option ${t.paymentMethod==='PayPal'?'selected':''}>PayPal</option><option ${t.paymentMethod==='Other'?'selected':''}>Other</option></select></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Description</label><input type="text" id="txDesc" value="${Utils.esc(t.description||'')}"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Tags (comma separated)</label><input type="text" id="txTags" value="${(t.tags||[]).join(', ')}"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Notes</label><textarea id="txNotes">${Utils.esc(t.notes||'')}</textarea></div>
+    const txType = t.type === 'income' ? 'income' : 'expense';
+    const sym = this.currencySymbol();
+    const accounts = this.store.data.accounts;
+    const accountOptions = accounts.length
+      ? accounts.map(a => `<option value="${a.id}" ${t.accountId === a.id ? 'selected' : ''}>${Utils.esc(a.name)}</option>`).join('')
+      : '<option value="">Add an account first</option>';
+    const payments = ['Cash', 'Debit Card', 'Credit Card', 'Bank Transfer', 'PayPal', 'Other'];
+    const paymentOptions = payments.map(p => `<option ${t.paymentMethod === p ? 'selected' : ''}>${p}</option>`).join('');
+    const body = `<div class="tx-form is-${txType}">
+      <input type="hidden" id="txType" value="${txType}">
+      <section class="tx-hero">
+        <div class="tx-type-toggle" role="tablist" aria-label="Transaction type">
+          <button type="button" class="tx-type-btn expense ${txType === 'expense' ? 'active' : ''}" data-type="expense">Expense</button>
+          <button type="button" class="tx-type-btn income ${txType === 'income' ? 'active' : ''}" data-type="income">Income</button>
+        </div>
+        <div class="tx-amount-wrap">
+          <span class="tx-amount-prefix" aria-hidden="true">${sym}</span>
+          <input type="number" id="txAmount" class="tx-amount-input" placeholder="0.00" step="0.01" inputmode="decimal" value="${t.amount || ''}" aria-label="Amount">
+        </div>
+        <input type="text" id="txDesc" class="tx-desc-input" placeholder="What was this for?" value="${Utils.esc(t.description || '')}" aria-label="Description">
+      </section>
+      <section class="tx-section">
+        <div class="tx-section-label">Details</div>
+        <div class="tx-field">
+          <label for="txCategory">Category</label>
+          <select id="txCategory">${this.txCategoryOptions(txType, t.categoryId || '')}</select>
+        </div>
+        <div class="tx-field">
+          <label for="txAccount">Account</label>
+          <select id="txAccount">${accountOptions}</select>
+        </div>
+        <div class="tx-field">
+          <label for="txPayment">Payment method</label>
+          <select id="txPayment">${paymentOptions}</select>
+        </div>
+      </section>
+      <section class="tx-section">
+        <div class="tx-section-label">When</div>
+        <div class="tx-field-row">
+          <div class="tx-field">
+            <label for="txDate">Date</label>
+            <input type="date" id="txDate" value="${t.date || Utils.toISO(new Date())}">
+          </div>
+          <div class="tx-field">
+            <label for="txTime">Time</label>
+            <input type="time" id="txTime" value="${t.time || '12:00'}">
+          </div>
+        </div>
+      </section>
+      <details class="tx-optional"${(t.tags && t.tags.length) || t.notes ? ' open' : ''}>
+        <summary>More options</summary>
+        <div class="tx-optional-body">
+          <div class="tx-field">
+            <label for="txTags">Tags <span style="font-weight:400;color:var(--text-muted)">(comma separated)</span></label>
+            <input type="text" id="txTags" value="${(t.tags || []).join(', ')}" placeholder="food, work, recurring">
+          </div>
+          <div class="tx-field">
+            <label for="txNotes">Notes</label>
+            <textarea id="txNotes" placeholder="Optional details…">${Utils.esc(t.notes || '')}</textarea>
+          </div>
+        </div>
+      </details>
     </div>`;
-    const footer = `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button>
-      <button class="btn btn-primary" onclick="app.saveTransaction('${id||''}')">${isEdit?'Update':'Save'}</button>`;
-    this.modal.open(isEdit ? 'Edit Transaction' : 'Add Transaction', body, footer);
+    this.openSheetModal(isEdit ? 'Edit Transaction' : 'Add Transaction', body, this.formFooter(isEdit ? 'Update' : 'Save', `app.saveTransaction('${id || ''}')`));
+    this.bindTransactionForm();
   }
 
   /** Save transaction */
@@ -3243,12 +3553,28 @@ class FinanceApp {
   /** Open account modal */
   openAccountModal(id = null) {
     const a = id ? this.store.get('accounts', id) : {};
-    this.modal.open(id ? 'Edit Account' : 'Add Account', `<div class="form-grid">
-      <div class="form-group"><label>Name</label><input id="accName" value="${Utils.esc(a.name||'')}"></div>
-      <div class="form-group"><label>Type</label><select id="accType"><option value="cash" ${a.type==='cash'?'selected':''}>Cash</option><option value="bank" ${a.type==='bank'?'selected':''}>Bank</option><option value="savings" ${a.type==='savings'?'selected':''}>Savings</option><option value="crypto" ${a.type==='crypto'?'selected':''}>Crypto</option><option value="investment" ${a.type==='investment'?'selected':''}>Investment</option><option value="custom" ${a.type==='custom'?'selected':''}>Custom</option></select></div>
-      <div class="form-group"><label>Opening Balance</label><input type="number" id="accBal" value="${a.openingBalance||0}"></div>
-      <div class="form-group"><label>Color</label><input type="color" id="accColor" value="${a.color||'#14b8a6'}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveAccount('${id||''}')">Save</button>`);
+    const type = a.type || 'bank';
+    const types = [
+      { value: 'cash', label: 'Cash', icon: 'money-bill' },
+      { value: 'bank', label: 'Bank', icon: 'building-columns' },
+      { value: 'savings', label: 'Savings', icon: 'piggy-bank' },
+      { value: 'crypto', label: 'Crypto', icon: 'bitcoin-sign' },
+      { value: 'investment', label: 'Investment', icon: 'chart-line' },
+      { value: 'custom', label: 'Custom', icon: 'wallet' }
+    ];
+    const chips = types.map(t => `<button type="button" class="tx-chip ${type === t.value ? 'active' : ''}" data-value="${t.value}"><i class="fas fa-${t.icon}"></i> ${t.label}</button>`).join('');
+    const body = `<div class="tx-form">
+      <input type="hidden" id="accType" value="${type}">
+      <section class="tx-hero">
+        ${this.heroText('accName', a.name, 'Account name', 'Name')}
+        ${this.heroAmount('accBal', a.openingBalance ?? 0, { label: 'Opening balance' })}
+      </section>
+      ${this.formSection('Account type', `<div class="tx-chip-grid" id="accTypeChips">${chips}</div>`)}
+      ${this.formSection('Appearance', this.formField('Accent color', `<input type="color" id="accColor" value="${a.color || '#14b8a6'}">`, 'accColor'))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Account' : 'Add Account', body, this.formFooter(id ? 'Update' : 'Save', `app.saveAccount('${id || ''}')`));
+    this.bindChipSelect('accType', '#accTypeChips .tx-chip');
+    this.focusFormInput('accName');
   }
 
   /** Save account */
@@ -3268,13 +3594,23 @@ class FinanceApp {
   /** Open transfer modal */
   openTransferModal() {
     const accs = this.store.data.accounts;
-    this.modal.open('Transfer Money', `<div class="form-grid">
-      <div class="form-group"><label>From</label><select id="trFrom">${accs.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>To</label><select id="trTo">${accs.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Amount</label><input type="number" id="trAmount" step="0.01"></div>
-      <div class="form-group"><label>Date</label><input type="date" id="trDate" value="${Utils.toISO(new Date())}"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Notes</label><input id="trNotes"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveTransfer()">Transfer</button>`);
+    if (accs.length < 2) { this.toast.show('Add at least two accounts to transfer', 'error'); return; }
+    const opts = accs.map(a => `<option value="${a.id}">${Utils.esc(a.name)}</option>`).join('');
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-right-left"></i></div>
+        ${this.heroAmount('trAmount', '', { label: 'Transfer amount' })}
+      </section>
+      ${this.formSection('Accounts', `
+        ${this.formField('From', `<select id="trFrom">${opts}</select>`, 'trFrom')}
+        <div class="tx-transfer-arrow"><i class="fas fa-arrow-down"></i></div>
+        ${this.formField('To', `<select id="trTo">${opts}</select>`, 'trTo')}
+      `)}
+      ${this.formSection('When', this.formField('Date', `<input type="date" id="trDate" value="${Utils.toISO(new Date())}">`, 'trDate'))}
+      ${this.formOptional('Notes', this.formField('Notes', `<input type="text" id="trNotes" placeholder="Optional transfer note">`, 'trNotes'))}
+    </div>`;
+    this.openSheetModal('Transfer Money', body, this.formFooter('Transfer', 'app.saveTransfer()', 'right-left'));
+    this.focusFormInput('trAmount');
   }
 
   /** Save transfer */
@@ -3348,16 +3684,25 @@ class FinanceApp {
   /** Open credit card modal */
   openCCModal(id = null) {
     const c = id ? this.store.get('creditCards', id) : {};
-    this.modal.open(id ? 'Edit Card' : 'Add Card', `<div class="form-grid">
-      <div class="form-group"><label>Card Name</label><input id="ccName" value="${Utils.esc(c.name||'')}"></div>
-      <div class="form-group"><label>Bank</label><input id="ccBank" value="${Utils.esc(c.bank||'')}"></div>
-      <div class="form-group"><label>Credit Limit</label><input type="number" id="ccLimit" value="${c.limit||''}"></div>
-      <div class="form-group"><label>Current Balance</label><input type="number" id="ccBal" value="${c.balance||''}"></div>
-      <div class="form-group"><label>Min Payment</label><input type="number" id="ccMin" value="${c.minPayment||''}"></div>
-      <div class="form-group"><label>Next Payment Date</label><input type="date" id="ccNextPay" value="${c.nextPaymentDate||''}"></div>
-      <div class="form-group"><label>Pay From Account</label><select id="ccLinkedAcc">${this.accountOptions(c.linkedAccountId)}</select></div>
-      <div class="form-group"><label>Interest Rate (%)</label><input type="number" id="ccRate" step="0.01" value="${c.interestRate||''}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveCC('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        ${this.heroText('ccName', c.name, 'Card name', 'Card name')}
+        ${this.heroAmount('ccBal', c.balance ?? '', { label: 'Current balance' })}
+      </section>
+      ${this.formSection('Card details', this.formRow(
+        this.formField('Bank', `<input type="text" id="ccBank" value="${Utils.esc(c.bank || '')}" placeholder="Issuer">`, 'ccBank'),
+        this.formField('Credit limit', `<input type="number" id="ccLimit" value="${c.limit ?? ''}" step="0.01">`, 'ccLimit')
+      ) + this.formRow(
+        this.formField('Min payment', `<input type="number" id="ccMin" value="${c.minPayment ?? ''}" step="0.01">`, 'ccMin'),
+        this.formField('Interest rate (%)', `<input type="number" id="ccRate" step="0.01" value="${c.interestRate ?? ''}">`, 'ccRate')
+      ))}
+      ${this.formSection('Payments', this.formRow(
+        this.formField('Next due date', `<input type="date" id="ccNextPay" value="${c.nextPaymentDate || ''}">`, 'ccNextPay'),
+        this.formField('Pay from account', `<select id="ccLinkedAcc">${this.accountOptions(c.linkedAccountId)}</select>`, 'ccLinkedAcc')
+      ))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Card' : 'Add Card', body, this.formFooter(id ? 'Update' : 'Save', `app.saveCC('${id || ''}')`));
+    this.focusFormInput('ccName');
   }
 
   /** Save credit card */
@@ -3433,18 +3778,28 @@ class FinanceApp {
   /** Open loan modal */
   openLoanModal(id = null) {
     const l = id ? this.store.get('loans', id) : {};
-    this.modal.open(id ? 'Edit Loan' : 'Add Loan', `<div class="form-grid">
-      <div class="form-group"><label>Loan Name</label><input id="loanName" value="${Utils.esc(l.name||'')}"></div>
-      <div class="form-group"><label>Original Amount</label><input type="number" id="loanOrig" value="${l.originalAmount||''}"></div>
-      <div class="form-group"><label>Current Balance</label><input type="number" id="loanBal" value="${l.currentBalance||''}"></div>
-      <div class="form-group"><label>Interest Rate (%)</label><input type="number" id="loanRate" step="0.01" value="${l.interestRate||''}"></div>
-      <div class="form-group"><label>Monthly Payment</label><input type="number" id="loanPay" value="${l.monthlyPayment||''}"></div>
-      <div class="form-group"><label>Remaining Months</label><input type="number" id="loanMonths" value="${l.remainingMonths||''}"></div>
-      <div class="form-group"><label>Next Payment Date</label><input type="date" id="loanNextPay" value="${l.nextPaymentDate||''}"></div>
-      <div class="form-group"><label>Pay From Account</label><select id="loanLinkedAcc">${this.accountOptions(l.linkedAccountId)}</select></div>
-      <div class="form-group"><label>Start Date</label><input type="date" id="loanStart" value="${l.startDate||''}"></div>
-      <div class="form-group"><label>End Date</label><input type="date" id="loanEnd" value="${l.endDate||''}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveLoan('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        ${this.heroText('loanName', l.name, 'Loan name', 'Loan name')}
+        ${this.heroAmount('loanBal', l.currentBalance ?? '', { label: 'Current balance' })}
+      </section>
+      ${this.formSection('Loan terms', this.formRow(
+        this.formField('Original amount', `<input type="number" id="loanOrig" value="${l.originalAmount ?? ''}" step="0.01">`, 'loanOrig'),
+        this.formField('Interest rate (%)', `<input type="number" id="loanRate" step="0.01" value="${l.interestRate ?? ''}">`, 'loanRate')
+      ) + this.formRow(
+        this.formField('Monthly payment', `<input type="number" id="loanPay" value="${l.monthlyPayment ?? ''}" step="0.01">`, 'loanPay'),
+        this.formField('Remaining months', `<input type="number" id="loanMonths" value="${l.remainingMonths ?? ''}">`, 'loanMonths')
+      ))}
+      ${this.formSection('Schedule', this.formRow(
+        this.formField('Next payment', `<input type="date" id="loanNextPay" value="${l.nextPaymentDate || ''}">`, 'loanNextPay'),
+        this.formField('Pay from account', `<select id="loanLinkedAcc">${this.accountOptions(l.linkedAccountId)}</select>`, 'loanLinkedAcc')
+      ) + this.formRow(
+        this.formField('Start date', `<input type="date" id="loanStart" value="${l.startDate || ''}">`, 'loanStart'),
+        this.formField('End date', `<input type="date" id="loanEnd" value="${l.endDate || ''}">`, 'loanEnd')
+      ))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Loan' : 'Add Loan', body, this.formFooter(id ? 'Update' : 'Save', `app.saveLoan('${id || ''}')`));
+    this.focusFormInput('loanName');
   }
 
   /** Save loan */
@@ -3466,12 +3821,19 @@ class FinanceApp {
     if (!entity.nextPaymentDate) { this.toast.show('Set a payment due date first', 'error'); return; }
     const defaultAmount = type === 'loan' ? entity.monthlyPayment : entity.minPayment;
     const balance = type === 'loan' ? entity.currentBalance : entity.balance;
-    this.modal.open('Record Payment', `<div class="form-grid">
-      <div class="form-group"><label>Amount</label><input type="number" id="payAmount" step="0.01" value="${defaultAmount}"></div>
-      <div class="form-group"><label>Payment Date</label><input type="date" id="payDate" value="${Utils.toISO(new Date())}"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Pay From</label><input readonly value="${Utils.esc(this.accName(entity.linkedAccountId))}"></div>
-      <div class="form-group" style="grid-column:1/-1"><small style="color:var(--text-muted)">Current balance: ${this.$(balance)}</small></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.recordPayment('${type}','${id}')">Confirm Payment</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-money-bill-wave"></i></div>
+        ${this.heroAmount('payAmount', defaultAmount, { label: 'Payment amount' })}
+        <p class="tx-field-hint">Current balance: ${this.$(balance)}</p>
+      </section>
+      ${this.formSection('Payment', this.formRow(
+        this.formField('Payment date', `<input type="date" id="payDate" value="${Utils.toISO(new Date())}">`, 'payDate'),
+        this.formField('Pay from', `<input readonly value="${Utils.esc(this.accName(entity.linkedAccountId))}">`)
+      ))}
+    </div>`;
+    this.openSheetModal('Record Payment', body, this.formFooter('Confirm Payment', `app.recordPayment('${type}','${id}')`, 'check'));
+    this.focusFormInput('payAmount');
   }
 
   /** Record loan or credit card payment */
@@ -3499,11 +3861,19 @@ class FinanceApp {
 
   /** Amortization calculator modal */
   openAmortModal() {
-    this.modal.open('Amortization Calculator', `<div class="form-grid">
-      <div class="form-group"><label>Principal</label><input type="number" id="amPrin" value="100000"></div>
-      <div class="form-group"><label>Annual Rate (%)</label><input type="number" id="amRate" value="5" step="0.01"></div>
-      <div class="form-group"><label>Term (months)</label><input type="number" id="amTerm" value="360"></div>
-    </div><button class="btn btn-primary" style="margin-top:12px" onclick="app.calcAmort()">Calculate</button><div id="amResult"></div>`, '', true);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-calculator"></i></div>
+        ${this.heroAmount('amPrin', 100000, { label: 'Principal' })}
+      </section>
+      ${this.formSection('Terms', this.formRow(
+        this.formField('Annual rate (%)', `<input type="number" id="amRate" value="5" step="0.01">`, 'amRate'),
+        this.formField('Term (months)', `<input type="number" id="amTerm" value="360">`, 'amTerm')
+      ))}
+      <div class="tx-calc-actions"><button class="btn btn-primary" type="button" onclick="app.calcAmort()"><i class="fas fa-calculator"></i> Calculate</button></div>
+      <div id="amResult"></div>
+    </div>`;
+    this.openSheetModal('Amortization Calculator', body, `<button class="btn btn-secondary" onclick="app.modal.close()">Close</button>`, true);
   }
 
   /** Calculate amortization */
@@ -3519,12 +3889,19 @@ class FinanceApp {
 
   /** Debt payoff calculator */
   openPayoffModal() {
-    this.modal.open('Debt Payoff Calculator', `<div class="form-grid">
-      <div class="form-group"><label>Balance</label><input type="number" id="poBal" value="10000"></div>
-      <div class="form-group"><label>Annual Rate (%)</label><input type="number" id="poRate" value="18" step="0.01"></div>
-      <div class="form-group"><label>Monthly Payment</label><input type="number" id="poPay" value="300"></div>
-      <div class="form-group"><label>Extra Payment</label><input type="number" id="poExtra" value="100"></div>
-    </div><button class="btn btn-primary" style="margin-top:12px" onclick="app.calcPayoff()">Calculate</button><div id="poResult"></div>`, '', true);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-chart-line"></i></div>
+        ${this.heroAmount('poBal', 10000, { label: 'Balance' })}
+      </section>
+      ${this.formSection('Payments', this.formRow(
+        this.formField('Annual rate (%)', `<input type="number" id="poRate" value="18" step="0.01">`, 'poRate'),
+        this.formField('Monthly payment', `<input type="number" id="poPay" value="300">`, 'poPay')
+      ) + this.formField('Extra payment', `<input type="number" id="poExtra" value="100">`, 'poExtra'))}
+      <div class="tx-calc-actions"><button class="btn btn-primary" type="button" onclick="app.calcPayoff()"><i class="fas fa-calculator"></i> Calculate</button></div>
+      <div id="poResult"></div>
+    </div>`;
+    this.openSheetModal('Debt Payoff Calculator', body, `<button class="btn btn-secondary" onclick="app.modal.close()">Close</button>`, true);
   }
 
   /** Calculate payoff scenarios */
@@ -3592,12 +3969,19 @@ class FinanceApp {
   /** Open savings modal */
   openSavingsModal(id = null) {
     const g = id ? this.store.get('savingsGoals', id) : {};
-    this.modal.open(id ? 'Edit Goal' : 'Add Savings Goal', `<div class="form-grid">
-      <div class="form-group"><label>Goal Name</label><input id="sgName" value="${Utils.esc(g.name||'')}"></div>
-      <div class="form-group"><label>Target Amount</label><input type="number" id="sgTarget" value="${g.targetAmount||''}"></div>
-      <div class="form-group"><label>Current Amount</label><input type="number" id="sgCurrent" value="${g.currentAmount||0}"></div>
-      <div class="form-group"><label>Target Date</label><input type="date" id="sgDate" value="${g.targetDate||''}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveSavings('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-piggy-bank"></i></div>
+        ${this.heroText('sgName', g.name, 'Goal name', 'Goal name')}
+        ${this.heroAmount('sgTarget', g.targetAmount ?? '', { label: 'Target amount' })}
+      </section>
+      ${this.formSection('Progress', this.formRow(
+        this.formField('Saved so far', `<input type="number" id="sgCurrent" value="${g.currentAmount ?? 0}" step="0.01">`, 'sgCurrent'),
+        this.formField('Target date', `<input type="date" id="sgDate" value="${g.targetDate || ''}">`, 'sgDate')
+      ))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Goal' : 'Add Savings Goal', body, this.formFooter(id ? 'Update' : 'Save', `app.saveSavings('${id || ''}')`));
+    this.focusFormInput('sgName');
   }
 
   /** Save savings goal */
@@ -3651,14 +4035,19 @@ class FinanceApp {
   /** Open investment modal */
   openInvModal(id = null) {
     const i = id ? this.store.get('investments', id) : {};
-    this.modal.open(id ? 'Edit Investment' : 'Add Investment', `<div class="form-grid">
-      <div class="form-group"><label>Name</label><input id="invName" value="${Utils.esc(i.name||'')}"></div>
-      <div class="form-group"><label>Type</label><select id="invType"><option ${i.type==='Stocks'?'selected':''}>Stocks</option><option ${i.type==='Crypto'?'selected':''}>Crypto</option><option ${i.type==='Gold'?'selected':''}>Gold</option><option ${i.type==='Real Estate'?'selected':''}>Real Estate</option><option ${i.type==='Business'?'selected':''}>Business</option><option ${i.type==='Custom'?'selected':''}>Custom</option></select></div>
-      <div class="form-group"><label>Purchase Price</label><input type="number" id="invPurchase" value="${i.purchasePrice||''}"></div>
-      <div class="form-group"><label>Current Value</label><input type="number" id="invValue" value="${i.currentValue||''}"></div>
-      <div class="form-group"><label>Quantity</label><input type="number" id="invQty" value="${i.quantity||1}"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Notes</label><textarea id="invNotes">${Utils.esc(i.notes||'')}</textarea></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveInv('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        ${this.heroText('invName', i.name, 'Investment name', 'Name')}
+        ${this.heroAmount('invValue', i.currentValue ?? '', { label: 'Current value' })}
+      </section>
+      ${this.formSection('Details', this.formRow(
+        this.formField('Type', `<select id="invType"><option ${i.type === 'Stocks' ? 'selected' : ''}>Stocks</option><option ${i.type === 'Crypto' ? 'selected' : ''}>Crypto</option><option ${i.type === 'Gold' ? 'selected' : ''}>Gold</option><option ${i.type === 'Real Estate' ? 'selected' : ''}>Real Estate</option><option ${i.type === 'Business' ? 'selected' : ''}>Business</option><option ${i.type === 'Custom' ? 'selected' : ''}>Custom</option></select>`, 'invType'),
+        this.formField('Quantity', `<input type="number" id="invQty" value="${i.quantity ?? 1}">`, 'invQty')
+      ) + this.formField('Purchase price', `<input type="number" id="invPurchase" value="${i.purchasePrice ?? ''}" step="0.01">`, 'invPurchase'))}
+      ${this.formOptional('Notes', this.formField('Notes', `<textarea id="invNotes" placeholder="Broker, ticker, etc.">${Utils.esc(i.notes || '')}</textarea>`, 'invNotes'), !!i.notes)}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Investment' : 'Add Investment', body, this.formFooter(id ? 'Update' : 'Save', `app.saveInv('${id || ''}')`));
+    this.focusFormInput('invName');
   }
 
   /** Save investment */
@@ -3844,21 +4233,29 @@ class FinanceApp {
   openCryptoModal(id = null) {
     const h = id ? this.store.get('cryptoHoldings', id) : null;
     this.cryptoModalCoin = h ? { id: h.coinGeckoId, name: h.name, symbol: h.symbol, thumb: h.logoUrl } : null;
-    const chip = this.cryptoModalCoin ? `<div class="coin-selected-chip" id="cryptoCoinChip">${this.cryptoModalCoin.thumb ? `<img class="coin-logo sm" src="${Utils.esc(this.cryptoModalCoin.thumb)}" alt="">` : ''}<strong>${Utils.esc(this.cryptoModalCoin.name)}</strong> (${this.cryptoModalCoin.symbol}) <button type="button" class="btn-icon btn-sm" onclick="app.clearCryptoCoinSelect()" style="margin-left:8px" title="Change coin"><i class="fas fa-pen"></i></button></div>` : '';
-    this.modal.open(id ? 'Edit Crypto Holding' : 'Add Crypto Holding', `<div class="form-grid">
-      <div class="form-group" style="grid-column:1/-1"><label>Cryptocurrency</label>
-        <div class="coin-autocomplete-wrap">
-          <input type="text" id="cryptoCoinSearch" placeholder="Search BTC, ETH, DOGE..." autocomplete="off" ${h ? 'style="display:none"' : ''}>
-          <div class="coin-autocomplete-results" id="cryptoCoinResults"></div>
+    const chip = this.cryptoModalCoin
+      ? `<div class="coin-selected-chip tx-coin-chip" id="cryptoCoinChip">${this.cryptoModalCoin.thumb ? `<img class="coin-logo sm" src="${Utils.esc(this.cryptoModalCoin.thumb)}" alt="">` : ''}<strong>${Utils.esc(this.cryptoModalCoin.name)}</strong> (${this.cryptoModalCoin.symbol}) <button type="button" class="btn-icon btn-sm" onclick="app.clearCryptoCoinSelect()" style="margin-left:8px" title="Change coin"><i class="fas fa-pen"></i></button></div>`
+      : '';
+    const body = `<div class="tx-form">
+      <section class="tx-hero tx-hero-crypto">
+        <div class="tx-hero-icon"><i class="fas fa-coins"></i></div>
+        <div class="tx-field crypto-coin-field">
+          <label>Cryptocurrency</label>
+          <div class="coin-autocomplete-wrap">
+            <input type="text" id="cryptoCoinSearch" class="coin-search-input" placeholder="Search BTC, ETH, SOL…" autocomplete="off" ${h ? 'style="display:none"' : ''}>
+            <div class="coin-autocomplete-results" id="cryptoCoinResults"></div>
+          </div>
+          ${chip}
         </div>
-        ${chip}
-        <div id="cryptoCoinChipWrap">${h ? '' : ''}</div>
-      </div>
-      <div class="form-group"><label>Amount Owned</label><input type="number" id="cryptoAmount" step="any" value="${h?.amount ?? ''}"></div>
-      <div class="form-group"><label>Average Buy Price</label><input type="number" id="cryptoAvgBuy" step="any" value="${h?.avgBuyPrice ?? ''}"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>Notes (optional)</label><textarea id="cryptoNotes">${Utils.esc(h?.notes||'')}</textarea></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveCryptoHolding('${id||''}')">Save</button>`);
+        ${this.heroAmount('cryptoAmount', h?.amount ?? '', { placeholder: '0.00', step: 'any', label: 'Amount owned' })}
+      </section>
+      ${this.formSection('Cost basis', this.formField('Average buy price', this.heroAmount('cryptoAvgBuy', h?.avgBuyPrice ?? '', { small: true, step: 'any', label: 'Average buy price' }), 'cryptoAvgBuy'))}
+      ${this.formOptional('Notes', this.formField('Notes', `<textarea id="cryptoNotes" placeholder="Exchange, wallet, etc.">${Utils.esc(h?.notes || '')}</textarea>`, 'cryptoNotes'), !!h?.notes)}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Crypto Holding' : 'Add Crypto Holding', body, this.formFooter(id ? 'Update' : 'Save', `app.saveCryptoHolding('${id || ''}')`));
     this.bindCoinAutocomplete();
+    if (!h) this.focusFormInput('cryptoCoinSearch');
+    else this.focusFormInput('cryptoAmount');
   }
 
   /** Bind coin search autocomplete in modal */
@@ -3882,9 +4279,9 @@ class FinanceApp {
           this.cryptoModalCoin = { id: el.dataset.id, name: el.dataset.name, symbol: el.dataset.symbol, thumb: el.dataset.thumb };
           input.style.display = 'none';
           results.classList.remove('open');
-          const wrap = input.closest('.form-group');
+          const wrap = input.closest('.crypto-coin-field') || input.closest('.form-group');
           let chip = wrap.querySelector('.coin-selected-chip');
-          if (!chip) { chip = document.createElement('div'); chip.className = 'coin-selected-chip'; chip.id = 'cryptoCoinChip'; wrap.appendChild(chip); }
+          if (!chip) { chip = document.createElement('div'); chip.className = 'coin-selected-chip tx-coin-chip'; chip.id = 'cryptoCoinChip'; wrap.appendChild(chip); }
           chip.innerHTML = `${this.cryptoModalCoin.thumb ? `<img class="coin-logo sm" src="${Utils.esc(this.cryptoModalCoin.thumb)}" alt="">` : ''}<strong>${Utils.esc(this.cryptoModalCoin.name)}</strong> (${this.cryptoModalCoin.symbol}) <button type="button" class="btn-icon btn-sm" onclick="app.clearCryptoCoinSelect()" style="margin-left:8px"><i class="fas fa-times"></i></button>`;
         };
       });
@@ -3981,12 +4378,18 @@ class FinanceApp {
   /** Open asset modal */
   openAssetModal(id = null) {
     const a = id ? this.store.get('assets', id) : {};
-    this.modal.open(id ? 'Edit Asset' : 'Add Asset', `<div class="form-grid">
-      <div class="form-group"><label>Name</label><input id="asName" value="${Utils.esc(a.name||'')}"></div>
-      <div class="form-group"><label>Type</label><select id="asType"><option ${a.type==='House'?'selected':''}>House</option><option ${a.type==='Land'?'selected':''}>Land</option><option ${a.type==='Car'?'selected':''}>Car</option><option ${a.type==='Jewelry'?'selected':''}>Jewelry</option><option ${a.type==='Electronics'?'selected':''}>Electronics</option><option ${a.type==='Furniture'?'selected':''}>Furniture</option><option ${a.type==='Business'?'selected':''}>Business</option><option ${a.type==='Other'?'selected':''}>Other</option></select></div>
-      <div class="form-group"><label>Purchase Value</label><input type="number" id="asPurchase" value="${a.purchaseValue||''}"></div>
-      <div class="form-group"><label>Current Value</label><input type="number" id="asValue" value="${a.currentValue||''}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveAsset('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        ${this.heroText('asName', a.name, 'Asset name', 'Name')}
+        ${this.heroAmount('asValue', a.currentValue ?? '', { label: 'Current value' })}
+      </section>
+      ${this.formSection('Details', this.formRow(
+        this.formField('Type', `<select id="asType"><option ${a.type === 'House' ? 'selected' : ''}>House</option><option ${a.type === 'Land' ? 'selected' : ''}>Land</option><option ${a.type === 'Car' ? 'selected' : ''}>Car</option><option ${a.type === 'Jewelry' ? 'selected' : ''}>Jewelry</option><option ${a.type === 'Electronics' ? 'selected' : ''}>Electronics</option><option ${a.type === 'Furniture' ? 'selected' : ''}>Furniture</option><option ${a.type === 'Business' ? 'selected' : ''}>Business</option><option ${a.type === 'Other' ? 'selected' : ''}>Other</option></select>`, 'asType'),
+        this.formField('Purchase value', `<input type="number" id="asPurchase" value="${a.purchaseValue ?? ''}" step="0.01">`, 'asPurchase')
+      ))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Asset' : 'Add Asset', body, this.formFooter(id ? 'Update' : 'Save', `app.saveAsset('${id || ''}')`));
+    this.focusFormInput('asName');
   }
 
   /** Save asset */
@@ -4039,11 +4442,18 @@ class FinanceApp {
   openBudgetModal(id = null) {
     const b = id ? this.store.get('budgets', id) : {};
     const cats = this.store.data.categories.filter(c => c.type === 'expense' || c.type === 'both');
-    this.modal.open(id ? 'Edit Budget' : 'Add Budget', `<div class="form-grid">
-      <div class="form-group"><label>Category</label><select id="bdCat">${cats.map(c => `<option value="${c.id}" ${b.categoryId===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Amount</label><input type="number" id="bdAmt" value="${b.amount||''}"></div>
-      <div class="form-group"><label>Month</label><input type="month" id="bdMonth" value="${b.month||Utils.monthKey(new Date())}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveBudget('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-calculator"></i></div>
+        ${this.heroAmount('bdAmt', b.amount ?? '', { label: 'Monthly budget' })}
+      </section>
+      ${this.formSection('Budget', this.formRow(
+        this.formField('Category', `<select id="bdCat">${cats.map(c => `<option value="${c.id}" ${b.categoryId === c.id ? 'selected' : ''}>${Utils.esc(c.name)}</option>`).join('')}</select>`, 'bdCat'),
+        this.formField('Month', `<input type="month" id="bdMonth" value="${b.month || Utils.monthKey(new Date())}">`, 'bdMonth')
+      ))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Budget' : 'Add Budget', body, this.formFooter(id ? 'Update' : 'Save', `app.saveBudget('${id || ''}')`));
+    this.focusFormInput('bdAmt');
   }
 
   /** Save budget */
@@ -4110,10 +4520,14 @@ class FinanceApp {
 
   /** Custom date range report */
   openCustomReport() {
-    this.modal.open('Custom Report', `<div class="form-grid">
-      <div class="form-group"><label>Start Date</label><input type="date" id="crStart"></div>
-      <div class="form-group"><label>End Date</label><input type="date" id="crEnd" value="${Utils.toISO(new Date())}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.runCustomReport()">Generate</button>`);
+    const body = `<div class="tx-form">
+      ${this.formSection('Date range', this.formRow(
+        this.formField('Start date', `<input type="date" id="crStart">`, 'crStart'),
+        this.formField('End date', `<input type="date" id="crEnd" value="${Utils.toISO(new Date())}">`, 'crEnd')
+      ))}
+    </div>`;
+    this.openSheetModal('Custom Report', body, this.formFooter('Generate', 'app.runCustomReport()', 'chart-bar'));
+    this.focusFormInput('crStart');
   }
 
   /** Run custom report */
@@ -4245,12 +4659,19 @@ class FinanceApp {
   /** Open goal modal */
   openGoalModal(id = null) {
     const g = id ? this.store.get('goals', id) : {};
-    this.modal.open(id ? 'Edit Goal' : 'Add Goal', `<div class="form-grid">
-      <div class="form-group"><label>Goal Name</label><input id="glName" value="${Utils.esc(g.name||'')}"></div>
-      <div class="form-group"><label>Type</label><select id="glType"><option value="savings" ${g.type==='savings'?'selected':''}>Save Money</option><option value="debt" ${g.type==='debt'?'selected':''}>Pay Off Debt</option><option value="custom" ${g.type==='custom'?'selected':''}>Custom</option></select></div>
-      <div class="form-group"><label>Target Amount</label><input type="number" id="glTarget" value="${g.targetAmount||''}"></div>
-      <div class="form-group"><label>Current Progress</label><input type="number" id="glCurrent" value="${g.currentAmount||0}"></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveGoal('${id||''}')">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        <div class="tx-hero-icon"><i class="fas fa-bullseye"></i></div>
+        ${this.heroText('glName', g.name, 'Goal name', 'Goal name')}
+        ${this.heroAmount('glTarget', g.targetAmount ?? '', { label: 'Target amount' })}
+      </section>
+      ${this.formSection('Progress', this.formRow(
+        this.formField('Type', `<select id="glType"><option value="savings" ${g.type === 'savings' ? 'selected' : ''}>Save Money</option><option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Pay Off Debt</option><option value="custom" ${g.type === 'custom' ? 'selected' : ''}>Custom</option></select>`, 'glType'),
+        this.formField('Current progress', `<input type="number" id="glCurrent" value="${g.currentAmount ?? 0}" step="0.01">`, 'glCurrent')
+      ))}
+    </div>`;
+    this.openSheetModal(id ? 'Edit Goal' : 'Add Goal', body, this.formFooter(id ? 'Update' : 'Save', `app.saveGoal('${id || ''}')`));
+    this.focusFormInput('glName');
   }
 
   /** Save goal */
@@ -4390,15 +4811,31 @@ class FinanceApp {
 
   /** Open recurring transaction modal */
   openRecurringModal() {
-    this.modal.open('Add Recurring Transaction', `<div class="form-grid">
-      <div class="form-group"><label>Description</label><input id="rcDesc"></div>
-      <div class="form-group"><label>Amount</label><input type="number" id="rcAmt"></div>
-      <div class="form-group"><label>Type</label><select id="rcType"><option value="expense">Expense</option><option value="income">Income</option></select></div>
-      <div class="form-group"><label>Frequency</label><select id="rcFreq"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
-      <div class="form-group"><label>Next Date</label><input type="date" id="rcDate" value="${Utils.toISO(new Date())}"></div>
-      <div class="form-group"><label>Category</label><select id="rcCat">${this.store.data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Account</label><select id="rcAcc">${this.store.data.accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveRecurring()">Save</button>`);
+    const accs = this.store.data.accounts;
+    const accOpts = accs.length
+      ? accs.map(a => `<option value="${a.id}">${Utils.esc(a.name)}</option>`).join('')
+      : '<option value="">Add an account first</option>';
+    const body = `<div class="tx-form is-expense">
+      <section class="tx-hero">
+        ${this.typeToggleHtml('rcType', 'expense', [
+          { value: 'expense', label: 'Expense', className: 'expense' },
+          { value: 'income', label: 'Income', className: 'income' }
+        ])}
+        ${this.heroAmount('rcAmt', '', { label: 'Amount' })}
+        ${this.heroText('rcDesc', '', 'What is this for?', 'Description')}
+      </section>
+      ${this.formSection('Schedule', this.formRow(
+        this.formField('Frequency', `<select id="rcFreq"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" selected>Monthly</option><option value="yearly">Yearly</option></select>`, 'rcFreq'),
+        this.formField('Next date', `<input type="date" id="rcDate" value="${Utils.toISO(new Date())}">`, 'rcDate')
+      ))}
+      ${this.formSection('Details', this.formRow(
+        this.formField('Category', `<select id="rcCat">${this.rcCategoryOptions('expense')}</select>`, 'rcCat'),
+        this.formField('Account', `<select id="rcAcc">${accOpts}</select>`, 'rcAcc')
+      ))}
+    </div>`;
+    this.openSheetModal('Add Recurring Transaction', body, this.formFooter('Save', 'app.saveRecurring()'));
+    this.bindFormTypeToggle('.tx-form', 'rcType', () => this.refreshRcCategories());
+    this.focusFormInput('rcAmt');
   }
 
   /** Save recurring transaction */
@@ -4418,10 +4855,22 @@ class FinanceApp {
 
   /** Open custom category modal */
   openCategoryModal() {
-    this.modal.open('Add Category', `<div class="form-grid">
-      <div class="form-group"><label>Name</label><input id="catName"></div>
-      <div class="form-group"><label>Type</label><select id="catType"><option value="expense">Expense</option><option value="income">Income</option><option value="both">Both</option></select></div>
-    </div>`, `<button class="btn btn-secondary" onclick="app.modal.close()">Cancel</button><button class="btn btn-primary" onclick="app.saveCategory()">Save</button>`);
+    const body = `<div class="tx-form">
+      <section class="tx-hero">
+        ${this.heroText('catName', '', 'Category name', 'Name')}
+      </section>
+      ${this.formSection('Type', `
+        <input type="hidden" id="catType" value="expense">
+        <div class="tx-chip-grid" id="catTypeChips">
+          <button type="button" class="tx-chip active" data-value="expense"><i class="fas fa-arrow-down"></i> Expense</button>
+          <button type="button" class="tx-chip" data-value="income"><i class="fas fa-arrow-up"></i> Income</button>
+          <button type="button" class="tx-chip" data-value="both"><i class="fas fa-arrows-left-right"></i> Both</button>
+        </div>
+      `)}
+    </div>`;
+    this.openSheetModal('Add Category', body, this.formFooter('Save', 'app.saveCategory()'));
+    this.bindChipSelect('catType', '#catTypeChips .tx-chip');
+    this.focusFormInput('catName');
   }
 
   /** Save custom category */
