@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="VaultOne">
 <meta name="theme-color" content="#050505">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>VaultOne — Personal Finance Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -713,6 +714,103 @@ tr:last-child td{border-bottom:none}
 .crypto-status-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .price-loading{display:inline-flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:13px}
 
+/* ========== VAULT VIDEO FEED ========== */
+body.view-vault .content{padding:0;max-width:100%;animation:none}
+.vault-shell{display:flex;justify-content:center;min-height:calc(100dvh - var(--topbar-h) - 24px)}
+.vault-feed-wrap{width:100%;max-width:440px;position:relative}
+.vault-feed-header{
+  display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;
+  max-width:440px;margin:0 auto;
+}
+.vault-feed-header h1{
+  font-family:'Manrope',sans-serif;font-size:22px;font-weight:800;margin:0;
+  background:linear-gradient(135deg,var(--gold-premium),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.vault-feed-header span{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em}
+.vault-feed{
+  height:calc(100dvh - var(--topbar-h) - 72px);
+  overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;
+  border-radius:var(--radius);background:#000;
+  border:1px solid rgba(212,175,55,0.2);box-shadow:var(--shadow-gold-glow);
+}
+.vault-slide{
+  position:relative;scroll-snap-align:start;scroll-snap-stop:always;
+  height:calc(100dvh - var(--topbar-h) - 72px);background:#050505;overflow:hidden;
+}
+.vault-yt-wrap{position:absolute;inset:0;overflow:hidden;background:#000;z-index:1}
+.vault-yt-host{width:100%;height:100%;position:relative}
+.vault-yt-poster{
+  position:absolute;inset:0;background-size:cover;background-position:center;background-color:#111;
+}
+.vault-yt-host iframe{
+  position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:2;
+}
+.vault-chrome-mask{
+  position:absolute;bottom:0;left:0;right:0;height:88px;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(5,5,5,0.55) 45%,rgba(5,5,5,0.92) 100%);
+}
+.vault-slide-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+  pointer-events:none;padding:14px 16px calc(22px + env(safe-area-inset-bottom));z-index:4;
+  background:linear-gradient(180deg,rgba(0,0,0,0.62) 0%,transparent 20%,transparent 58%,rgba(0,0,0,0.35) 100%);
+}
+.vault-slide-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vault-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.35);color:var(--gold-premium);
+}
+.vault-topic{
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
+  padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.08);color:var(--text-secondary);
+}
+.vault-slide-bottom h3{font-family:'Manrope',sans-serif;font-size:18px;font-weight:700;margin:0 0 6px;line-height:1.25}
+.vault-slide-bottom p{margin:0;font-size:13px;line-height:1.45;color:var(--text-secondary)}
+.vault-slide-bottom{pointer-events:auto}
+.vault-yt-fallback{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:600;
+  color:var(--gold-premium);text-decoration:none;opacity:0.85;
+}
+.vault-yt-fallback:hover{opacity:1;text-decoration:underline}
+.vault-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
+.vault-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.25);transition:var(--transition)}
+.vault-dot.active{background:var(--gold-premium);box-shadow:0 0 8px rgba(212,175,55,0.5)}
+.vault-play-hint{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;
+  width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,0.85);
+  background:rgba(0,0,0,0.35);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:opacity 0.25s ease;
+}
+.vault-slide.is-playing .vault-play-hint{opacity:0;pointer-events:none}
+.vault-slide.is-ready .vault-yt-poster{opacity:0;pointer-events:none;transition:opacity 0.35s ease}
+.vault-tap-layer{
+  position:absolute;inset:0;z-index:3;cursor:pointer;background:transparent;
+}
+.vault-slide.is-ready .vault-tap-layer,.vault-slide.is-playing .vault-tap-layer{display:none}
+.vault-empty{
+  max-width:520px;margin:40px auto;padding:32px 24px;text-align:center;
+  border-radius:var(--radius);border:1px solid rgba(212,175,55,0.2);
+  background:linear-gradient(165deg,rgba(23,23,23,0.98),rgba(8,8,8,0.92));
+}
+.vault-empty-icon{font-size:48px;color:var(--gold);margin-bottom:16px;opacity:0.9}
+.vault-empty h2{font-family:'Manrope',sans-serif;font-size:22px;margin:0 0 10px}
+.vault-empty p{font-size:13px;color:var(--text-secondary);line-height:1.6;margin:0 0 16px}
+.vault-empty code{font-size:12px;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.4);color:var(--gold)}
+.vault-swipe-hint{
+  position:absolute;bottom:calc(var(--mobile-nav-h) + 24px);left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--text-muted);letter-spacing:0.04em;pointer-events:none;
+}
+@media(max-width:768px){
+  body.view-vault .vault-feed-wrap{max-width:100%}
+  body.view-vault .vault-feed{border-radius:0;border-left:none;border-right:none}
+  .vault-feed,.vault-slide{height:calc(100dvh - 56px - var(--mobile-nav-h) - 32px)}
+  .vault-feed-header{padding:12px 14px 8px}
+  body.view-vault .content{padding:0 0 calc(var(--mobile-nav-h) + 8px)}
+}
+@media(min-width:769px){
+  .vault-swipe-hint{display:none}
+}
+
 /* ========== MOBILE BOTTOM NAV ========== */
 .mobile-bottom-nav{
   display:none;position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:12px;right:12px;
@@ -1134,7 +1232,64 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '0.90';
+const APP_VERSION = '1.46.3';
+
+/** Extract YouTube video id from Shorts / watch / youtu.be URLs */
+function parseYoutubeId(url) {
+  if (!url) return null;
+  const s = String(url).trim();
+  try {
+    const u = new URL(s);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split(/[/?#&]/)[0] || null;
+    if (u.pathname.includes('/shorts/')) return u.pathname.split('/shorts/')[1]?.split(/[/?#&]/)[0] || null;
+    if (u.pathname.includes('/embed/')) return u.pathname.split('/embed/')[1]?.split(/[/?#&]/)[0] || null;
+    return u.searchParams.get('v');
+  } catch (_) {
+    const m = s.match(/(?:shorts\/|v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+}
+
+/** YouTube embed URL tuned for Vault full-screen Shorts playback */
+function buildYoutubeEmbedUrl(videoId, autoplay = false, mute = true) {
+  const p = new URLSearchParams({
+    autoplay: autoplay ? '1' : '0',
+    mute: mute ? '1' : '0',
+    controls: '1',
+    modestbranding: '1',
+    rel: '0',
+    fs: '0',
+    playsinline: '1',
+    loop: '1',
+    playlist: videoId,
+    iv_load_policy: '3'
+  });
+  return `https://www.youtube.com/embed/${videoId}?${p.toString()}`;
+}
+
+function vaultYoutubeWatchUrl(videoId) {
+  return `https://www.youtube.com/shorts/${videoId}`;
+}
+
+/** True when the app is served over HTTP(S) — YouTube embeds work (Vercel, GitHub Pages, localhost). */
+function isVaultHosted() {
+  return location.protocol === 'https:' || location.protocol === 'http:';
+}
+
+function vaultYoutubePoster(videoId) {
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+/** Vault feed — paste YouTube Shorts URLs below (shared for everyone on your Vercel / GitHub Pages link). */
+const VAULT_VIDEOS = [
+  {
+    id: 'v1',
+    title: 'Mel Robbins — Change Your Life',
+    url: 'https://youtube.com/shorts/AJpErm8H2aU',
+    caption: '',
+    topic: 'finance'
+  },
+];
 
 const Utils = {
   /** Generate unique ID */
@@ -1607,6 +1762,107 @@ class CoinGeckoProvider extends CryptoPriceProvider {
       localStorage.setItem(cacheStore, JSON.stringify(cache));
     } catch (_) {}
     return prices;
+  }
+
+  /** Coin detail from CoinGecko */
+  async getCoinDetail(coinId, vsCurrency = 'usd') {
+    const cacheKey = `pfm_cg_detail:${coinId}:${vsCurrency}`;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (Date.now() - c.fetchedAt < 2 * 60 * 1000) return c.data;
+      }
+    } catch (_) {}
+    const vs = vsCurrency.toLowerCase();
+    const data = await this._fetch(`/coins/${encodeURIComponent(coinId)}`, {
+      localization: 'false', tickers: 'false', market_data: 'true', community_data: 'false', developer_data: 'false'
+    });
+    const md = data.market_data || {};
+    const out = {
+      id: data.id, name: data.name, symbol: (data.symbol || '').toUpperCase(),
+      image: data.image?.small || data.image?.thumb || null,
+      price: md.current_price?.[vs] ?? null,
+      change24h: md.price_change_percentage_24h ?? null,
+      volume24h: md.total_volume?.[vs] ?? null,
+      marketCap: md.market_cap?.[vs] ?? null,
+      rank: md.market_cap_rank ?? data.market_cap_rank ?? null,
+      ath: (md.ath?.[vs] > 0 ? md.ath[vs] : null) ?? md.ath?.usd ?? null,
+      atl: (md.atl?.[vs] > 0 ? md.atl[vs] : null) ?? md.atl?.usd ?? null,
+      lastUpdated: md.last_updated || null
+    };
+    try { localStorage.setItem(cacheKey, JSON.stringify({ fetchedAt: Date.now(), data: out })); } catch (_) {}
+    return out;
+  }
+
+  /** Global market data (BTC dominance) */
+  async getGlobal() {
+    const cacheKey = 'pfm_cg_global';
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (Date.now() - c.fetchedAt < 10 * 60 * 1000) return c.data;
+      }
+    } catch (_) {}
+    const data = await this._fetch('/global');
+    const pct = data.data?.market_cap_percentage?.btc ?? null;
+    const out = { btcDominance: pct, updatedAt: data.data?.updated_at || null };
+    try { localStorage.setItem(cacheKey, JSON.stringify({ fetchedAt: Date.now(), data: out })); } catch (_) {}
+    return out;
+  }
+
+  /** Historical prices + volumes for VWAP / volume analysis */
+  async getMarketChartFull(coinId, days, vsCurrency = 'usd') {
+    const cacheStore = 'pfm_coingecko_charts';
+    const cacheKey = `${coinId}:${days}:${vsCurrency}:full`;
+    try {
+      const raw = localStorage.getItem(cacheStore);
+      if (raw) {
+        const cache = JSON.parse(raw);
+        const entry = cache[cacheKey];
+        if (entry && Date.now() - entry.fetchedAt < 20 * 60 * 1000) return entry.data;
+      }
+    } catch (_) {}
+    const data = await this._fetch(`/coins/${encodeURIComponent(coinId)}/market_chart`, {
+      vs_currency: vsCurrency, days: String(days)
+    });
+    const out = {
+      prices: (data.prices || []).map(([t, p]) => [t, p]),
+      volumes: (data.total_volumes || []).map(([t, v]) => [t, v])
+    };
+    try {
+      const raw = localStorage.getItem(cacheStore);
+      const cache = raw ? JSON.parse(raw) : {};
+      cache[cacheKey] = { fetchedAt: Date.now(), data: out };
+      localStorage.setItem(cacheStore, JSON.stringify(cache));
+    } catch (_) {}
+    return out;
+  }
+
+  /** OHLC candlestick series */
+  async getOHLC(coinId, days, vsCurrency = 'usd') {
+    const cacheStore = 'pfm_coingecko_ohlc';
+    const cacheKey = `${coinId}:${days}:${vsCurrency}`;
+    try {
+      const raw = localStorage.getItem(cacheStore);
+      if (raw) {
+        const cache = JSON.parse(raw);
+        const entry = cache[cacheKey];
+        if (entry && Date.now() - entry.fetchedAt < 20 * 60 * 1000) return entry.candles;
+      }
+    } catch (_) {}
+    const data = await this._fetch(`/coins/${encodeURIComponent(coinId)}/ohlc`, {
+      vs_currency: vsCurrency, days: String(days)
+    });
+    const candles = (data || []).map(([t, o, h, l, c]) => ({ timestamp: t, open: o, high: h, low: l, close: c }));
+    try {
+      const raw = localStorage.getItem(cacheStore);
+      const cache = raw ? JSON.parse(raw) : {};
+      cache[cacheKey] = { fetchedAt: Date.now(), candles };
+      localStorage.setItem(cacheStore, JSON.stringify(cache));
+    } catch (_) {}
+    return candles;
   }
 }
 
@@ -2287,6 +2543,7 @@ class InsightEngine {
 }
 
 
+
 // ========== FINANCE APP (Main Controller) ==========
 class FinanceApp {
   constructor() {
@@ -2309,6 +2566,8 @@ class FinanceApp {
     this.dashboardChartPeriod = '7d';
     this.accountsChartPeriod = '7d';
     this.cryptoChartPeriod = '7d';
+    this._vaultObserver = null;
+    this._vaultFileWarned = false;
     this.init();
   }
 
@@ -2330,7 +2589,9 @@ class FinanceApp {
       this.navigate(this.currentView);
     });
     window.addEventListener('beforeunload', () => this.store.persistNow());
-    this.navigate(Utils.loadActiveView() === 'insights' ? 'dashboard' : (Utils.loadActiveView() || 'dashboard'));
+    const saved = Utils.loadActiveView();
+    const view = (saved === 'insights' || saved === 'futures') ? 'dashboard' : (saved || 'dashboard');
+    this.navigate(view);
     this.checkReminders();
     this.initCrypto();
     window.addEventListener('beforeunload', () => this.crypto.stopAutoRefresh());
@@ -2622,7 +2883,8 @@ class FinanceApp {
         { id: 'dashboard', icon: 'gauge-high', label: 'Dashboard' },
         { id: 'transactions', icon: 'exchange-alt', label: 'Transactions' },
         { id: 'income', icon: 'arrow-trend-up', label: 'Income' },
-        { id: 'expenses', icon: 'arrow-trend-down', label: 'Expenses' }
+        { id: 'expenses', icon: 'arrow-trend-down', label: 'Expenses' },
+        { id: 'vault', icon: 'circle-play', label: 'Vault' }
       ]},
       { section: 'Accounts', links: [
         { id: 'accounts', icon: 'wallet', label: 'Accounts' },
@@ -2711,9 +2973,11 @@ class FinanceApp {
 
   /** Navigate to view */
   navigate(view) {
+    if (this.currentView === 'vault' && view !== 'vault') this._teardownVaultFeed();
     Utils.saveActiveView(view);
     this.currentView = view;
     document.body.classList.toggle('view-dashboard', view === 'dashboard');
+    document.body.classList.toggle('view-vault', view === 'vault');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
     this.syncMobileNav(view);
     const renderers = {
@@ -2727,6 +2991,7 @@ class FinanceApp {
       savings: () => this.renderSavings(),
       investments: () => this.renderInvestments(),
       crypto: () => this.renderCryptoPortfolio(),
+      vault: () => this.renderVault(),
       assets: () => this.renderAssets(),
       budgets: () => this.renderBudgets(),
       'reports-monthly': () => this.renderReports('month'),
@@ -4229,6 +4494,181 @@ class FinanceApp {
     if (this.currentView === 'dashboard') this.renderDashboard();
   }
 
+  // ========== VAULT VIDEO FEED ==========
+  /** Normalize Vault entries with resolved YouTube ids */
+  _vaultItems() {
+    return VAULT_VIDEOS.map(v => ({
+      ...v,
+      videoId: parseYoutubeId(v.url || v.src)
+    })).filter(v => v.videoId);
+  }
+
+  /** Render Vault vertical video feed */
+  renderVault() {
+    this._teardownVaultFeed();
+    const videos = this._vaultItems();
+    if (!VAULT_VIDEOS.length) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="vault-empty">
+          <div class="vault-empty-icon"><i class="fas fa-circle-play"></i></div>
+          <h2>Vault</h2>
+          <p>Add YouTube Shorts URLs to <code>VAULT_VIDEOS</code> in <code>index.html</code>. Deploy to <strong>Vercel</strong> or GitHub Pages — everyone on your link sees the same feed.</p>
+          <p><strong>Example:</strong><br><code>{ title: 'Budget tip', url: 'https://youtube.com/shorts/VIDEO_ID', topic: 'budgeting' }</code></p>
+          <p style="font-size:12px;color:var(--text-muted)">Paste Shorts links, push to GitHub — no MP4 uploads needed.</p>
+        </div>`;
+      return;
+    }
+    if (!videos.length) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="vault-empty">
+          <div class="vault-empty-icon"><i class="fas fa-circle-exclamation"></i></div>
+          <h2>Vault</h2>
+          <p>Could not read YouTube IDs from your <code>VAULT_VIDEOS</code> URLs. Use Shorts links like <code>https://youtube.com/shorts/XXXXXXXXXXX</code>.</p>
+        </div>`;
+      return;
+    }
+
+    const slides = videos.map((v, i) => `
+      <div class="vault-slide" data-index="${i}" data-video-id="${Utils.esc(v.videoId)}" data-watch-url="${Utils.esc(vaultYoutubeWatchUrl(v.videoId))}">
+        <div class="vault-yt-wrap">
+          <div class="vault-yt-poster" style="background-image:url('${Utils.esc(vaultYoutubePoster(v.videoId))}')"></div>
+          <div class="vault-yt-host" id="vaultYtHost${i}"></div>
+          <div class="vault-chrome-mask" aria-hidden="true"></div>
+        </div>
+        <div class="vault-tap-layer" aria-label="Play video"></div>
+        <div class="vault-slide-overlay">
+          <div class="vault-slide-top">
+            <span class="vault-badge"><i class="fas fa-shield-halved"></i> Vault</span>
+            ${v.topic ? `<span class="vault-topic">${Utils.esc(v.topic)}</span>` : ''}
+          </div>
+          <div class="vault-slide-bottom">
+            <h3>${Utils.esc(v.title || 'Vault Short')}</h3>
+            ${v.caption ? `<p>${Utils.esc(v.caption)}</p>` : ''}
+            <a class="vault-yt-fallback" href="${Utils.esc(vaultYoutubeWatchUrl(v.videoId))}" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square"></i> Open in YouTube</a>
+          </div>
+        </div>
+        <button type="button" class="vault-play-hint" aria-label="Play"><i class="fas fa-play"></i></button>
+      </div>`).join('');
+
+    const dots = videos.map((_, i) => `<span class="vault-dot${i === 0 ? ' active' : ''}" data-index="${i}"></span>`).join('');
+
+    document.getElementById('mainContent').innerHTML = `
+      <div class="vault-feed-header hide-on-mobile">
+        <h1>Vault</h1>
+        <span>${videos.length} short${videos.length === 1 ? '' : 's'}</span>
+      </div>
+      <div class="vault-shell">
+        <div class="vault-feed-wrap">
+          <div class="vault-feed" id="vaultFeed">${slides}</div>
+          <div class="vault-dots" id="vaultDots">${dots}</div>
+        </div>
+      </div>
+      <div class="vault-swipe-hint hide-on-desktop"><i class="fas fa-arrows-up-down"></i> Swipe for next</div>`;
+
+    this._bindVaultFeed();
+  }
+
+  /** Load or reload YouTube iframe for a slide */
+  _mountVaultIframe(slide, autoplay = true, mute = true) {
+    const host = slide.querySelector('.vault-yt-host');
+    const videoId = slide.dataset.videoId;
+    if (!host || !videoId) return;
+
+    if (!isVaultHosted() && !this._vaultFileWarned) {
+      this._vaultFileWarned = true;
+      this.toast.show('Open your Vercel or GitHub Pages link for in-app video. Tap Open in YouTube below meanwhile.', 'warning', 7000);
+    }
+
+    const existing = host.querySelector('iframe');
+    if (existing && slide.classList.contains('is-ready')) {
+      if (autoplay) slide.classList.add('is-playing');
+      return;
+    }
+
+    host.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    iframe.setAttribute('title', slide.querySelector('.vault-slide-bottom h3')?.textContent || 'Vault video');
+    iframe.src = buildYoutubeEmbedUrl(videoId, autoplay, mute);
+    iframe.addEventListener('load', () => {
+      slide.classList.add('is-ready', 'is-playing');
+    });
+    host.appendChild(iframe);
+  }
+
+  /** Clear YouTube iframe to stop playback */
+  _unmountVaultIframe(slide) {
+    const host = slide.querySelector('.vault-yt-host');
+    if (host) host.innerHTML = '';
+    slide.classList.remove('is-playing', 'is-active', 'is-ready');
+  }
+
+  /** Wire Vault feed playback, scroll snap, and gestures */
+  _bindVaultFeed() {
+    const feed = document.getElementById('vaultFeed');
+    if (!feed) return;
+    const slides = [...feed.querySelectorAll('.vault-slide')];
+    const dots = [...document.querySelectorAll('#vaultDots .vault-dot')];
+    let activeIndex = -1;
+
+    const setActive = (index, opts = {}) => {
+      if (index < 0 || index >= slides.length) return;
+      activeIndex = index;
+      dots.forEach((d, i) => d.classList.toggle('active', i === index));
+      slides.forEach((slide, i) => {
+        if (i === index) {
+          slide.classList.add('is-active');
+          this._mountVaultIframe(slide, opts.autoplay !== false, opts.mute !== false);
+        } else {
+          this._unmountVaultIframe(slide);
+        }
+      });
+    };
+
+    const playSlide = (slide) => {
+      const idx = parseInt(slide.dataset.index, 10);
+      if (isNaN(idx)) return;
+      slide.classList.remove('is-ready', 'is-playing');
+      const host = slide.querySelector('.vault-yt-host');
+      if (host) host.innerHTML = '';
+      setActive(idx, { autoplay: true, mute: false });
+    };
+
+    slides.forEach(slide => {
+      const tap = () => playSlide(slide);
+      slide.querySelector('.vault-tap-layer')?.addEventListener('click', tap);
+      slide.querySelector('.vault-play-hint')?.addEventListener('click', e => { e.stopPropagation(); tap(); });
+    });
+
+    if (this._vaultObserver) this._vaultObserver.disconnect();
+    this._vaultObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.55) return;
+        const idx = parseInt(entry.target.dataset.index, 10);
+        if (!isNaN(idx) && idx !== activeIndex) setActive(idx, { autoplay: true, mute: true });
+      });
+    }, { root: feed, threshold: [0.55, 0.75] });
+
+    slides.forEach(slide => this._vaultObserver.observe(slide));
+    this._vaultFeedCleanup = () => {
+      if (this._vaultObserver) { this._vaultObserver.disconnect(); this._vaultObserver = null; }
+      slides.forEach(slide => this._unmountVaultIframe(slide));
+    };
+
+    setTimeout(() => setActive(0, { autoplay: true, mute: true }), 200);
+  }
+
+  /** Stop Vault videos when leaving the feed */
+  _teardownVaultFeed() {
+    if (typeof this._vaultFeedCleanup === 'function') {
+      this._vaultFeedCleanup();
+      this._vaultFeedCleanup = null;
+    }
+    document.querySelectorAll('.vault-yt-host').forEach(host => { host.innerHTML = ''; });
+  }
+
   /** Open add/edit crypto holding modal */
   openCryptoModal(id = null) {
     const h = id ? this.store.get('cryptoHoldings', id) : null;
@@ -4972,6 +5412,13 @@ class FinanceApp {
     (this.store.data.cryptoHoldings || []).forEach(h => {
       const hay = [h.name, h.symbol, h.notes].join(' ').toLowerCase();
       if (hay.includes(q)) { if (!groups['Crypto']) groups['Crypto'] = []; groups['Crypto'].push({ icon: 'bitcoin-sign', text: `${h.name} (${h.symbol})`, sub: `${h.amount} coins`, action: () => this.navigate('crypto') }); }
+    });
+    VAULT_VIDEOS.forEach(v => {
+      const hay = [v.title, v.caption, v.topic, v.url].filter(Boolean).join(' ').toLowerCase();
+      if (hay.includes(q)) {
+        if (!groups.Vault) groups.Vault = [];
+        groups.Vault.push({ icon: 'circle-play', text: v.title, sub: v.topic || 'Vault video', action: () => this.navigate('vault') });
+      }
     });
 
     let html = '';
