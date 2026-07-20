@@ -1258,7 +1258,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.47.1';
+const APP_VERSION = '1.47.2';
 
 /** Extract YouTube video id from Shorts / watch / youtu.be URLs */
 function parseYoutubeId(url) {
@@ -4654,15 +4654,6 @@ class FinanceApp {
       this.toast.show('Open your Vercel or GitHub Pages link for in-app video.', 'warning', 7000);
     }
 
-    const existing = host.querySelector('iframe');
-    if (existing && slide.classList.contains('is-ready')) {
-      const needsUnmute = this._vaultSoundOn && existing.src.includes('mute=1');
-      if (!needsUnmute) {
-        if (autoplay) slide.classList.add('is-playing');
-        return;
-      }
-    }
-
     host.innerHTML = '';
     const iframe = document.createElement('iframe');
     iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
@@ -4712,50 +4703,55 @@ class FinanceApp {
       if (countEl) countEl.textContent = `${index + 1} / ${slides.length}`;
     };
 
-    const scrollToIndex = (index, smooth = true) => {
-      if (index < 0 || index >= slides.length) return;
-      scrollLock = true;
-      feed.scrollTo({ top: index * slideHeight(), behavior: smooth ? 'smooth' : 'auto' });
-      setTimeout(() => { scrollLock = false; }, smooth ? 420 : 50);
-    };
-
-    const setActive = (index, opts = {}) => {
-      if (index < 0 || index >= slides.length) return;
-      const forceRemount = opts.force === true;
-      if (index === activeIndex && !forceRemount) return;
-      activeIndex = index;
-      updateChrome(index);
-      const mute = opts.mute === true;
-      slides.forEach((slide, i) => {
-        if (i === index) {
-          slide.classList.add('is-active');
-          this._mountVaultIframe(slide, opts.autoplay !== false, mute);
-        } else if (Math.abs(i - index) > 1) {
-          this._unmountVaultIframe(slide);
-        }
-      });
-    };
-
     const resolveScrollIndex = () => {
       const h = slideHeight();
       if (!h) return 0;
       return Math.max(0, Math.min(slides.length - 1, Math.round(feed.scrollTop / h)));
     };
 
+    const activateSlide = (index) => {
+      if (index < 0 || index >= slides.length || index === activeIndex) return;
+      const prev = activeIndex;
+      activeIndex = index;
+      updateChrome(index);
+      if (prev >= 0 && slides[prev]) this._unmountVaultIframe(slides[prev]);
+      slides.forEach((slide, i) => {
+        if (i !== index) {
+          if (Math.abs(i - index) <= 1) {
+            slide.classList.remove('is-active', 'is-playing', 'is-ready');
+          } else {
+            this._unmountVaultIframe(slide);
+          }
+        }
+      });
+      const slide = slides[index];
+      slide.classList.add('is-active');
+      slide.classList.remove('is-ready', 'is-playing');
+      this._mountVaultIframe(slide, true, false);
+    };
+
+    const scrollToIndex = (index, smooth = true) => {
+      if (index < 0 || index >= slides.length) return;
+      scrollLock = true;
+      feed.scrollTo({ top: index * slideHeight(), behavior: smooth ? 'smooth' : 'auto' });
+      setTimeout(() => {
+        scrollLock = false;
+        activateSlide(index);
+      }, smooth ? 450 : 60);
+    };
+
     const playSlide = (slide) => {
       const idx = parseInt(slide.dataset.index, 10);
       if (isNaN(idx)) return;
       scrollToIndex(idx, false);
-      slide.classList.remove('is-ready', 'is-playing');
-      const host = slide.querySelector('.vault-yt-host');
-      if (host) host.innerHTML = '';
-      activeIndex = -1;
-      setActive(idx, { autoplay: true, force: true });
     };
 
-    const enableSound = () => this._enableVaultSound();
-    feed.addEventListener('pointerdown', enableSound, { once: true, passive: true });
-    document.getElementById('vaultFeed')?.addEventListener('touchstart', enableSound, { once: true, passive: true });
+    const onScrollSettled = () => {
+      if (scrollLock) return;
+      activateSlide(resolveScrollIndex());
+    };
+
+    feed.addEventListener('pointerdown', () => this._enableVaultSound(), { once: true, passive: true });
 
     slides.forEach(slide => {
       const tap = () => playSlide(slide);
@@ -4763,38 +4759,45 @@ class FinanceApp {
       slide.querySelector('.vault-play-hint')?.addEventListener('click', e => { e.stopPropagation(); tap(); });
     });
 
-    let scrollRaf = null;
+    let scrollEndTimer = null;
     feed.addEventListener('scroll', () => {
       if (scrollLock) return;
-      if (scrollRaf) cancelAnimationFrame(scrollRaf);
-      scrollRaf = requestAnimationFrame(() => {
-        const idx = resolveScrollIndex();
-        if (idx !== activeIndex) setActive(idx, { autoplay: true });
-      });
+      clearTimeout(scrollEndTimer);
+      scrollEndTimer = setTimeout(onScrollSettled, 100);
     }, { passive: true });
+    feed.addEventListener('scrollend', onScrollSettled, { passive: true });
+
+    if (this._vaultObserver) this._vaultObserver.disconnect();
+    this._vaultObserver = new IntersectionObserver((entries) => {
+      let best = null;
+      entries.forEach(entry => {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.55) return;
+        if (!best || entry.intersectionRatio > best.ratio) {
+          best = { el: entry.target, ratio: entry.intersectionRatio };
+        }
+      });
+      if (best) {
+        const idx = parseInt(best.el.dataset.index, 10);
+        if (!isNaN(idx)) activateSlide(idx);
+      }
+    }, { root: feed, threshold: [0.55, 0.72, 0.9] });
+    slides.forEach(slide => this._vaultObserver.observe(slide));
 
     feed.addEventListener('wheel', (e) => {
       if (Math.abs(e.deltaY) < 18) return;
       e.preventDefault();
       const next = activeIndex + (e.deltaY > 0 ? 1 : -1);
-      if (next >= 0 && next < slides.length) {
-        scrollToIndex(next);
-        setActive(next, { autoplay: true });
-      }
+      if (next >= 0 && next < slides.length) scrollToIndex(next);
     }, { passive: false });
 
     this._vaultKeyHandler = (e) => {
       if (this.currentView !== 'vault') return;
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         e.preventDefault();
-        const next = Math.min(slides.length - 1, activeIndex + 1);
-        scrollToIndex(next);
-        setActive(next, { autoplay: true });
+        scrollToIndex(Math.min(slides.length - 1, activeIndex + 1));
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
-        const prev = Math.max(0, activeIndex - 1);
-        scrollToIndex(prev);
-        setActive(prev, { autoplay: true });
+        scrollToIndex(Math.max(0, activeIndex - 1));
       } else if (e.key === 'Escape') {
         this.navigate('dashboard');
       }
@@ -4802,14 +4805,17 @@ class FinanceApp {
     document.addEventListener('keydown', this._vaultKeyHandler);
 
     this._vaultFeedCleanup = () => {
+      clearTimeout(scrollEndTimer);
+      if (this._vaultObserver) { this._vaultObserver.disconnect(); this._vaultObserver = null; }
       document.removeEventListener('keydown', this._vaultKeyHandler);
       this._vaultKeyHandler = null;
       slides.forEach(slide => this._unmountVaultIframe(slide));
+      activeIndex = -1;
     };
 
     requestAnimationFrame(() => {
-      scrollToIndex(0, false);
-      setActive(0, { autoplay: true, force: true });
+      feed.scrollTop = 0;
+      activateSlide(0);
     });
   }
 
