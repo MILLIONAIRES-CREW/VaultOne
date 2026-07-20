@@ -714,28 +714,27 @@ tr:last-child td{border-bottom:none}
 .crypto-status-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .price-loading{display:inline-flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:13px}
 
-/* ========== VAULT VIDEO FEED ========== */
-body.view-vault .content{padding:0;max-width:100%;animation:none}
-.vault-shell{display:flex;justify-content:center;min-height:calc(100dvh - var(--topbar-h) - 24px)}
-.vault-feed-wrap{width:100%;max-width:440px;position:relative}
-.vault-feed-header{
-  display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;
-  max-width:440px;margin:0 auto;
-}
-.vault-feed-header h1{
-  font-family:'Manrope',sans-serif;font-size:22px;font-weight:800;margin:0;
-  background:linear-gradient(135deg,var(--gold-premium),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.vault-feed-header span{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em}
+/* ========== VAULT VIDEO FEED (Shorts-style) ========== */
+body.view-vault{overflow:hidden}
+body.view-vault .content{padding:0;max-width:100%;animation:none;height:100dvh;overflow:hidden}
+body.view-vault .main{min-height:100dvh}
+body.view-vault .topbar{display:none!important}
+body.view-vault .mobile-bottom-nav{display:none!important}
+.vault-shell{display:flex;justify-content:center;align-items:stretch;width:100%;height:100dvh;min-height:100dvh;background:#000}
+.vault-feed-wrap{width:100%;max-width:480px;height:100dvh;position:relative;margin:0 auto}
+.vault-feed-header{display:none}
 .vault-feed{
-  height:calc(100dvh - var(--topbar-h) - 72px);
-  overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;
-  border-radius:var(--radius);background:#000;
-  border:1px solid rgba(212,175,55,0.2);box-shadow:var(--shadow-gold-glow);
+  width:100%;height:100dvh;overflow-y:auto;overflow-x:hidden;
+  scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;touch-action:pan-y;
+  background:#000;border:none;border-radius:0;box-shadow:none;
+  scrollbar-width:none;
 }
+.vault-feed::-webkit-scrollbar{display:none}
 .vault-slide{
   position:relative;scroll-snap-align:start;scroll-snap-stop:always;
-  height:calc(100dvh - var(--topbar-h) - 72px);background:#050505;overflow:hidden;
+  width:100%;height:100dvh;min-height:100dvh;background:#000;overflow:hidden;
+  flex-shrink:0;
 }
 .vault-yt-wrap{position:absolute;inset:0;overflow:hidden;background:#000;z-index:1}
 .vault-yt-host{width:100%;height:100%;position:relative}
@@ -743,50 +742,70 @@ body.view-vault .content{padding:0;max-width:100%;animation:none}
   position:absolute;inset:0;background-size:cover;background-position:center;background-color:#111;
 }
 .vault-yt-host iframe{
-  position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;z-index:2;
+  position:absolute;top:50%;left:50%;width:100%;height:100%;
+  min-width:100%;min-height:100%;
+  transform:translate(-50%,-50%) scale(1.18);transform-origin:center center;
+  border:0;background:#000;z-index:2;
 }
 .vault-chrome-mask{
-  position:absolute;bottom:0;left:0;right:0;height:88px;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg,transparent 0%,rgba(5,5,5,0.55) 45%,rgba(5,5,5,0.92) 100%);
+  position:absolute;bottom:0;left:0;right:0;height:120px;z-index:3;pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.72) 100%);
 }
+.vault-float-bar{
+  position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,0.72) 0%,transparent 100%);
+}
+.vault-float-back{
+  pointer-events:auto;width:40px;height:40px;border-radius:50%;border:none;
+  background:rgba(255,255,255,0.12);color:#fff;font-size:16px;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);
+}
+.vault-float-title{
+  pointer-events:none;font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;
+  letter-spacing:0.04em;color:var(--gold-premium);text-transform:uppercase;
+}
+.vault-float-count{font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);pointer-events:none}
+.vault-progress-rail{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:10;
+  display:flex;flex-direction:column;gap:5px;pointer-events:none;
+}
+.vault-rail-seg{
+  width:3px;height:16px;border-radius:999px;background:rgba(255,255,255,0.25);
+  transition:height 0.25s ease,background 0.25s ease;
+}
+.vault-rail-seg.active{height:28px;background:var(--gold-premium);box-shadow:0 0 10px rgba(212,175,55,0.45)}
 .vault-slide-overlay{
-  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;
-  pointer-events:none;padding:14px 16px calc(22px + env(safe-area-inset-bottom));z-index:4;
-  background:linear-gradient(180deg,rgba(0,0,0,0.62) 0%,transparent 20%,transparent 58%,rgba(0,0,0,0.35) 100%);
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;
+  pointer-events:none;padding:0 52px calc(24px + env(safe-area-inset-bottom)) 16px;z-index:5;
 }
-.vault-slide-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.vault-badge{
-  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
-  font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
-  background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.35);color:var(--gold-premium);
+.vault-slide-top{display:none}
+.vault-slide-bottom h3{
+  font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;margin:0 0 4px;line-height:1.3;
+  text-shadow:0 1px 8px rgba(0,0,0,0.8);
 }
-.vault-topic{
-  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;
-  padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.08);color:var(--text-secondary);
+.vault-slide-bottom p{margin:0;font-size:12px;line-height:1.4;color:rgba(255,255,255,0.82);text-shadow:0 1px 6px rgba(0,0,0,0.8)}
+.vault-slide-bottom{pointer-events:none}
+.vault-topic-inline{
+  display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
+  padding:3px 8px;border-radius:999px;margin-bottom:8px;
+  background:rgba(212,175,55,0.2);border:1px solid rgba(212,175,55,0.35);color:var(--gold-premium);
 }
-.vault-slide-bottom h3{font-family:'Manrope',sans-serif;font-size:18px;font-weight:700;margin:0 0 6px;line-height:1.25}
-.vault-slide-bottom p{margin:0;font-size:13px;line-height:1.45;color:var(--text-secondary)}
-.vault-slide-bottom{pointer-events:auto}
-.vault-yt-fallback{
-  display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:600;
-  color:var(--gold-premium);text-decoration:none;opacity:0.85;
-}
-.vault-yt-fallback:hover{opacity:1;text-decoration:underline}
-.vault-dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
-.vault-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.25);transition:var(--transition)}
-.vault-dot.active{background:var(--gold-premium);box-shadow:0 0 8px rgba(212,175,55,0.5)}
+.vault-yt-fallback{display:none}
 .vault-play-hint{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;
-  width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,0.85);
-  background:rgba(0,0,0,0.35);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:opacity 0.25s ease;
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6;
+  width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,0.9);
+  background:rgba(0,0,0,0.4);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:opacity 0.25s ease,transform 0.2s ease;backdrop-filter:blur(4px);
 }
+.vault-play-hint:active{transform:translate(-50%,-50%) scale(0.94)}
 .vault-slide.is-playing .vault-play-hint{opacity:0;pointer-events:none}
 .vault-slide.is-ready .vault-yt-poster{opacity:0;pointer-events:none;transition:opacity 0.35s ease}
-.vault-tap-layer{
-  position:absolute;inset:0;z-index:3;cursor:pointer;background:transparent;
-}
+.vault-tap-layer{position:absolute;inset:0;z-index:4;cursor:pointer;background:transparent}
 .vault-slide.is-ready .vault-tap-layer,.vault-slide.is-playing .vault-tap-layer{display:none}
+.vault-swipe-zone{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+}
 .vault-empty{
   max-width:520px;margin:40px auto;padding:32px 24px;text-align:center;
   border-radius:var(--radius);border:1px solid rgba(212,175,55,0.2);
@@ -796,19 +815,26 @@ body.view-vault .content{padding:0;max-width:100%;animation:none}
 .vault-empty h2{font-family:'Manrope',sans-serif;font-size:22px;margin:0 0 10px}
 .vault-empty p{font-size:13px;color:var(--text-secondary);line-height:1.6;margin:0 0 16px}
 .vault-empty code{font-size:12px;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,0.4);color:var(--gold)}
-.vault-swipe-hint{
-  position:absolute;bottom:calc(var(--mobile-nav-h) + 24px);left:50%;transform:translateX(-50%);
-  font-size:11px;color:var(--text-muted);letter-spacing:0.04em;pointer-events:none;
+@media(min-width:769px){
+  body.view-vault .topbar{display:flex!important}
+  body.view-vault .content{height:calc(100dvh - var(--topbar-h))}
+  .vault-shell{height:calc(100dvh - var(--topbar-h));min-height:calc(100dvh - var(--topbar-h))}
+  .vault-feed-wrap{max-width:420px;height:calc(100dvh - var(--topbar-h));border-radius:20px;overflow:hidden;border:1px solid rgba(212,175,55,0.2);box-shadow:var(--shadow-gold-glow)}
+  .vault-feed,.vault-slide{height:calc(100dvh - var(--topbar-h));min-height:calc(100dvh - var(--topbar-h))}
+  .vault-feed-header{
+    display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;
+    max-width:420px;margin:0 auto;
+  }
+  .vault-feed-header h1{
+    font-family:'Manrope',sans-serif;font-size:22px;font-weight:800;margin:0;
+    background:linear-gradient(135deg,var(--gold-premium),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .vault-feed-header span{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em}
+  .vault-float-bar{display:none}
 }
 @media(max-width:768px){
-  body.view-vault .vault-feed-wrap{max-width:100%}
-  body.view-vault .vault-feed{border-radius:0;border-left:none;border-right:none}
-  .vault-feed,.vault-slide{height:calc(100dvh - 56px - var(--mobile-nav-h) - 32px)}
-  .vault-feed-header{padding:12px 14px 8px}
-  body.view-vault .content{padding:0 0 calc(var(--mobile-nav-h) + 8px)}
-}
-@media(min-width:769px){
-  .vault-swipe-hint{display:none}
+  body.view-vault .sidebar{display:none}
+  body.view-vault .main{margin-left:0!important}
 }
 
 /* ========== MOBILE BOTTOM NAV ========== */
@@ -1232,7 +1258,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.46.4';
+const APP_VERSION = '1.47.0';
 
 /** Extract YouTube video id from Shorts / watch / youtu.be URLs */
 function parseYoutubeId(url) {
@@ -1255,7 +1281,7 @@ function buildYoutubeEmbedUrl(videoId, autoplay = false, mute = true) {
   const p = new URLSearchParams({
     autoplay: autoplay ? '1' : '0',
     mute: mute ? '1' : '0',
-    controls: '1',
+    controls: '0',
     modestbranding: '1',
     rel: '0',
     fs: '0',
@@ -2690,6 +2716,7 @@ class FinanceApp {
 
   /** Sync mobile bottom nav active state */
   syncMobileNav(view) {
+    if (view === 'vault') return;
     const primary = ['dashboard', 'accounts', 'crypto'];
     const mapped = primary.includes(view) ? view : 'more';
     document.querySelectorAll('.mobile-nav-item').forEach(el => {
@@ -4579,20 +4606,16 @@ class FinanceApp {
         </div>
         <div class="vault-tap-layer" aria-label="Play video"></div>
         <div class="vault-slide-overlay">
-          <div class="vault-slide-top">
-            <span class="vault-badge"><i class="fas fa-shield-halved"></i> Vault</span>
-            ${v.topic ? `<span class="vault-topic">${Utils.esc(v.topic)}</span>` : ''}
-          </div>
           <div class="vault-slide-bottom">
+            ${v.topic ? `<span class="vault-topic-inline">${Utils.esc(v.topic)}</span>` : ''}
             <h3>${Utils.esc(v.title || 'Vault Short')}</h3>
             ${v.caption ? `<p>${Utils.esc(v.caption)}</p>` : ''}
-            <a class="vault-yt-fallback" href="${Utils.esc(vaultYoutubeWatchUrl(v.videoId))}" target="_blank" rel="noopener noreferrer"><i class="fas fa-arrow-up-right-from-square"></i> Open in YouTube</a>
           </div>
         </div>
         <button type="button" class="vault-play-hint" aria-label="Play"><i class="fas fa-play"></i></button>
       </div>`).join('');
 
-    const dots = videos.map((_, i) => `<span class="vault-dot${i === 0 ? ' active' : ''}" data-index="${i}"></span>`).join('');
+    const rail = videos.map((_, i) => `<span class="vault-rail-seg${i === 0 ? ' active' : ''}" data-index="${i}"></span>`).join('');
 
     document.getElementById('mainContent').innerHTML = `
       <div class="vault-feed-header hide-on-mobile">
@@ -4601,11 +4624,15 @@ class FinanceApp {
       </div>
       <div class="vault-shell">
         <div class="vault-feed-wrap">
+          <div class="vault-float-bar">
+            <button type="button" class="vault-float-back" onclick="app.navigate('dashboard')" aria-label="Back"><i class="fas fa-chevron-left"></i></button>
+            <span class="vault-float-title">Vault</span>
+            <span class="vault-float-count" id="vaultFloatCount">1 / ${videos.length}</span>
+          </div>
+          <div class="vault-progress-rail" id="vaultRail">${rail}</div>
           <div class="vault-feed" id="vaultFeed">${slides}</div>
-          <div class="vault-dots" id="vaultDots">${dots}</div>
         </div>
-      </div>
-      <div class="vault-swipe-hint hide-on-desktop"><i class="fas fa-arrows-up-down"></i> Swipe for next</div>`;
+      </div>`;
 
     this._bindVaultFeed();
   }
@@ -4652,29 +4679,53 @@ class FinanceApp {
     const feed = document.getElementById('vaultFeed');
     if (!feed) return;
     const slides = [...feed.querySelectorAll('.vault-slide')];
-    const dots = [...document.querySelectorAll('#vaultDots .vault-dot')];
+    const railSegs = [...document.querySelectorAll('#vaultRail .vault-rail-seg')];
+    const countEl = document.getElementById('vaultFloatCount');
     let activeIndex = -1;
+    let scrollLock = false;
+
+    const slideHeight = () => feed.clientHeight || window.innerHeight;
+
+    const updateChrome = (index) => {
+      railSegs.forEach((seg, i) => seg.classList.toggle('active', i === index));
+      if (countEl) countEl.textContent = `${index + 1} / ${slides.length}`;
+    };
+
+    const scrollToIndex = (index, smooth = true) => {
+      if (index < 0 || index >= slides.length) return;
+      scrollLock = true;
+      feed.scrollTo({ top: index * slideHeight(), behavior: smooth ? 'smooth' : 'auto' });
+      setTimeout(() => { scrollLock = false; }, smooth ? 420 : 50);
+    };
 
     const setActive = (index, opts = {}) => {
-      if (index < 0 || index >= slides.length) return;
+      if (index < 0 || index >= slides.length || index === activeIndex) return;
       activeIndex = index;
-      dots.forEach((d, i) => d.classList.toggle('active', i === index));
+      updateChrome(index);
       slides.forEach((slide, i) => {
         if (i === index) {
           slide.classList.add('is-active');
           this._mountVaultIframe(slide, opts.autoplay !== false, opts.mute !== false);
-        } else {
+        } else if (Math.abs(i - index) > 1) {
           this._unmountVaultIframe(slide);
         }
       });
     };
 
+    const resolveScrollIndex = () => {
+      const h = slideHeight();
+      if (!h) return 0;
+      return Math.max(0, Math.min(slides.length - 1, Math.round(feed.scrollTop / h)));
+    };
+
     const playSlide = (slide) => {
       const idx = parseInt(slide.dataset.index, 10);
       if (isNaN(idx)) return;
+      scrollToIndex(idx, false);
       slide.classList.remove('is-ready', 'is-playing');
       const host = slide.querySelector('.vault-yt-host');
       if (host) host.innerHTML = '';
+      activeIndex = -1;
       setActive(idx, { autoplay: true, mute: false });
     };
 
@@ -4684,22 +4735,54 @@ class FinanceApp {
       slide.querySelector('.vault-play-hint')?.addEventListener('click', e => { e.stopPropagation(); tap(); });
     });
 
-    if (this._vaultObserver) this._vaultObserver.disconnect();
-    this._vaultObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting || entry.intersectionRatio < 0.55) return;
-        const idx = parseInt(entry.target.dataset.index, 10);
-        if (!isNaN(idx) && idx !== activeIndex) setActive(idx, { autoplay: true, mute: true });
+    let scrollRaf = null;
+    feed.addEventListener('scroll', () => {
+      if (scrollLock) return;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = requestAnimationFrame(() => {
+        const idx = resolveScrollIndex();
+        if (idx !== activeIndex) setActive(idx, { autoplay: true, mute: true });
       });
-    }, { root: feed, threshold: [0.55, 0.75] });
+    }, { passive: true });
 
-    slides.forEach(slide => this._vaultObserver.observe(slide));
+    feed.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) < 18) return;
+      e.preventDefault();
+      const next = activeIndex + (e.deltaY > 0 ? 1 : -1);
+      if (next >= 0 && next < slides.length) {
+        scrollToIndex(next);
+        setActive(next, { autoplay: true, mute: true });
+      }
+    }, { passive: false });
+
+    this._vaultKeyHandler = (e) => {
+      if (this.currentView !== 'vault') return;
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        const next = Math.min(slides.length - 1, activeIndex + 1);
+        scrollToIndex(next);
+        setActive(next, { autoplay: true, mute: true });
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        const prev = Math.max(0, activeIndex - 1);
+        scrollToIndex(prev);
+        setActive(prev, { autoplay: true, mute: true });
+      } else if (e.key === 'Escape') {
+        this.navigate('dashboard');
+      }
+    };
+    document.addEventListener('keydown', this._vaultKeyHandler);
+
     this._vaultFeedCleanup = () => {
-      if (this._vaultObserver) { this._vaultObserver.disconnect(); this._vaultObserver = null; }
+      document.removeEventListener('keydown', this._vaultKeyHandler);
+      this._vaultKeyHandler = null;
       slides.forEach(slide => this._unmountVaultIframe(slide));
     };
 
-    setTimeout(() => setActive(0, { autoplay: true, mute: true }), 200);
+    requestAnimationFrame(() => {
+      scrollToIndex(0, false);
+      setActive(0, { autoplay: true, mute: true });
+    });
   }
 
   /** Stop Vault videos when leaving the feed */
