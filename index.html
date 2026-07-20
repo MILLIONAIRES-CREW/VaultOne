@@ -1264,7 +1264,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.52.0';
+const APP_VERSION = '1.52.1';
 
 /** True when served over HTTP(S) */
 function isVaultHosted() {
@@ -4553,7 +4553,7 @@ class FinanceApp {
           <video
             playsinline
             webkit-playsinline
-            preload="${i === 0 ? 'auto' : 'metadata'}"
+            preload="${i <= 1 ? 'auto' : 'metadata'}"
             loop
             muted
             ${poster ? `poster="${Utils.esc(poster)}"` : ''}
@@ -4608,6 +4608,21 @@ class FinanceApp {
     return document.querySelector(`#vaultFeed .vault-slide[data-index="${index}"] video`);
   }
 
+  /** Prefetch neighbors so swipe play feels instant */
+  _vaultWarmNeighbors(index) {
+    const videos = this._vaultVideos || this._vaultItems();
+    [index - 1, index, index + 1, index + 2].forEach((i) => {
+      if (i < 0 || i >= videos.length) return;
+      const video = this._vaultVideoEl(i);
+      if (!video) return;
+      video.preload = 'auto';
+      // Kick network fetch without playing
+      if (video.readyState < 2) {
+        try { video.load(); } catch (_) {}
+      }
+    });
+  }
+
   /** Sync sound button icon */
   _vaultSyncSoundBtn(slide, muted) {
     const btn = slide?.querySelector('[data-vault-sound] i');
@@ -4615,52 +4630,72 @@ class FinanceApp {
     btn.className = muted ? 'fas fa-volume-xmark' : 'fas fa-volume-high';
   }
 
-  /** Play slide video (native) */
-  async _vaultPlaySlide(index, { muted = true } = {}) {
+  /** Play slide video immediately (TikTok-style) */
+  _vaultPlaySlide(index, { muted = true } = {}) {
     const feed = document.getElementById('vaultFeed');
     const slide = feed?.querySelector(`.vault-slide[data-index="${index}"]`);
     const video = this._vaultVideoEl(index);
     if (!slide || !video) return;
 
-    // Pause others
-    feed.querySelectorAll('video').forEach((v, i) => {
-      const s = v.closest('.vault-slide');
-      if (Number(s?.dataset.index) !== index) {
-        v.pause();
-        s?.classList.remove('is-playing');
+    // Pause others — keep buffers; only rewind non-neighbors
+    feed.querySelectorAll('.vault-slide').forEach((s) => {
+      const i = Number(s.dataset.index);
+      const v = s.querySelector('video');
+      if (!v || i === index) return;
+      v.pause();
+      s.classList.remove('is-playing');
+      if (Math.abs(i - index) > 1) {
+        try { v.currentTime = 0; } catch (_) {}
       }
     });
 
     video.muted = muted;
     video.playsInline = true;
-    try {
-      await video.play();
-      slide.classList.add('is-playing');
-      slide.classList.toggle('is-muted', muted);
-      this._vaultSyncSoundBtn(slide, muted);
-    } catch (_) {
-      slide.classList.remove('is-playing');
-      // Keep tap-to-play visible if autoplay blocked
+    // Optimistic UI — don't wait for play() promise
+    slide.classList.add('is-playing');
+    slide.classList.toggle('is-muted', muted);
+    this._vaultSyncSoundBtn(slide, muted);
+
+    const start = () => {
+      const p = video.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => this._vaultWarmNeighbors(index))
+          .catch(() => {
+            slide.classList.remove('is-playing');
+          });
+      } else {
+        this._vaultWarmNeighbors(index);
+      }
+    };
+
+    if (video.readyState >= 2) {
+      start();
+    } else {
+      const onReady = () => {
+        video.removeEventListener('loadeddata', onReady);
+        video.removeEventListener('canplay', onReady);
+        if (this._vaultActiveIndex === index) start();
+      };
+      video.addEventListener('loadeddata', onReady, { once: true });
+      video.addEventListener('canplay', onReady, { once: true });
+      video.preload = 'auto';
+      try { video.load(); } catch (_) {}
+      // Also try play now — browsers often start buffering
+      start();
     }
   }
 
-  /** Pause / unload non-active slides to save bandwidth */
-  _vaultPauseOthers(activeIndex) {
-    document.querySelectorAll('#vaultFeed .vault-slide').forEach((slide) => {
-      const i = Number(slide.dataset.index);
-      const video = slide.querySelector('video');
-      if (i !== activeIndex && video) {
-        video.pause();
-        try { video.currentTime = 0; } catch (_) {}
-        slide.classList.remove('is-playing');
-      }
-    });
-  }
-
-  /** Activate slide index */
+  /** Activate slide index — switches play as soon as swipe lands */
   _vaultActivate(index, { play = false } = {}) {
     const videos = this._vaultVideos || this._vaultItems();
     if (index < 0 || index >= videos.length) return;
+    if (index === this._vaultActiveIndex && play) {
+      // Already active — still ensure playing
+      this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
+      return;
+    }
+    if (index === this._vaultActiveIndex && !play) return;
+
     this._vaultActiveIndex = index;
 
     document.querySelectorAll('#vaultFeed .vault-slide').forEach((slide, i) => {
@@ -4672,7 +4707,7 @@ class FinanceApp {
     const countEl = document.getElementById('vaultFloatCount');
     if (countEl) countEl.textContent = `${index + 1} / ${videos.length}`;
 
-    this._vaultPauseOthers(index);
+    this._vaultWarmNeighbors(index);
     if (play) {
       this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
     }
@@ -4681,6 +4716,7 @@ class FinanceApp {
   /** Tap play — required first gesture on iOS PWA */
   _vaultTapPlay(index) {
     const idx = typeof index === 'number' ? index : this._vaultActiveIndex;
+    this._vaultWarmNeighbors(idx);
     this._vaultPlaySlide(idx, { muted: true });
   }
 
@@ -4712,14 +4748,24 @@ class FinanceApp {
       return Math.max(0, Math.min(slides.length - 1, Math.round(feed.scrollTop / h)));
     };
 
+    /** Switch video the moment the snap target changes (no wait) */
+    const switchTo = (index) => {
+      if (index < 0 || index >= slides.length) return;
+      if (index === this._vaultActiveIndex && userPlayed) {
+        const v = this._vaultVideoEl(index);
+        if (v && v.paused) this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
+        return;
+      }
+      this._vaultActivate(index, { play: userPlayed });
+    };
+
     const scrollToIndex = (index, smooth = true) => {
       if (index < 0 || index >= slides.length) return;
       scrollLock = true;
+      // Start next video immediately while scroll animates
+      switchTo(index);
       feed.scrollTo({ top: index * slideHeight(), behavior: smooth ? 'smooth' : 'auto' });
-      setTimeout(() => {
-        scrollLock = false;
-        this._vaultActivate(index, { play: userPlayed });
-      }, smooth ? 380 : 40);
+      setTimeout(() => { scrollLock = false; }, smooth ? 280 : 30);
     };
 
     feed.addEventListener('click', (e) => {
@@ -4739,7 +4785,6 @@ class FinanceApp {
         this._vaultToggleSound(Number(soundBtn.dataset.vaultSound));
         return;
       }
-      // Tap video area to pause/resume when already playing
       const slide = e.target.closest('.vault-slide.is-playing');
       if (slide && !e.target.closest('.vault-float-back, [data-vault-sound]')) {
         const video = slide.querySelector('video');
@@ -4749,18 +4794,17 @@ class FinanceApp {
       }
     });
 
-    let scrollEndTimer = null;
-    const onScrollSettled = () => {
-      if (scrollLock) return;
-      const idx = resolveScrollIndex();
-      this._vaultActivate(idx, { play: userPlayed });
-    };
+    // During swipe: as soon as halfway to next slide, start it
     feed.addEventListener('scroll', () => {
       if (scrollLock) return;
-      clearTimeout(scrollEndTimer);
-      scrollEndTimer = setTimeout(onScrollSettled, 90);
+      const idx = resolveScrollIndex();
+      if (idx !== this._vaultActiveIndex) switchTo(idx);
     }, { passive: true });
-    feed.addEventListener('scrollend', onScrollSettled, { passive: true });
+
+    feed.addEventListener('scrollend', () => {
+      if (scrollLock) return;
+      switchTo(resolveScrollIndex());
+    }, { passive: true });
 
     const onWheel = (e) => {
       if (Math.abs(e.deltaY) < 18) return;
@@ -4784,8 +4828,10 @@ class FinanceApp {
     };
     document.addEventListener('keydown', this._vaultKeyHandler);
 
+    // Prefetch first neighbors on open
+    this._vaultWarmNeighbors(0);
+
     this._vaultFeedCleanup = () => {
-      clearTimeout(scrollEndTimer);
       feed.removeEventListener('wheel', onWheel);
       document.removeEventListener('keydown', this._vaultKeyHandler);
       this._vaultKeyHandler = null;
