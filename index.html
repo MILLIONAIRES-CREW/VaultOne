@@ -737,23 +737,16 @@ body.view-vault .mobile-bottom-nav{display:none!important}
 .vault-media{
   position:absolute;inset:0;background:#000;overflow:hidden;
 }
-/* Shorts cover crop — scales iframe past edges so YouTube chrome/logo is clipped */
-.vault-iframe-host{
-  position:absolute;inset:0;overflow:hidden;z-index:2;pointer-events:none;
+.vault-media video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;background:#000;z-index:2;
+  pointer-events:none;
 }
-.vault-iframe-host iframe{
-  position:absolute;top:50%;left:50%;
-  border:0;display:block;pointer-events:none;
-  /* Cover fill + crop YouTube title/logo chrome outside the visible frame */
-  width:100vw;height:177.78vw; /* 9:16 tall canvas */
-  min-width:177.78vh;min-height:100vh;
-  transform:translate(-50%,-50%) scale(1.28);
-}
-.vault-yt-poster{
+.vault-poster{
   position:absolute;inset:0;background-size:cover;background-position:center;background-color:#111;z-index:1;
   transition:opacity 0.3s ease;
 }
-.vault-slide.is-playing .vault-yt-poster{opacity:0;pointer-events:none}
+.vault-slide.is-playing .vault-poster{opacity:0;pointer-events:none}
 .vault-brand-mask-top,.vault-brand-mask-bottom{
   position:absolute;left:0;right:0;z-index:4;pointer-events:none;
 }
@@ -834,7 +827,6 @@ body.view-vault .mobile-bottom-nav{display:none!important}
   .vault-shell{height:calc(100dvh - var(--topbar-h));min-height:calc(100dvh - var(--topbar-h))}
   .vault-feed-wrap{max-width:420px;height:calc(100dvh - var(--topbar-h));border-radius:20px;overflow:hidden;border:1px solid rgba(212,175,55,0.2);box-shadow:var(--shadow-gold-glow)}
   .vault-feed,.vault-slide{height:calc(100dvh - var(--topbar-h));min-height:calc(100dvh - var(--topbar-h))}
-  .vault-iframe-host iframe{width:100%;height:177.78%;min-width:177.78%;min-height:100%;transform:translate(-50%,-50%) scale(1.22)}
   .vault-feed-header{
     display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;
     max-width:420px;margin:0 auto;
@@ -1272,108 +1264,40 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.51.0';
+const APP_VERSION = '1.52.0';
 
-/** Extract YouTube video id from Shorts / watch / youtu.be URLs */
-function parseYoutubeId(url) {
-  if (!url) return null;
-  const s = String(url).trim();
-  try {
-    const u = new URL(s);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split(/[/?#&]/)[0] || null;
-    if (u.pathname.includes('/shorts/')) return u.pathname.split('/shorts/')[1]?.split(/[/?#&]/)[0] || null;
-    if (u.pathname.includes('/embed/')) return u.pathname.split('/embed/')[1]?.split(/[/?#&]/)[0] || null;
-    return u.searchParams.get('v');
-  } catch (_) {
-    const m = s.match(/(?:shorts\/|v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-    return m ? m[1] : null;
-  }
-}
-
-/** YouTube embed URL — no controls; UI chrome cropped by CSS for Shorts-like fill */
-function buildYoutubeEmbedUrl(videoId, autoplay = false, mute = true) {
-  const p = new URLSearchParams({
-    autoplay: autoplay ? '1' : '0',
-    mute: mute ? '1' : '0',
-    controls: '0',
-    disablekb: '1',
-    modestbranding: '1',
-    rel: '0',
-    fs: '0',
-    playsinline: '1',
-    loop: '1',
-    playlist: videoId,
-    iv_load_policy: '3',
-    cc_load_policy: '0',
-    enablejsapi: '1'
-  });
-  if (location.protocol === 'https:' || location.protocol === 'http:') {
-    p.set('origin', location.origin);
-  }
-  return `https://www.youtube.com/embed/${videoId}?${p.toString()}`;
-}
-
-function vaultYoutubeWatchUrl(videoId) {
-  return `https://www.youtube.com/shorts/${videoId}`;
-}
-
-/** True when the app is served over HTTP(S) — YouTube embeds work (Vercel, GitHub Pages, localhost). */
+/** True when served over HTTP(S) */
 function isVaultHosted() {
   return location.protocol === 'https:' || location.protocol === 'http:';
 }
 
-function vaultYoutubePoster(videoId) {
-  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+/** Cloudinary / MP4 poster frame (first second) */
+function vaultVideoPoster(src) {
+  if (!src) return '';
+  const s = String(src);
+  if (s.includes('res.cloudinary.com') && s.includes('/video/upload/')) {
+    // Insert so_0 after upload/ (works with or without other transforms)
+    let poster = s.replace('/video/upload/', '/video/upload/so_0/');
+    poster = poster.replace(/\.mp4(\?.*)?$/i, '.jpg$1');
+    return poster;
+  }
+  return '';
 }
 
-/** Vault feed — paste YouTube Shorts URLs below (shared for everyone on your Vercel / GitHub Pages link). */
+/** Vault feed — paste Cloudinary (or any HTTPS) MP4 URLs below.
+ *  Tip: use f_mp4,vc_h264 so iPhone/PWA can play (AV1 often fails on iOS). */
 const VAULT_VIDEOS = [
   {
     id: 'v1',
-    title: 'Mel Robbins — Change Your Life',
-    url: 'https://youtube.com/shorts/AJpErm8H2aU',
+    title: "Don't Give Up — Steve Harvey",
+    src: 'https://res.cloudinary.com/hbb5ncif/video/upload/f_mp4,vc_h264,q_auto/v1784562524/vidssave.com_Steve_Harvey-_Inspirational_Speech___Motivational_Short_Video___Incredible_You_480P_jzjapc.mp4',
     caption: '',
     topic: 'motivation'
   },
   {
     id: 'v2',
-    title: 'Michelle Obama — The Power of Hope',
-    url: 'https://youtube.com/shorts/ZwcaFhdjRY4',
-    caption: '',
-    topic: 'motivation'
-  },
-  {
-    id: 'v3',
-    title: "Don't Give Up — Steve Harvey",
-    url: 'https://youtube.com/shorts/Dd2EEeV5zMs',
-    caption: '',
-    topic: 'motivation'
-  },
-  {
-    id: 'v4',
-    title: 'Advice for Students',
-    url: 'https://youtube.com/shorts/_uWHLBv2R28',
-    caption: '',
-    topic: 'motivation'
-  },
-  {
-    id: 'v5',
-    title: 'Nick Vujicic — You May Have Arms and Legs',
-    url: 'https://youtube.com/shorts/OUisWAP9yls',
-    caption: '',
-    topic: 'motivation'
-  },
-  {
-    id: 'v6',
-    title: 'Les Brown — Kill Your Negative Thinking',
-    url: 'https://youtube.com/shorts/NbK3-zVDiq0',
-    caption: '',
-    topic: 'motivation'
-  },
-  {
-    id: 'v7',
-    title: 'Les Brown — Three Rules For Success',
-    url: 'https://youtube.com/shorts/20aoQpxm4gc',
+    title: 'Mel Robbins — Change Your Life',
+    src: 'https://res.cloudinary.com/hbb5ncif/video/upload/f_mp4,vc_h264,q_auto/v1784562524/vidssave.com_Mel_Robbins_Message_Will_Change_Your_LIFE___Motivational_Video_720P_mahbxi.mp4',
     caption: '',
     topic: 'motivation'
   },
@@ -4588,15 +4512,15 @@ class FinanceApp {
   }
 
   // ========== VAULT VIDEO FEED ==========
-  /** Normalize Vault entries with resolved YouTube ids */
+  /** Normalize Vault entries with MP4 src */
   _vaultItems() {
     return VAULT_VIDEOS.map(v => ({
       ...v,
-      videoId: parseYoutubeId(v.url || v.src)
-    })).filter(v => v.videoId);
+      src: (v.src || v.url || '').trim()
+    })).filter(v => v.src && /\.mp4(\?|$)/i.test(v.src));
   }
 
-  /** Render Vault vertical video feed — one player per slide (PWA-safe) */
+  /** Render Vault vertical video feed — native HTML5 (Shorts-like) */
   renderVault() {
     this._teardownVaultFeed();
     const videos = this._vaultItems();
@@ -4605,9 +4529,8 @@ class FinanceApp {
         <div class="vault-empty">
           <div class="vault-empty-icon"><i class="fas fa-circle-play"></i></div>
           <h2>Vault</h2>
-          <p>Add YouTube Shorts URLs to <code>VAULT_VIDEOS</code> in <code>index.html</code>. Deploy to <strong>Vercel</strong> or GitHub Pages — everyone on your link sees the same feed.</p>
-          <p><strong>Example:</strong><br><code>{ title: 'Budget tip', url: 'https://youtube.com/shorts/VIDEO_ID', topic: 'budgeting' }</code></p>
-          <p style="font-size:12px;color:var(--text-muted)">Paste Shorts links, push to GitHub — no MP4 uploads needed.</p>
+          <p>Add Cloudinary (or any HTTPS) MP4 URLs to <code>VAULT_VIDEOS</code> in <code>index.html</code>.</p>
+          <p><strong>Example:</strong><br><code>{ title: 'Motivation', src: 'https://res.cloudinary.com/.../video.mp4', topic: 'motivation' }</code></p>
         </div>`;
       return;
     }
@@ -4616,21 +4539,26 @@ class FinanceApp {
         <div class="vault-empty">
           <div class="vault-empty-icon"><i class="fas fa-circle-exclamation"></i></div>
           <h2>Vault</h2>
-          <p>Could not read YouTube IDs from your <code>VAULT_VIDEOS</code> URLs. Use Shorts links like <code>https://youtube.com/shorts/XXXXXXXXXXX</code>.</p>
+          <p>Could not read MP4 URLs from <code>VAULT_VIDEOS</code>. Use direct <code>.mp4</code> links (Cloudinary works great).</p>
         </div>`;
       return;
     }
 
-    if (!isVaultHosted() && !this._vaultFileWarned) {
-      this._vaultFileWarned = true;
-      this.toast.show('Open your Vercel link for in-app video.', 'warning', 7000);
-    }
-
-    const slides = videos.map((v, i) => `
-      <div class="vault-slide${i === 0 ? ' is-active' : ''}" data-index="${i}" data-video-id="${Utils.esc(v.videoId)}">
+    const slides = videos.map((v, i) => {
+      const poster = vaultVideoPoster(v.src);
+      return `
+      <div class="vault-slide${i === 0 ? ' is-active' : ''}" data-index="${i}">
         <div class="vault-media">
-          <div class="vault-yt-poster" style="background-image:url('${Utils.esc(vaultYoutubePoster(v.videoId))}')"></div>
-          <div class="vault-iframe-host"></div>
+          ${poster ? `<div class="vault-poster" style="background-image:url('${Utils.esc(poster)}')"></div>` : '<div class="vault-poster"></div>'}
+          <video
+            playsinline
+            webkit-playsinline
+            preload="${i === 0 ? 'auto' : 'metadata'}"
+            loop
+            muted
+            ${poster ? `poster="${Utils.esc(poster)}"` : ''}
+            src="${Utils.esc(v.src)}"
+          ></video>
         </div>
         <div class="vault-brand-mask-top" aria-hidden="true"></div>
         <div class="vault-brand-mask-bottom" aria-hidden="true"></div>
@@ -4647,7 +4575,8 @@ class FinanceApp {
         <button type="button" class="vault-sound-btn" data-vault-sound="${i}" aria-label="Toggle sound">
           <i class="fas fa-volume-xmark"></i>
         </button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     const rail = videos.map((_, i) => `<span class="vault-rail-seg${i === 0 ? ' active' : ''}" data-index="${i}"></span>`).join('');
 
@@ -4674,74 +4603,68 @@ class FinanceApp {
     this._bindVaultFeed();
   }
 
-  /** Build iframe element for a Vault slide */
-  _vaultCreateIframe(videoId, muted) {
-    const iframe = document.createElement('iframe');
-    iframe.src = buildYoutubeEmbedUrl(videoId, true, muted);
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.setAttribute('referrerpolicy', 'origin');
-    iframe.setAttribute('loading', 'eager');
-    iframe.title = 'Vault video';
-    iframe.playsInline = true;
-    return iframe;
+  /** Get video element for slide index */
+  _vaultVideoEl(index) {
+    return document.querySelector(`#vaultFeed .vault-slide[data-index="${index}"] video`);
   }
 
-  /** Sync sound button icon on a slide */
+  /** Sync sound button icon */
   _vaultSyncSoundBtn(slide, muted) {
     const btn = slide?.querySelector('[data-vault-sound] i');
     if (!btn) return;
     btn.className = muted ? 'fas fa-volume-xmark' : 'fas fa-volume-high';
   }
 
-  /** Mount / remount iframe for slide index. Must run inside user gesture for PWA. */
-  _vaultMountSlide(index, { muted = true, force = false } = {}) {
-    const videos = this._vaultVideos || this._vaultItems();
-    if (index < 0 || index >= videos.length) return;
+  /** Play slide video (native) */
+  async _vaultPlaySlide(index, { muted = true } = {}) {
     const feed = document.getElementById('vaultFeed');
-    if (!feed) return;
-    const slide = feed.querySelector(`.vault-slide[data-index="${index}"]`);
-    if (!slide) return;
-    const host = slide.querySelector('.vault-iframe-host');
-    if (!host) return;
-    if (!isVaultHosted()) return;
+    const slide = feed?.querySelector(`.vault-slide[data-index="${index}"]`);
+    const video = this._vaultVideoEl(index);
+    if (!slide || !video) return;
 
-    const { videoId } = videos[index];
-    const existing = host.querySelector('iframe');
-    const wantSrc = buildYoutubeEmbedUrl(videoId, true, muted);
-    if (!force && existing && existing.getAttribute('src') === wantSrc) {
+    // Pause others
+    feed.querySelectorAll('video').forEach((v, i) => {
+      const s = v.closest('.vault-slide');
+      if (Number(s?.dataset.index) !== index) {
+        v.pause();
+        s?.classList.remove('is-playing');
+      }
+    });
+
+    video.muted = muted;
+    video.playsInline = true;
+    try {
+      await video.play();
       slide.classList.add('is-playing');
       slide.classList.toggle('is-muted', muted);
       this._vaultSyncSoundBtn(slide, muted);
-      return;
+    } catch (_) {
+      slide.classList.remove('is-playing');
+      // Keep tap-to-play visible if autoplay blocked
     }
-
-    host.innerHTML = '';
-    host.appendChild(this._vaultCreateIframe(videoId, muted));
-    slide.classList.add('is-playing');
-    slide.classList.toggle('is-muted', muted);
-    this._vaultSyncSoundBtn(slide, muted);
   }
 
-  /** Stop iframe on a slide to free memory / autoplay */
-  _vaultUnloadSlide(index) {
-    const feed = document.getElementById('vaultFeed');
-    const slide = feed?.querySelector(`.vault-slide[data-index="${index}"]`);
-    if (!slide) return;
-    const host = slide.querySelector('.vault-iframe-host');
-    if (host) host.innerHTML = '';
-    slide.classList.remove('is-playing', 'is-muted');
+  /** Pause / unload non-active slides to save bandwidth */
+  _vaultPauseOthers(activeIndex) {
+    document.querySelectorAll('#vaultFeed .vault-slide').forEach((slide) => {
+      const i = Number(slide.dataset.index);
+      const video = slide.querySelector('video');
+      if (i !== activeIndex && video) {
+        video.pause();
+        try { video.currentTime = 0; } catch (_) {}
+        slide.classList.remove('is-playing');
+      }
+    });
   }
 
-  /** Activate slide index (UI + optional autoplay after first play) */
-  _vaultActivate(index, { play = false, muted = true } = {}) {
+  /** Activate slide index */
+  _vaultActivate(index, { play = false } = {}) {
     const videos = this._vaultVideos || this._vaultItems();
     if (index < 0 || index >= videos.length) return;
     this._vaultActiveIndex = index;
 
     document.querySelectorAll('#vaultFeed .vault-slide').forEach((slide, i) => {
       slide.classList.toggle('is-active', i === index);
-      if (i !== index) this._vaultUnloadSlide(i);
     });
     document.querySelectorAll('#vaultRail .vault-rail-seg').forEach((seg, i) => {
       seg.classList.toggle('active', i === index);
@@ -4749,29 +4672,29 @@ class FinanceApp {
     const countEl = document.getElementById('vaultFloatCount');
     if (countEl) countEl.textContent = `${index + 1} / ${videos.length}`;
 
+    this._vaultPauseOthers(index);
     if (play) {
-      const useMute = this._vaultSoundOn ? false : muted;
-      this._vaultMountSlide(index, { muted: useMute, force: true });
+      this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
     }
   }
 
-  /** Tap play on active slide — sync with user gesture */
+  /** Tap play — required first gesture on iOS PWA */
   _vaultTapPlay(index) {
-    if (!isVaultHosted()) {
-      this.toast.show('Open your Vercel / HTTPS link to play Vault videos.', 'warning', 6000);
-      return;
-    }
     const idx = typeof index === 'number' ? index : this._vaultActiveIndex;
-    // Always start muted — PWA/iOS blocks unmuted autoplay
-    this._vaultMountSlide(idx, { muted: true, force: true });
+    this._vaultPlaySlide(idx, { muted: true });
   }
 
-  /** Toggle mute/unmute via reload inside user gesture */
+  /** Toggle mute without remounting */
   _vaultToggleSound(index) {
-    if (!isVaultHosted()) return;
     const idx = typeof index === 'number' ? index : this._vaultActiveIndex;
+    const video = this._vaultVideoEl(idx);
+    const slide = document.querySelector(`#vaultFeed .vault-slide[data-index="${idx}"]`);
+    if (!video) return;
     this._vaultSoundOn = !this._vaultSoundOn;
-    this._vaultMountSlide(idx, { muted: !this._vaultSoundOn, force: true });
+    video.muted = !this._vaultSoundOn;
+    slide?.classList.toggle('is-muted', video.muted);
+    this._vaultSyncSoundBtn(slide, video.muted);
+    if (video.paused) video.play().catch(() => {});
   }
 
   /** Wire Vault feed scroll + play gestures */
@@ -4795,7 +4718,7 @@ class FinanceApp {
       feed.scrollTo({ top: index * slideHeight(), behavior: smooth ? 'smooth' : 'auto' });
       setTimeout(() => {
         scrollLock = false;
-        this._vaultActivate(index, { play: userPlayed, muted: !this._vaultSoundOn });
+        this._vaultActivate(index, { play: userPlayed });
       }, smooth ? 380 : 40);
     };
 
@@ -4805,7 +4728,7 @@ class FinanceApp {
         e.preventDefault();
         const idx = Number(playBtn.dataset.vaultPlay);
         userPlayed = true;
-        this._vaultActivate(idx, { play: false });
+        this._vaultActivate(idx);
         this._vaultTapPlay(idx);
         return;
       }
@@ -4813,8 +4736,16 @@ class FinanceApp {
       if (soundBtn) {
         e.preventDefault();
         e.stopPropagation();
-        const idx = Number(soundBtn.dataset.vaultSound);
-        this._vaultToggleSound(idx);
+        this._vaultToggleSound(Number(soundBtn.dataset.vaultSound));
+        return;
+      }
+      // Tap video area to pause/resume when already playing
+      const slide = e.target.closest('.vault-slide.is-playing');
+      if (slide && !e.target.closest('.vault-float-back, [data-vault-sound]')) {
+        const video = slide.querySelector('video');
+        if (!video) return;
+        if (video.paused) video.play().catch(() => {});
+        else video.pause();
       }
     });
 
@@ -4822,7 +4753,7 @@ class FinanceApp {
     const onScrollSettled = () => {
       if (scrollLock) return;
       const idx = resolveScrollIndex();
-      this._vaultActivate(idx, { play: userPlayed, muted: !this._vaultSoundOn });
+      this._vaultActivate(idx, { play: userPlayed });
     };
     feed.addEventListener('scroll', () => {
       if (scrollLock) return;
@@ -4858,7 +4789,11 @@ class FinanceApp {
       feed.removeEventListener('wheel', onWheel);
       document.removeEventListener('keydown', this._vaultKeyHandler);
       this._vaultKeyHandler = null;
-      slides.forEach((_, i) => this._vaultUnloadSlide(i));
+      feed.querySelectorAll('video').forEach(v => {
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
+      });
       this._vaultActiveIndex = -1;
       this._vaultVideos = null;
       this._vaultSoundOn = false;
@@ -5618,7 +5553,7 @@ class FinanceApp {
       if (hay.includes(q)) { if (!groups['Crypto']) groups['Crypto'] = []; groups['Crypto'].push({ icon: 'bitcoin-sign', text: `${h.name} (${h.symbol})`, sub: `${h.amount} coins`, action: () => this.navigate('crypto') }); }
     });
     VAULT_VIDEOS.forEach(v => {
-      const hay = [v.title, v.caption, v.topic, v.url].filter(Boolean).join(' ').toLowerCase();
+      const hay = [v.title, v.caption, v.topic, v.src, v.url].filter(Boolean).join(' ').toLowerCase();
       if (hay.includes(q)) {
         if (!groups.Vault) groups.Vault = [];
         groups.Vault.push({ icon: 'circle-play', text: v.title, sub: v.topic || 'Vault video', action: () => this.navigate('vault') });
