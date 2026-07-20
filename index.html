@@ -1258,7 +1258,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.47.0';
+const APP_VERSION = '1.47.1';
 
 /** Extract YouTube video id from Shorts / watch / youtu.be URLs */
 function parseYoutubeId(url) {
@@ -2636,6 +2636,7 @@ class FinanceApp {
     this.cryptoChartPeriod = '7d';
     this._vaultObserver = null;
     this._vaultFileWarned = false;
+    this._vaultSoundOn = false;
     this.init();
   }
 
@@ -2654,6 +2655,7 @@ class FinanceApp {
       this.updateShellSummary();
       const active = document.activeElement;
       if (this.currentView === 'settings' && active?.closest('#mainContent input, #mainContent select, #mainContent textarea')) return;
+      if (this.currentView === 'vault') return;
       this.navigate(this.currentView);
     });
     window.addEventListener('beforeunload', () => this.store.persistNow());
@@ -3043,6 +3045,8 @@ class FinanceApp {
   /** Navigate to view */
   navigate(view) {
     if (this.currentView === 'vault' && view !== 'vault') this._teardownVaultFeed();
+    if (view === 'vault') this._vaultSoundOn = true;
+    if (view === this.currentView && view === 'vault') return;
     Utils.saveActiveView(view);
     this.currentView = view;
     document.body.classList.toggle('view-dashboard', view === 'dashboard');
@@ -4638,20 +4642,25 @@ class FinanceApp {
   }
 
   /** Load or reload YouTube iframe for a slide */
-  _mountVaultIframe(slide, autoplay = true, mute = true) {
+  _mountVaultIframe(slide, autoplay = true, mute = false) {
     const host = slide.querySelector('.vault-yt-host');
     const videoId = slide.dataset.videoId;
     if (!host || !videoId) return;
 
+    const useMute = mute || !this._vaultSoundOn;
+
     if (!isVaultHosted() && !this._vaultFileWarned) {
       this._vaultFileWarned = true;
-      this.toast.show('Open your Vercel or GitHub Pages link for in-app video. Tap Open in YouTube below meanwhile.', 'warning', 7000);
+      this.toast.show('Open your Vercel or GitHub Pages link for in-app video.', 'warning', 7000);
     }
 
     const existing = host.querySelector('iframe');
     if (existing && slide.classList.contains('is-ready')) {
-      if (autoplay) slide.classList.add('is-playing');
-      return;
+      const needsUnmute = this._vaultSoundOn && existing.src.includes('mute=1');
+      if (!needsUnmute) {
+        if (autoplay) slide.classList.add('is-playing');
+        return;
+      }
     }
 
     host.innerHTML = '';
@@ -4660,11 +4669,23 @@ class FinanceApp {
     iframe.setAttribute('allowfullscreen', '');
     iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
     iframe.setAttribute('title', slide.querySelector('.vault-slide-bottom h3')?.textContent || 'Vault video');
-    iframe.src = buildYoutubeEmbedUrl(videoId, autoplay, mute);
+    iframe.src = buildYoutubeEmbedUrl(videoId, autoplay, useMute);
     iframe.addEventListener('load', () => {
       slide.classList.add('is-ready', 'is-playing');
     });
     host.appendChild(iframe);
+  }
+
+  /** Turn on Vault sound and replay current slide (after user gesture) */
+  _enableVaultSound() {
+    if (this._vaultSoundOn) return;
+    this._vaultSoundOn = true;
+    const slide = document.querySelector('.vault-slide.is-active');
+    if (!slide) return;
+    slide.classList.remove('is-ready', 'is-playing');
+    const host = slide.querySelector('.vault-yt-host');
+    if (host) host.innerHTML = '';
+    this._mountVaultIframe(slide, true, false);
   }
 
   /** Clear YouTube iframe to stop playback */
@@ -4699,13 +4720,16 @@ class FinanceApp {
     };
 
     const setActive = (index, opts = {}) => {
-      if (index < 0 || index >= slides.length || index === activeIndex) return;
+      if (index < 0 || index >= slides.length) return;
+      const forceRemount = opts.force === true;
+      if (index === activeIndex && !forceRemount) return;
       activeIndex = index;
       updateChrome(index);
+      const mute = opts.mute === true;
       slides.forEach((slide, i) => {
         if (i === index) {
           slide.classList.add('is-active');
-          this._mountVaultIframe(slide, opts.autoplay !== false, opts.mute !== false);
+          this._mountVaultIframe(slide, opts.autoplay !== false, mute);
         } else if (Math.abs(i - index) > 1) {
           this._unmountVaultIframe(slide);
         }
@@ -4726,8 +4750,12 @@ class FinanceApp {
       const host = slide.querySelector('.vault-yt-host');
       if (host) host.innerHTML = '';
       activeIndex = -1;
-      setActive(idx, { autoplay: true, mute: false });
+      setActive(idx, { autoplay: true, force: true });
     };
+
+    const enableSound = () => this._enableVaultSound();
+    feed.addEventListener('pointerdown', enableSound, { once: true, passive: true });
+    document.getElementById('vaultFeed')?.addEventListener('touchstart', enableSound, { once: true, passive: true });
 
     slides.forEach(slide => {
       const tap = () => playSlide(slide);
@@ -4741,7 +4769,7 @@ class FinanceApp {
       if (scrollRaf) cancelAnimationFrame(scrollRaf);
       scrollRaf = requestAnimationFrame(() => {
         const idx = resolveScrollIndex();
-        if (idx !== activeIndex) setActive(idx, { autoplay: true, mute: true });
+        if (idx !== activeIndex) setActive(idx, { autoplay: true });
       });
     }, { passive: true });
 
@@ -4751,7 +4779,7 @@ class FinanceApp {
       const next = activeIndex + (e.deltaY > 0 ? 1 : -1);
       if (next >= 0 && next < slides.length) {
         scrollToIndex(next);
-        setActive(next, { autoplay: true, mute: true });
+        setActive(next, { autoplay: true });
       }
     }, { passive: false });
 
@@ -4761,12 +4789,12 @@ class FinanceApp {
         e.preventDefault();
         const next = Math.min(slides.length - 1, activeIndex + 1);
         scrollToIndex(next);
-        setActive(next, { autoplay: true, mute: true });
+        setActive(next, { autoplay: true });
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
         const prev = Math.max(0, activeIndex - 1);
         scrollToIndex(prev);
-        setActive(prev, { autoplay: true, mute: true });
+        setActive(prev, { autoplay: true });
       } else if (e.key === 'Escape') {
         this.navigate('dashboard');
       }
@@ -4781,7 +4809,7 @@ class FinanceApp {
 
     requestAnimationFrame(() => {
       scrollToIndex(0, false);
-      setActive(0, { autoplay: true, mute: true });
+      setActive(0, { autoplay: true, force: true });
     });
   }
 
