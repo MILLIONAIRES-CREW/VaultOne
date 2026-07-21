@@ -1266,7 +1266,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.52.4';
+const APP_VERSION = '1.52.5';
 
 /** True when served over HTTP(S) */
 function isVaultHosted() {
@@ -1363,15 +1363,15 @@ const Utils = {
 
   saveActiveView(view) {
     try {
+      // Session only — never restore last page after PWA close (always open on Home)
       sessionStorage.setItem('pfm_active_view', view);
-      if (Utils.isStandalone()) localStorage.setItem('pfm_active_view', view);
+      localStorage.removeItem('pfm_active_view');
     } catch (_) {}
   },
 
   loadActiveView() {
     try {
-      return localStorage.getItem('pfm_active_view')
-        || sessionStorage.getItem('pfm_active_view');
+      return sessionStorage.getItem('pfm_active_view');
     } catch (_) { return null; }
   },
 
@@ -2641,9 +2641,9 @@ class FinanceApp {
       this.navigate(this.currentView);
     });
     window.addEventListener('beforeunload', () => this.store.persistNow());
-    const saved = Utils.loadActiveView();
-    const view = (saved === 'insights' || saved === 'futures') ? 'dashboard' : (saved || 'dashboard');
-    this.navigate(view);
+    // Always open on Home (dashboard) — never restore Vault / last page after PWA close
+    try { localStorage.removeItem('pfm_active_view'); } catch (_) {}
+    this.navigate('dashboard');
     this.checkReminders();
     this.initCrypto();
     window.addEventListener('beforeunload', () => this.crypto.stopAutoRefresh());
