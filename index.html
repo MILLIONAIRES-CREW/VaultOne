@@ -759,13 +759,15 @@ body.view-vault .mobile-bottom-nav{display:none!important}
   background:linear-gradient(0deg,rgba(0,0,0,0.82) 0%,rgba(0,0,0,0.35) 55%,transparent 100%);
 }
 .vault-play-tap{
-  position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;
+  position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;
   border:none;background:rgba(0,0,0,0.35);color:#fff;cursor:pointer;
   flex-direction:column;gap:10px;font-size:14px;font-weight:700;
   font-family:'Manrope',sans-serif;letter-spacing:0.04em;
 }
 .vault-play-tap i{font-size:56px;filter:drop-shadow(0 2px 12px rgba(0,0,0,0.75));color:var(--gold-premium)}
-.vault-slide.is-playing .vault-play-tap{display:none}
+/* Play button only on the active slide, and only before the feed is engaged */
+.vault-slide.is-active:not(.is-playing) .vault-play-tap{display:flex}
+.vault-feed.is-engaged .vault-play-tap{display:none!important}
 .vault-sound-btn{
   position:absolute;right:14px;bottom:calc(120px + env(safe-area-inset-bottom));z-index:8;
   width:44px;height:44px;border-radius:50%;border:none;
@@ -1264,7 +1266,7 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.52.3';
+const APP_VERSION = '1.52.4';
 
 /** True when served over HTTP(S) */
 function isVaultHosted() {
@@ -4589,7 +4591,7 @@ class FinanceApp {
           <video
             playsinline
             webkit-playsinline
-            preload="${i <= 1 ? 'auto' : 'metadata'}"
+            preload="${i <= 2 ? 'auto' : 'metadata'}"
             loop
             muted
             ${poster ? `poster="${Utils.esc(poster)}"` : ''}
@@ -4644,7 +4646,7 @@ class FinanceApp {
     return document.querySelector(`#vaultFeed .vault-slide[data-index="${index}"] video`);
   }
 
-  /** Prefetch neighbors so swipe play feels instant */
+  /** Prefetch neighbors so swipe play feels instant — never call load() (wipes buffer) */
   _vaultWarmNeighbors(index) {
     const videos = this._vaultVideos || this._vaultItems();
     [index - 1, index, index + 1, index + 2].forEach((i) => {
@@ -4652,10 +4654,6 @@ class FinanceApp {
       const video = this._vaultVideoEl(i);
       if (!video) return;
       video.preload = 'auto';
-      // Kick network fetch without playing
-      if (video.readyState < 2) {
-        try { video.load(); } catch (_) {}
-      }
     });
   }
 
@@ -4666,7 +4664,13 @@ class FinanceApp {
     btn.className = muted ? 'fas fa-volume-xmark' : 'fas fa-volume-high';
   }
 
-  /** Play slide video immediately (sound on by default) */
+  /** Mark feed engaged — hides play button forever for this session */
+  _vaultMarkEngaged() {
+    document.getElementById('vaultFeed')?.classList.add('is-engaged');
+    this._vaultEngaged = true;
+  }
+
+  /** Play slide video immediately (TikTok-smooth, no play-button flash) */
   _vaultPlaySlide(index, { muted } = {}) {
     const feed = document.getElementById('vaultFeed');
     const slide = feed?.querySelector(`.vault-slide[data-index="${index}"]`);
@@ -4674,8 +4678,14 @@ class FinanceApp {
     if (!slide || !video) return Promise.resolve(false);
 
     const wantMute = typeof muted === 'boolean' ? muted : !this._vaultSoundOn;
+    this._vaultMarkEngaged();
 
-    // Pause others — keep buffers; only rewind non-neighbors
+    // Mark new slide playing FIRST so play button never flashes mid-swipe
+    slide.classList.add('is-playing', 'is-active');
+    slide.classList.toggle('is-muted', wantMute);
+    this._vaultSyncSoundBtn(slide, wantMute);
+
+    // Pause others after — keep their buffers warm
     feed.querySelectorAll('.vault-slide').forEach((s) => {
       const i = Number(s.dataset.index);
       const v = s.querySelector('video');
@@ -4689,9 +4699,7 @@ class FinanceApp {
 
     video.muted = wantMute;
     video.playsInline = true;
-    slide.classList.add('is-playing');
-    slide.classList.toggle('is-muted', wantMute);
-    this._vaultSyncSoundBtn(slide, wantMute);
+    video.preload = 'auto';
 
     const start = () => {
       const p = video.play();
@@ -4700,7 +4708,6 @@ class FinanceApp {
           this._vaultWarmNeighbors(index);
           return true;
         }).catch(() => {
-          // Unmuted autoplay blocked — retry muted, then user can unmute
           if (!wantMute) {
             video.muted = true;
             this._vaultSoundOn = false;
@@ -4709,12 +4716,8 @@ class FinanceApp {
             return video.play().then(() => {
               this._vaultWarmNeighbors(index);
               return true;
-            }).catch(() => {
-              slide.classList.remove('is-playing');
-              return false;
-            });
+            }).catch(() => false);
           }
-          slide.classList.remove('is-playing');
           return false;
         });
       }
@@ -4722,10 +4725,6 @@ class FinanceApp {
       return Promise.resolve(true);
     };
 
-    if (video.readyState >= 2) return start();
-
-    video.preload = 'auto';
-    try { video.load(); } catch (_) {}
     return start();
   }
 
@@ -4741,8 +4740,8 @@ class FinanceApp {
 
     this._vaultActiveIndex = index;
 
-    document.querySelectorAll('#vaultFeed .vault-slide').forEach((slide, i) => {
-      slide.classList.toggle('is-active', i === index);
+    document.querySelectorAll('#vaultFeed .vault-slide').forEach((s, i) => {
+      s.classList.toggle('is-active', i === index);
     });
     document.querySelectorAll('#vaultRail .vault-rail-seg').forEach((seg, i) => {
       seg.classList.toggle('active', i === index);
@@ -4751,7 +4750,7 @@ class FinanceApp {
     if (countEl) countEl.textContent = `${index + 1} / ${videos.length}`;
 
     this._vaultWarmNeighbors(index);
-    if (play) {
+    if (play || this._vaultEngaged) {
       this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
     }
   }
@@ -4783,7 +4782,7 @@ class FinanceApp {
     if (!feed) return;
     const slides = [...feed.querySelectorAll('.vault-slide')];
     let scrollLock = false;
-    let userPlayed = false;
+    this._vaultEngaged = false;
     this._vaultSoundOn = true;
 
     const slideHeight = () => feed.clientHeight || window.innerHeight;
@@ -4793,15 +4792,17 @@ class FinanceApp {
       return Math.max(0, Math.min(slides.length - 1, Math.round(feed.scrollTop / h)));
     };
 
-    /** Switch video the moment the snap target changes (no wait) */
+    /** Instant TikTok-style switch */
     const switchTo = (index) => {
       if (index < 0 || index >= slides.length) return;
-      if (index === this._vaultActiveIndex && userPlayed) {
-        const v = this._vaultVideoEl(index);
-        if (v && v.paused) this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
+      if (index === this._vaultActiveIndex) {
+        if (this._vaultEngaged) {
+          const v = this._vaultVideoEl(index);
+          if (v && v.paused) this._vaultPlaySlide(index, { muted: !this._vaultSoundOn });
+        }
         return;
       }
-      this._vaultActivate(index, { play: userPlayed });
+      this._vaultActivate(index, { play: this._vaultEngaged });
     };
 
     const scrollToIndex = (index, smooth = true) => {
@@ -4809,7 +4810,7 @@ class FinanceApp {
       scrollLock = true;
       switchTo(index);
       feed.scrollTo({ top: index * slideHeight(), behavior: smooth ? 'smooth' : 'auto' });
-      setTimeout(() => { scrollLock = false; }, smooth ? 280 : 30);
+      setTimeout(() => { scrollLock = false; }, smooth ? 220 : 20);
     };
 
     feed.addEventListener('click', (e) => {
@@ -4817,7 +4818,6 @@ class FinanceApp {
       if (playBtn) {
         e.preventDefault();
         const idx = Number(playBtn.dataset.vaultPlay);
-        userPlayed = true;
         this._vaultSoundOn = true;
         this._vaultActivate(idx);
         this._vaultTapPlay(idx);
@@ -4839,6 +4839,7 @@ class FinanceApp {
       }
     });
 
+    // Switch as soon as swipe crosses halfway — no debounce
     feed.addEventListener('scroll', () => {
       if (scrollLock) return;
       const idx = resolveScrollIndex();
@@ -4874,12 +4875,11 @@ class FinanceApp {
 
     this._vaultWarmNeighbors(0);
 
-    // Start first video with sound (nav tap = user gesture on many devices)
+    // Boot first video with sound
     const boot = this._vaultPlaySlide(0, { muted: false });
     if (boot && typeof boot.then === 'function') {
       boot.then((ok) => {
         if (ok) {
-          userPlayed = true;
           const v = this._vaultVideoEl(0);
           if (v && !v.muted) this._vaultSoundOn = true;
         }
@@ -4897,6 +4897,7 @@ class FinanceApp {
       });
       this._vaultActiveIndex = -1;
       this._vaultVideos = null;
+      this._vaultEngaged = false;
       this._vaultSoundOn = true;
     };
   }
