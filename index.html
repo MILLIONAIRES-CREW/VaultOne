@@ -846,6 +846,118 @@ body.view-vault .mobile-bottom-nav{display:none!important}
   body.view-vault .main{margin-left:0!important}
 }
 
+/* ========== CASH LAB ========== */
+body.view-cashlab .content{padding:12px 12px 88px;max-width:1100px}
+.cl-shell{color:var(--text-primary)}
+.cl-hero{
+  position:relative;border-radius:20px;padding:28px 24px 32px;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%,rgba(212,175,55,0.18),transparent 55%),
+    linear-gradient(165deg,rgba(28,28,28,0.98),rgba(8,8,8,0.96));
+  border:1px solid rgba(212,175,55,0.22);
+}
+.cl-hero-copy h1{
+  font-family:'Manrope',sans-serif;font-size:clamp(28px,5vw,40px);font-weight:800;margin:8px 0 12px;
+  background:linear-gradient(135deg,var(--gold-premium),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.cl-kicker{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold-premium);margin:0}
+.cl-hero-copy>p{color:var(--text-secondary);line-height:1.55;max-width:52ch;margin:0 0 18px;font-size:14px}
+.cl-hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.cl-legal{font-size:11px;color:var(--text-muted);margin:0}
+.cl-back{
+  width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.08);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:8px;
+}
+.cl-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cl-top h2{font-family:'Manrope',sans-serif;margin:0;font-size:20px}
+.cl-top-meta{flex:1;min-width:0}
+.cl-top-meta span{display:block;font-size:12px;color:var(--text-muted)}
+.cl-prof-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cl-prof{
+  text-align:left;padding:14px;border-radius:14px;cursor:pointer;color:#fff;
+  background:rgba(23,23,23,0.9);border:1px solid rgba(212,175,55,0.18);
+  display:flex;flex-direction:column;gap:4px;
+}
+.cl-prof:hover{border-color:rgba(212,175,55,0.45);background:rgba(35,35,35,0.95)}
+.cl-prof strong{font-size:14px}
+.cl-prof span{font-size:11px;color:var(--text-muted)}
+.cl-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.cl-stat{
+  background:rgba(17,17,17,0.9);border:1px solid rgba(212,175,55,0.12);border-radius:12px;padding:10px;
+}
+.cl-stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted)}
+.cl-stat strong{font-size:14px;font-weight:700}
+.cl-stat strong.pos,.cl-deal-stats .pos{color:#4ade80}
+.cl-stat strong.neg,.cl-deal-stats .neg{color:#f87171}
+.cl-board{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:14px;
+}
+.cl-space{
+  min-height:64px;border-radius:10px;padding:6px;background:rgba(20,20,20,0.95);
+  border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;justify-content:space-between;
+}
+.cl-space.is-here{border-color:var(--gold-premium);box-shadow:0 0 0 1px rgba(212,175,55,0.35),0 0 18px rgba(212,175,55,0.2)}
+.cl-space-i{font-size:9px;color:var(--text-muted)}
+.cl-space-l{font-size:10px;font-weight:700;line-height:1.2}
+.cl-payday{background:linear-gradient(160deg,rgba(34,120,70,0.35),rgba(20,20,20,0.9))}
+.cl-opportunity{background:linear-gradient(160deg,rgba(40,80,160,0.3),rgba(20,20,20,0.9))}
+.cl-market{background:linear-gradient(160deg,rgba(140,90,20,0.35),rgba(20,20,20,0.9))}
+.cl-doodad{background:linear-gradient(160deg,rgba(140,40,40,0.3),rgba(20,20,20,0.9))}
+.cl-charity{background:linear-gradient(160deg,rgba(90,40,140,0.3),rgba(20,20,20,0.9))}
+.cl-baby{background:linear-gradient(160deg,rgba(160,80,120,0.3),rgba(20,20,20,0.9))}
+.cl-downsized{background:linear-gradient(160deg,rgba(80,80,80,0.4),rgba(20,20,20,0.9))}
+.cl-ft_cash,.cl-ft_deal,.cl-ft_charity,.cl-ft_tax,.cl-ft_divorce,.cl-ft_lawsuit{
+  background:linear-gradient(160deg,rgba(212,175,55,0.18),rgba(20,20,20,0.92));
+}
+.cl-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.cl-roll{min-width:140px}
+.cl-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cl-panel{
+  background:rgba(17,17,17,0.92);border:1px solid rgba(212,175,55,0.12);border-radius:14px;padding:12px 14px;
+}
+.cl-panel h3{margin:0 0 8px;font-size:13px;color:var(--gold-premium)}
+.cl-list,.cl-log{list-style:none;margin:0;padding:0;max-height:180px;overflow:auto}
+.cl-list li,.cl-log li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px}
+.cl-muted{color:var(--text-muted)!important}
+.cl-modal-backdrop{
+  position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.72);
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.cl-modal{
+  width:min(480px,100%);max-height:min(80dvh,640px);overflow:auto;
+  background:linear-gradient(180deg,#1a1a1a,#0c0c0c);border:1px solid rgba(212,175,55,0.28);
+  border-radius:16px;padding:18px;
+}
+.cl-modal h3{margin:0 0 10px;font-family:'Manrope',sans-serif}
+.cl-modal-body{font-size:13px;line-height:1.5;color:var(--text-secondary);margin-bottom:14px}
+.cl-modal-actions{display:flex;flex-wrap:wrap;gap:8px}
+.cl-deal-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.cl-deal-stats div{background:rgba(255,255,255,0.04);border-radius:10px;padding:8px}
+.cl-deal-stats span{display:block;font-size:10px;color:var(--text-muted)}
+.cl-deal-stats strong{font-size:14px;color:#fff}
+.cl-dreams{display:grid;gap:8px}
+.cl-dream{
+  text-align:left;padding:12px;border-radius:12px;border:1px solid rgba(212,175,55,0.2);
+  background:rgba(255,255,255,0.04);color:#fff;cursor:pointer;display:grid;gap:2px;
+}
+.cl-dream:hover{border-color:var(--gold-premium)}
+.cl-dream span{color:var(--gold-premium);font-weight:700}
+.cl-dream em{font-style:normal;font-size:12px;color:var(--text-muted)}
+.cl-sell-list{display:grid;gap:8px;margin-top:10px}
+.cl-sell-btn{
+  text-align:left;padding:10px 12px;border-radius:10px;border:1px solid rgba(212,175,55,0.25);
+  background:rgba(212,175,55,0.08);color:#fff;cursor:pointer;font-size:12px;
+}
+.cl-sheet h4{margin:12px 0 6px;color:var(--gold-premium);font-size:12px;text-transform:uppercase;letter-spacing:0.06em}
+.cl-row{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:12px;color:var(--text-secondary)}
+.cl-row.total{border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;padding-top:8px;color:#fff;font-weight:700}
+@media(max-width:768px){
+  .cl-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cl-board{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .cl-cols{grid-template-columns:1fr}
+  body.view-cashlab .content{padding-bottom:100px}
+}
+
 /* ========== MOBILE BOTTOM NAV ========== */
 .mobile-bottom-nav{
   display:none;position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:12px;right:12px;
@@ -1262,12 +1374,13 @@ try{if(localStorage.getItem('pfm_vaultone_access_granted')==='true')document.doc
 <div class="print-report" id="printReport"></div>
 </div>
 
+<script src="cashlab.js"></script>
 <script>
 /* ============================================================
    PERSONAL FINANCE MANAGER — JavaScript
    ============================================================ */
 
-const APP_VERSION = '1.53.0';
+const APP_VERSION = '1.54.0';
 
 /** True when served over HTTP(S) */
 function isVaultHosted() {
@@ -2638,7 +2751,7 @@ class FinanceApp {
       this.updateShellSummary();
       const active = document.activeElement;
       if (this.currentView === 'settings' && active?.closest('#mainContent input, #mainContent select, #mainContent textarea')) return;
-      if (this.currentView === 'vault') return;
+      if (this.currentView === 'vault' || this.currentView === 'cashlab') return;
       this.navigate(this.currentView);
     });
     window.addEventListener('beforeunload', () => this.store.persistNow());
@@ -2937,7 +3050,8 @@ class FinanceApp {
         { id: 'transactions', icon: 'exchange-alt', label: 'Transactions' },
         { id: 'income', icon: 'arrow-trend-up', label: 'Income' },
         { id: 'expenses', icon: 'arrow-trend-down', label: 'Expenses' },
-        { id: 'vault', icon: 'circle-play', label: 'Vault' }
+        { id: 'vault', icon: 'circle-play', label: 'Vault' },
+        { id: 'cashlab', icon: 'dice', label: 'Cash Lab' }
       ]},
       { section: 'Accounts', links: [
         { id: 'accounts', icon: 'wallet', label: 'Accounts' },
@@ -3027,12 +3141,15 @@ class FinanceApp {
   /** Navigate to view */
   navigate(view) {
     if (this.currentView === 'vault' && view !== 'vault') this._teardownVaultFeed();
+    if (this.currentView === 'cashlab' && view !== 'cashlab') this._teardownCashLab();
     if (view === this.currentView && view === 'vault') return;
+    if (view === this.currentView && view === 'cashlab') return;
     if (view === 'vault') this._vaultSoundOn = true;
     Utils.saveActiveView(view);
     this.currentView = view;
     document.body.classList.toggle('view-dashboard', view === 'dashboard');
     document.body.classList.toggle('view-vault', view === 'vault');
+    document.body.classList.toggle('view-cashlab', view === 'cashlab');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
     this.syncMobileNav(view);
     const renderers = {
@@ -3047,6 +3164,7 @@ class FinanceApp {
       investments: () => this.renderInvestments(),
       crypto: () => this.renderCryptoPortfolio(),
       vault: () => this.renderVault(),
+      cashlab: () => this.renderCashLab(),
       assets: () => this.renderAssets(),
       budgets: () => this.renderBudgets(),
       'reports-monthly': () => this.renderReports('month'),
@@ -4951,6 +5069,29 @@ class FinanceApp {
       this._vaultFeedCleanup();
       this._vaultFeedCleanup = null;
     }
+  }
+
+  /** Render Cash Lab solo cashflow board game */
+  renderCashLab() {
+    this._teardownCashLab();
+    const el = document.getElementById('mainContent');
+    if (!el) return;
+    if (typeof CashLabGame !== 'function') {
+      el.innerHTML = `<div class="vault-empty"><h2>Cash Lab</h2><p>Game script failed to load. Ensure <code>cashlab.js</code> is deployed next to <code>index.html</code>.</p></div>`;
+      return;
+    }
+    el.innerHTML = '<div id="cashLabRoot"></div>';
+    this._cashLab = new CashLabGame(document.getElementById('cashLabRoot'), {
+      onExit: () => this.navigate('dashboard')
+    });
+  }
+
+  /** Tear down Cash Lab when leaving */
+  _teardownCashLab() {
+    if (this._cashLab?.destroy) {
+      try { this._cashLab.destroy(); } catch (_) {}
+    }
+    this._cashLab = null;
   }
 
   /** Open add/edit crypto holding modal */
